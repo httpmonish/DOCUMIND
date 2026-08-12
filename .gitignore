@@ -1,0 +1,12 @@
+# Virtual environment — never commit this. It can be 100+ MB, it's
+# specific to your operating system, and anyone can recreate it in
+# seconds from requirements.txt. Committing it would bloat the repo
+# for no benefit.
+venv/
+
+# Python's own cache files — regenerated automatically, no reason to track them
+__pycache__/
+*.pyc
+
+# OS clutter
+.DS_Store

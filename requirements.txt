@@ -1,0 +1,6 @@
+# Every package this project needs, with exact versions, so anyone
+# (including future you) can recreate this exact environment with:
+#   pip install -r requirements.txt
+#
+# Empty for now — the first real entry gets added next session, when
+# we write loader.py and need a package to read PDF files.
