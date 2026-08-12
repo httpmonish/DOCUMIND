@@ -10,14 +10,20 @@
 
 </div>
 
-> **Status note:** this README documents the plan. Checkboxes below get ticked off only once that piece is actually built *and* tested — not before.
+> **Status note:** this README documents the plan. Nothing here claims to be finished until it's actually built *and* tested.
 
 Ask questions about your own documents — PDFs, text files, markdown notes — and get answers grounded in what those documents actually say, not the AI's general knowledge and not a guess. Built using **RAG (Retrieval-Augmented Generation)**.
+
+## What This Project Is Designed To Demonstrate
+
+- A full **RAG pipeline** — retrieval *and* generation, backed by a real vector database, not just a single API call
+- **One engine, three interfaces** — CLI, REST API, and a native **MCP** integration for Claude Desktop, all sharing identical core logic
+- **Security considered from the start** — planned API-key auth, upload validation, and prompt-injection mitigation
+- **Clean separation of concerns** — the retrieval engine has zero knowledge of which interface is calling it
 
 ## Table of Contents
 - [The Big Picture](#the-big-picture)
 - [How It Will Work](#how-it-will-work)
-- [Roadmap](#roadmap)
 - [Planned Tech Stack](#planned-tech-stack)
 - [Why I'm Building This](#why-im-building-this)
 - [Setup](#setup)
@@ -31,20 +37,14 @@ flowchart TB
     U([You]) --> CLI[CLI]
     U --> API[REST API]
     U --> MCP[MCP Server]
-
-    CLI --> RP
+    CLI --> RP["core/rag_pipeline.py"]
     API --> RP
     MCP --> RP
-
-    subgraph core["core/ — the engine"]
-        RP[rag_pipeline.py]
-    end
-
-    RP --> VDB[(ChromaDB<br/>vector store)]
+    RP --> VDB[(ChromaDB)]
     RP --> Claude[Claude API]
 ```
 
-All three interfaces call the exact same underlying engine — nothing is duplicated between them.
+All three interfaces call the exact same underlying engine — nothing duplicated between them.
 
 ## How It Will Work
 
@@ -52,21 +52,21 @@ All three interfaces call the exact same underlying engine — nothing is duplic
 
 ```mermaid
 flowchart LR
-    A["📄 Document"] --> B["loader.py<br/>extract text"]
-    B --> C["chunker.py<br/>split into overlapping chunks"]
-    C --> D["embedder.py<br/>text → vector"]
-    D --> E[("ChromaDB")]
+    A[Document] --> B[loader.py]
+    B -->|raw text| C[chunker.py]
+    C -->|chunks| D[embedder.py]
+    D -->|vectors| E[(ChromaDB)]
 ```
 
 **Asking a question (query):**
 
 ```mermaid
 flowchart LR
-    Q["❓ Your question"] --> E1["embedder.py<br/>question → vector"]
-    E1 --> S["ChromaDB<br/>find closest chunks"]
-    S --> P["build prompt<br/>with retrieved context"]
-    P --> C["Claude API"]
-    C --> A["✅ Answer + sources"]
+    Q[Your question] --> M[embedder.py]
+    M -->|vector| S[ChromaDB]
+    S -->|closest chunks| P[build prompt]
+    P --> C[Claude API]
+    C -->|answer + sources| R[Response]
 ```
 
 **Asking through Claude Desktop (MCP):**
@@ -78,29 +78,13 @@ sequenceDiagram
     participant Server as MCP Server
     participant Engine as rag_pipeline.py
 
-    You->>Desktop: "Search my documents for X"
-    Desktop->>Server: calls search_documents(question)
+    You->>Desktop: Search my documents for X
+    Desktop->>Server: search_documents(question)
     Server->>Engine: answer_question(question)
     Engine-->>Server: answer + sources
     Server-->>Desktop: formatted result
-    Desktop-->>You: shows the answer in chat
+    Desktop-->>You: shows the answer
 ```
-
-## Roadmap
-
-- [x] Project folder + git + GitHub connected
-- [ ] Virtual environment + dependencies
-- [ ] Document loader (PDF/TXT/MD → text)
-- [ ] Chunking (splitting text into searchable pieces)
-- [ ] Embeddings (text → numbers, for semantic search)
-- [ ] Vector storage (ChromaDB)
-- [ ] RAG pipeline (retrieval + Claude API answer generation)
-- [ ] Command-line interface
-- [ ] REST API (FastAPI)
-- [ ] MCP server (Claude Desktop integration)
-- [ ] Automated tests
-- [ ] Security review (auth, file validation, prompt injection)
-- [ ] Optional: RAG quality evaluation (RAGAS)
 
 ## Planned Tech Stack
 
@@ -113,10 +97,3 @@ sequenceDiagram
 | REST API | FastAPI | exposes this over HTTP, with free auto-generated docs |
 | Desktop integration | MCP | lets Claude Desktop call this project directly as a tool |
 
-## Why I'm Building This
-
-<!-- your own words — a sentence or two on why this project, what you wanted to learn -->
-
-## Setup
-
-<!-- filled in once there's actually something to set up -->
