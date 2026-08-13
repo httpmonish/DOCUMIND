@@ -10,3 +10,5 @@ __pycache__/
 
 # OS clutter
 .DS_Store
+# Secrets - never commit this
+.env

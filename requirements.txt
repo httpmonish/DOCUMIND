@@ -4,3 +4,4 @@
 #
 # Empty for now — the first real entry gets added next session, when
 # we write loader.py and need a package to read PDF files.
+python-dotenv==<26.2.1>
