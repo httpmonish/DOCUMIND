@@ -13,12 +13,23 @@ def load_document(filepath: str) -> str:
     extension = path.suffix.lower()
 
     if extension == ".pdf":
-        reader = PdfReader(str(path))
-        page_texts = []
-        for page in reader.pages:
-            page_texts.append(page.extract_text())
-        return "\n".join(page_texts)
+        text = _load_pdf(path)
     elif extension in {".txt", ".md"}:
-        return path.read_text(encoding="utf-8")
+        text = path.read_text(encoding="utf-8")
     else:
         raise ValueError(f"Unsupported file type: {extension}")
+
+    if not text.strip():
+        raise ValueError(
+            f"{path.name}: no extractable text found. This usually means "
+            f"it's a scanned/image-only PDF with no real text layer — "
+            f"pypdf can only read text that's actually stored as text."
+        )
+
+    return text
+
+
+def _load_pdf(path: Path) -> str:
+    reader = PdfReader(str(path))
+    page_texts = [page.extract_text() for page in reader.pages]
+    return "\n".join(page_texts)
