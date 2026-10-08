@@ -1,6 +1,7 @@
 """tests/test_vector_store_edges.py
 Edge cases and error handling for NumpyStore and ChromaStore.
 """
+
 from __future__ import annotations
 
 import json
