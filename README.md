@@ -96,4 +96,3 @@ sequenceDiagram
 | Answer generation | Claude API | writes the final answer, grounded in retrieved text |
 | REST API | FastAPI | exposes this over HTTP, with free auto-generated docs |
 | Desktop integration | MCP | lets Claude Desktop call this project directly as a tool |
-
