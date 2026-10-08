@@ -2,7 +2,7 @@
 
 ## 1. Processes
 
-A process represents an instance of a computer program in active execution. When code resides on a storage drive as an executable binary file, it constitutes a passive collection of instructions. Upon invocation by an operating system loader, memory regions are allocated, instructions are brought into physical memory, and the program transitions into an active process. 
+A process represents an instance of a computer program in active execution. When code resides on a storage drive as an executable binary file, it constitutes a passive collection of instructions. Upon invocation by an operating system loader, memory regions are allocated, instructions are brought into physical memory, and the program transitions into an active process.
 
 Every operating system process maintains a distinct address space partitioned into standardized memory segments. The text segment contains compiled machine instructions executed sequentially by the CPU. The data segment stores global and static variables initialized prior to program execution, while the BSS (Block Started by Symbol) segment holds uninitialized global variables initialized to zero at launch. Above these static regions lie dynamic memory allocations: the heap expands upward through dynamic system calls such as `brk`, `sbrk`, or memory mapping calls like `mmap`, providing runtime dynamically allocated memory for application data structures. Descending from high virtual memory addresses toward the heap is the call stack, which manages activation records, function parameters, return addresses, and local automatic variables.
 
