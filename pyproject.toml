@@ -51,5 +51,6 @@ ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["."]
 markers = ["slow: loads the real embedding model (deselect with -m 'not slow')"]
 addopts = "-q"
