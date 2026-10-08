@@ -1,6 +1,7 @@
 """tests/store_contract.py
 Behaviour EVERY VectorStore must satisfy (NumpyStore and ChromaStore).
 """
+
 from __future__ import annotations
 
 from typing import Any

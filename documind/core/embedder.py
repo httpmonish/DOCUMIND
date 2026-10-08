@@ -56,7 +56,10 @@ class SentenceTransformerEmbedder:
                 "DocuMind requires at least 512 token context to avoid silent truncation."
             )
 
-        dim_val = self._model.get_sentence_embedding_dimension()
+        dim_fn = getattr(self._model, "get_embedding_dimension", None) or getattr(
+            self._model, "get_sentence_embedding_dimension", None
+        )
+        dim_val = dim_fn() if dim_fn is not None else None
         if dim_val is None:
             raise ValueError(f"Unable to determine embedding dimension for {model_id}")
         self.dim: int = int(dim_val)

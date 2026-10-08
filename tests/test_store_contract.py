@@ -1,6 +1,7 @@
 """tests/test_store_contract.py
 Runs store contract tests against both NumpyStore and ChromaStore.
 """
+
 from __future__ import annotations
 
 from pathlib import Path

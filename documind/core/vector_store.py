@@ -1,11 +1,13 @@
 """documind/core/vector_store.py
 Vector store implementations: in-memory NumpyStore and embedded ChromaStore.
 """
+
 from __future__ import annotations
 
 import json
 from collections.abc import Sequence
 from pathlib import Path
+from typing import Any, cast
 
 import numpy as np
 
@@ -192,7 +194,7 @@ class ChromaStore:
                     ids=ids,
                     documents=documents,
                     embeddings=embeddings,
-                    metadatas=metadatas,
+                    metadatas=cast(Any, metadatas),
                 )
             except Exception as err:
                 raise IndexUnavailable(f"Chroma upsert failed: {err}") from err
@@ -219,10 +221,15 @@ class ChromaStore:
             raise IndexUnavailable(f"Chroma query failed: {err}") from err
 
         retrieved: list[RetrievedChunk] = []
-        ids = results.get("ids", [[]])[0]
-        docs = results.get("documents", [[]])[0]
-        metas = results.get("metadatas", [[]])[0]
-        dists = results.get("distances", [[]])[0]
+        ids_batch = results.get("ids")
+        docs_batch = results.get("documents")
+        metas_batch = results.get("metadatas")
+        dists_batch = results.get("distances")
+
+        ids = ids_batch[0] if ids_batch is not None and len(ids_batch) > 0 else []
+        docs = docs_batch[0] if docs_batch is not None and len(docs_batch) > 0 else []
+        metas = metas_batch[0] if metas_batch is not None and len(metas_batch) > 0 else []
+        dists = dists_batch[0] if dists_batch is not None and len(dists_batch) > 0 else []
 
         zipped = zip(ids, docs, metas, dists, strict=True)
         for rank, (cid, doc, meta, dist) in enumerate(zipped, start=1):
@@ -230,7 +237,7 @@ class ChromaStore:
                 id=cid,
                 text=str(doc),
                 source=str(meta["source"]),
-                chunk_index=int(meta["chunk_index"]),
+                chunk_index=int(str(meta["chunk_index"])),
                 doc_sha256=str(meta["doc_sha256"]),
             )
             # Cosine distance to similarity: 1.0 - distance
@@ -260,8 +267,13 @@ class ChromaStore:
 
     def sources(self) -> list[str]:
         res = self._collection.get(include=["metadatas"])
-        metas = res.get("metadatas", [])
-        return sorted({str(m["source"]) for m in metas if m and "source" in m})
+        raw_metas = res.get("metadatas")
+        metas = raw_metas if raw_metas is not None else []
+        found: set[str] = set()
+        for m in metas:
+            if m and "source" in m:
+                found.add(str(m["source"]))
+        return sorted(found)
 
     def count(self) -> int:
         return int(self._collection.count())
