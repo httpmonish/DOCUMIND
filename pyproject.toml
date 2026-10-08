@@ -1,0 +1,55 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "documind"
+version = "0.1.0"
+description = "Ask questions about your own PDFs, text and markdown files and get cited, grounded answers."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = [
+  "pypdf>=6.14.2,<7",
+  "chromadb>=1.5.5,<2",
+  "python-dotenv>=1.0,<2",
+  "numpy>=1.26",
+]
+
+[project.optional-dependencies]
+embed = ["sentence-transformers>=6.0.1,<7"]
+dev = [
+  "pytest>=8",
+  "pytest-cov>=5",
+  "ruff>=0.8",
+  "mypy>=1.10",
+  "pre-commit>=3.7",
+  "pip-audit>=2.7",
+]
+
+[tool.setuptools.packages.find]
+include = ["documind*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "S", "PTH"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+files = ["documind"]
+
+[[tool.mypy.overrides]]
+module = ["chromadb.*", "sentence_transformers.*", "pypdf.*"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = ["slow: loads the real embedding model (deselect with -m 'not slow')"]
+addopts = "-q"
