@@ -1,0 +1,48 @@
+# DocuMind Phase 1 Measurements
+
+Hardware: Apple Silicon M-series (macOS arm64), 16 GB Unified Memory.
+Date: 2026-10-08
+Model: `BAAI/bge-small-en-v1.5` (revision `5c38ec7c405ec4b44b94cc5a9bb96e735b38267a`)
+
+---
+
+## 1. Embedding Benchmark (`scripts/bench_embed.py --n 200`)
+
+| Metric | Measured Value |
+|---|---|
+| Synthetic Chunks (200 words each) | 200 |
+| Model Load Time | 3.11 s |
+| Encoding Time (batch_size=32) | 3.17 s |
+| Throughput | **63.1 chunks/s** |
+| Peak RSS Memory | **732.0 MB** |
+| Output Dimensions | `(200, 384)` |
+
+---
+
+## 2. Token Length Distribution (`scripts/token_stats.py tests/fixtures`)
+
+Evaluated on `tests/fixtures/os_notes.md` (1,494 words) and `tests/fixtures/hello.pdf` with standard 200/30 windowing:
+
+| Metric | Measured Value |
+|---|---|
+| Total Chunks | 10 |
+| p50 Tokens | 266.0 |
+| p95 Tokens | 312.5 |
+| p99 Tokens | 320.1 |
+| Max Tokens | 322 |
+| **Percentage > 256 Tokens** | **70.00%** |
+| **Percentage > 512 Tokens** | **0.00%** |
+
+### Critical Retrieval Insight
+70.00% of standard 200-word chunks exceed 256 tokens. Had `all-MiniLM-L6-v2` been used, the final ~10–66 tokens of 7 out of 10 chunks would have been silently truncated, destroying end-of-chunk sentences and citations. `BAAI/bge-small-en-v1.5` provides a 512-token context window where 0.00% of chunks suffer truncation.
+
+---
+
+## 3. Storage & Search Performance
+
+| Metric | Measured Value |
+|---|---|
+| Chroma Disk Usage (`du -sh ~/.documind/chroma`) | **644 KB** |
+| `phase1_search.py` Cold Start Time | **3.23 s** |
+| Top-1 Retrieval Cosine Score ("what is a semaphore") | **0.783** |
+| Top-1 Chunk Retrieved | `os_notes.md#3` (correct semaphore passage) |
