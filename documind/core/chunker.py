@@ -2,6 +2,9 @@
 Splits raw text into smaller overlapping pieces ("chunks").
 """
 
+from typing import Any
+
+
 def chunk_text(text: str, chunk_size: int = 200, overlap: int = 30) -> list[str]:
     if chunk_size <= 0:
         raise ValueError(f"chunk_size ({chunk_size}) must be positive.")
@@ -30,7 +33,10 @@ def chunk_text(text: str, chunk_size: int = 200, overlap: int = 30) -> list[str]
 
     return chunks
 
-def chunk_document(document: dict, chunk_size: int = 200, overlap: int = 30) -> list[dict]:
+
+def chunk_document(
+    document: dict[str, Any], chunk_size: int = 200, overlap: int = 30
+) -> list[dict[str, Any]]:
     pieces = chunk_text(document["text"], chunk_size=chunk_size, overlap=overlap)
     source = document["source"]
 

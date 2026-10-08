@@ -3,6 +3,7 @@ core/loader.py
 
 Turns a file on disk into plain text — the first step of the pipeline.
 """
+
 from pathlib import Path
 
 from pypdf import PdfReader

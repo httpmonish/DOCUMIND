@@ -1,5 +1,6 @@
-import pytest
 from pathlib import Path
+
+import pytest
 from pypdf import PdfWriter
 from pypdf.errors import PdfStreamError
 
@@ -56,7 +57,7 @@ def test_load_blank_pdf_raises_value_error(tmp_path: Path):
     blank_pdf = tmp_path / "blank.pdf"
     writer = PdfWriter()
     writer.add_blank_page(width=612, height=792)
-    with open(blank_pdf, "wb") as f:
+    with blank_pdf.open("wb") as f:
         writer.write(f)
 
     with pytest.raises(ValueError, match="no extractable text found"):

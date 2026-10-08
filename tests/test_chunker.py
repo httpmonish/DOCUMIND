@@ -1,4 +1,5 @@
 import pytest
+
 from documind.core.chunker import chunk_document, chunk_text
 
 
