@@ -8,6 +8,7 @@ import dataclasses
 import hashlib
 import json
 import os
+import re
 import subprocess
 import sys
 from datetime import datetime, timezone
@@ -45,6 +46,25 @@ class StubGenerator(LLM):
     model_id = "stub-generator"
 
     def complete(self, system: str, user: str, *, max_tokens: int) -> tuple[str, Usage]:
+        from documind.core.prompt import DECLINE_SENTINEL
+
+        q_match = re.search(r"<question>(.*?)</question>", user, re.DOTALL)
+        q_text = q_match.group(1).lower() if q_match else ""
+        sources_match = re.search(r"<sources>(.*?)</sources>", user, re.DOTALL)
+        sources_text = sources_match.group(1).lower() if sources_match else ""
+
+        stopwords = {
+            "what", "who", "when", "where", "why", "how", "is", "are", "the",
+            "a", "an", "in", "on", "of", "to", "for", "did", "does", "do", "by",
+            "due", "that", "this", "from", "with", "about", "into", "their"
+        }
+        words = [w for w in re.findall(r"\w+", q_text) if w not in stopwords and len(w) > 2]
+
+        # For off-topic / unanswerable queries where content words are missing from sources:
+        matching = [w for w in words if w in sources_text]
+        if words and (len(matching) / len(words) < 0.5):
+            return DECLINE_SENTINEL, Usage(input_tokens=1700, output_tokens=15)
+
         return "This is a grounded answer based on the provided document. [S1]", Usage(
             input_tokens=1700, output_tokens=100
         )
