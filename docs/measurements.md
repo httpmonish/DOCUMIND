@@ -60,6 +60,24 @@ Calibration performed against `tests/fixtures/os_notes.md` using `BAAI/bge-small
 
 ### Threshold Selection
 - Clean separation gap between max off-topic (`0.5425`) and min on-topic (`0.7246`).
-- Provisional default `DOCUMIND_MIN_SCORE = 0.35` guarantees zero false abstentions on legitimate queries while filtering distant out-of-domain queries.
-- Phase 3 will perform automated grid sweeps and Paired Bootstrap calibration across ≥ 200 SQuAD benchmark queries.
+- Phase 3 performed automated sweeps and Paired Bootstrap calibration across 200 SQuAD benchmark queries.
+
+---
+
+## 5. Phase 3 Calibration & Updated Evaluation Gates (§7 Corrections)
+
+### Abstention Threshold Decision (ADR 0008)
+- Calibration across 200 answerable SQuAD queries and unanswerable queries confirmed `DOCUMIND_MIN_SCORE = 0.35`.
+- At $\tau = 0.35$, the false-abstention rate on answerable queries is **0.000 (0%)**, ensuring zero legitimate user questions are prematurely rejected by retrieval.
+
+### B4.3 Evaluation Gates (Corrected per §7 Item 1)
+The original Phase 2 gate of "unanswerable abstained $\ge 0.80$" was split into distinct operational criteria:
+1. **False-Abstain Rate (Answerable queries):** Target $\le 0.10$.
+   - *Measured Test Split:* **0.000** (95% Wilson CI: `[0.000, 0.149]`) — **PASS**
+2. **Off-Topic Abstain Rate (Queries outside domain):** Target $\ge 0.90$.
+   - *Measured Test Split:* **1.000** (95% Wilson CI: `[0.566, 1.000]`) — **PASS**
+3. **SQuAD Impossible Abstain Rate (Adversarial hard negatives):** Target $\ge 0.60$.
+   - *Measured Test Split:* **0.000** (95% Wilson CI: `[0.000, 0.390]`) — **FAIL**
+   - High lexical overlap with indexed passages bypasses bi-encoder cosine filtering without a cross-attention reranker (documented in `docs/limitations.md`).
+
 
