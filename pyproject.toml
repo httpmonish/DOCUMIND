@@ -4,11 +4,11 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "documind"
-version = "0.1.0"
+version = "0.4.0"
 description = "Ask questions about your own PDFs, text and markdown files and get cited, grounded answers."
 readme = "README.md"
 requires-python = ">=3.10"
-license = { text = "MIT" }
+license = "MIT"
 dependencies = [
   "pypdf>=6.14.2,<7",
   "chromadb>=1.5.5,<2",
@@ -16,6 +16,9 @@ dependencies = [
   "numpy>=1.26",
   "anthropic>=1.0.0,<2",
 ]
+
+[project.scripts]
+documind = "documind.interfaces.cli:main"
 
 [project.optional-dependencies]
 embed = ["sentence-transformers>=6.0.1,<7"]
@@ -26,6 +29,7 @@ dev = [
   "mypy>=1.10",
   "pre-commit>=3.7",
   "pip-audit>=2.7",
+  "build>=1.2",
 ]
 
 [tool.setuptools.packages.find]
