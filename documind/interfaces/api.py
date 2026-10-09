@@ -5,16 +5,33 @@ Strictly decoupled: delegates all search, retrieval, and indexing to DocuMind co
 
 from __future__ import annotations
 
+import contextlib
+import hashlib
 import hmac
 import logging
+import os
 import re
+import subprocess
 import sys
+import threading
 import uuid
 from collections.abc import AsyncGenerator, Mapping
 from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import Any
 
-from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request, Response, status
+from fastapi import (
+    APIRouter,
+    Depends,
+    FastAPI,
+    File,
+    HTTPException,
+    Query,
+    Request,
+    Response,
+    UploadFile,
+    status,
+)
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, field_validator
@@ -29,6 +46,7 @@ from documind.core.errors import (
     IndexUnavailable,
     LLMUnavailable,
 )
+from documind.core.ingest import safe_upload_name
 from documind.core.pipeline import DocuMind
 from documind.core.serialize import answer_to_dict
 from documind.interfaces.ratelimit import TokenBucketLimiter
@@ -306,6 +324,7 @@ def create_app(
     app.state.settings = app_settings
     app.state.engine = dm
     app.state.limiter = limiter or TokenBucketLimiter(rate_per_min=app_settings.rate_limit_per_min)
+    app.state.write_lock = threading.Lock()
 
     # Register Request ID and security headers middleware
     @app.middleware("http")
@@ -417,6 +436,206 @@ def create_app(
             "Cache-Control": "no-store",
         }
         return JSONResponse(status_code=status.HTTP_200_OK, content=data, headers=headers)
+
+    @v1_router.post("/documents")
+    def upload_document(
+        request: Request,
+        file: UploadFile = File(...),  # noqa: B008
+        replace: bool = Query(default=False),  # noqa: B008
+    ) -> JSONResponse:
+        engine: DocuMind = request.app.state.engine
+        settings: Settings = request.app.state.settings
+        req_id = _get_request_id(request)
+
+        # 1. Sanitize filename
+        filename = file.filename or "upload.txt"
+        try:
+            safe_name = safe_upload_name(filename)
+        except ValueError as err:
+            raise HTTPException(
+                status_code=422,
+                detail=f"Invalid filename: {err}",
+            ) from err
+
+        # 2. Check extension
+        ext = Path(safe_name).suffix.lower()
+        if ext not in {".pdf", ".txt", ".md"}:
+            raise HTTPException(
+                status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+                detail=f"Unsupported file extension '{ext}'. Only .pdf, .txt, .md are supported.",
+            )
+
+        # 3. Stream and hash into temp file inside uploads/
+        uploads_dir = settings.home / "uploads"
+        uploads_dir.mkdir(parents=True, exist_ok=True)
+        temp_path = uploads_dir / f"tmp_{uuid.uuid4().hex}{ext}"
+
+        hasher = hashlib.sha256()
+        total_bytes = 0
+        max_bytes = settings.max_upload_mb * 1024 * 1024
+
+        try:
+            with temp_path.open("wb") as f_out:
+                while True:
+                    chunk = file.file.read(1024 * 1024)
+                    if not chunk:
+                        break
+                    total_bytes += len(chunk)
+                    if total_bytes > max_bytes:
+                        raise DocumentTooLarge(
+                            safe_name,
+                            f"File exceeds maximum upload size of {settings.max_upload_mb} MB",
+                        )
+                    hasher.update(chunk)
+                    f_out.write(chunk)
+
+            file_sha = hasher.hexdigest()
+
+            # 4. Content validation
+            if ext == ".pdf":
+                with temp_path.open("rb") as f_in:
+                    header = f_in.read(1024)
+                if not header.startswith(b"%PDF-"):
+                    raise HTTPException(
+                        status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+                        detail="File does not have a valid PDF header (%PDF-)",
+                    )
+            else:
+                # Text/Markdown: UTF-8 without NUL bytes
+                content_bytes = temp_path.read_bytes()
+                if b"\x00" in content_bytes:
+                    raise HTTPException(
+                        status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+                        detail="Text files must not contain NUL bytes",
+                    )
+                try:
+                    content_bytes.decode("utf-8")
+                except UnicodeDecodeError as dec_err:
+                    raise HTTPException(
+                        status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+                        detail="Text file is not valid UTF-8",
+                    ) from dec_err
+
+            # Storage path with sha256 prefix
+            final_name = f"{file_sha[:16]}_{safe_name}"
+            final_path = (uploads_dir / final_name).resolve()
+            if not final_path.is_relative_to(uploads_dir.resolve()):
+                raise ValueError("Upload path escapes directory")
+
+            if final_path.exists():
+                temp_path.unlink(missing_ok=True)
+            else:
+                temp_path.replace(final_path)
+
+        except Exception:
+            temp_path.unlink(missing_ok=True)
+            raise
+
+        # Check existing document with safe_name
+        existing_sha = engine.doc_sha(safe_name)
+        if existing_sha is not None:
+            if existing_sha == file_sha:
+                return JSONResponse(
+                    status_code=status.HTTP_200_OK,
+                    content={
+                        "status": "unchanged",
+                        "source": safe_name,
+                        "chunks": engine.chunk_count(safe_name),
+                        "sha256": file_sha,
+                    },
+                    headers={
+                        "X-Request-ID": req_id,
+                        "X-Content-Type-Options": "nosniff",
+                        "Cache-Control": "no-store",
+                    },
+                )
+            if not replace:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="Document already exists. Set replace=true to overwrite.",
+                )
+
+        # 5. Text extraction & Indexing with write lock
+        write_lock: threading.Lock = request.app.state.write_lock
+        with write_lock:
+            if ext == ".pdf":
+                try:
+                    proc_env = os.environ.copy()
+                    proc_env["DOCUMIND_MAX_PAGES"] = str(settings.max_pages)
+                    proc = subprocess.run(  # noqa: S603
+                        [sys.executable, "-m", "documind.core._extract_worker", str(final_path)],
+                        timeout=60,
+                        capture_output=True,
+                        env=proc_env,
+                        check=False,
+                    )
+                except subprocess.TimeoutExpired as timeout_err:
+                    raise DocumentUnreadable(
+                        safe_name, "Extraction timed out after 60s"
+                    ) from timeout_err
+
+                if proc.returncode == 2:
+                    raise DocumentTooLarge(
+                        safe_name, f"PDF exceeds maximum page limit of {settings.max_pages}"
+                    )
+                if proc.returncode != 0:
+                    err_msg = (
+                        proc.stderr.decode("utf-8", errors="replace").strip() or "PDF parse failed"
+                    )
+                    raise DocumentUnreadable(safe_name, err_msg)
+
+                extracted_text = proc.stdout.decode("utf-8")
+            else:
+                extracted_text = final_path.read_text(encoding="utf-8")
+
+            num_chunks = engine.index_text(extracted_text, safe_name, file_sha)
+
+        return JSONResponse(
+            status_code=status.HTTP_201_CREATED,
+            content={
+                "status": "indexed",
+                "source": safe_name,
+                "chunks": num_chunks,
+                "sha256": file_sha,
+            },
+            headers={
+                "X-Request-ID": req_id,
+                "X-Content-Type-Options": "nosniff",
+                "Cache-Control": "no-store",
+            },
+        )
+
+    @v1_router.delete("/documents/{source:path}")
+    def delete_document(source: str, request: Request) -> Response:
+        engine: DocuMind = request.app.state.engine
+        settings: Settings = request.app.state.settings
+        req_id = _get_request_id(request)
+
+        # Safety validation: reject paths escaping root
+        if ".." in source or source.startswith("/") or "\\" in source or "\x00" in source:
+            raise HTTPException(status_code=422, detail="Invalid source path")
+
+        if source not in engine.documents():
+            raise HTTPException(status_code=404, detail="Document not found")
+
+        write_lock: threading.Lock = request.app.state.write_lock
+        with write_lock:
+            engine.delete(source)
+            # Remove stored upload files matching source name
+            uploads_dir = settings.home / "uploads"
+            if uploads_dir.exists():
+                for f in uploads_dir.glob(f"*_{source}"):
+                    with contextlib.suppress(OSError):
+                        f.unlink(missing_ok=True)
+
+        return Response(
+            status_code=status.HTTP_204_NO_CONTENT,
+            headers={
+                "X-Request-ID": req_id,
+                "X-Content-Type-Options": "nosniff",
+                "Cache-Control": "no-store",
+            },
+        )
 
     app.include_router(v1_router)
 

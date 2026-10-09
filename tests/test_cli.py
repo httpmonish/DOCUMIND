@@ -308,3 +308,33 @@ def test_stats_command(tmp_path):
     assert code == 0 and json.loads(out)["query_count"] == 1
     code, out, _ = run_cli(["stats"], eng)
     assert code == 0 and "Total queries: 1" in out
+
+
+def test_serve_command_loopback_and_non_loopback_warning(tmp_path):
+    eng, _, _ = make_engine(tmp_path, NumpyStore())
+    cfg = dataclasses.replace(eng.settings, api_key="a" * 32)
+
+    with patch("uvicorn.run") as mock_run:
+        code, out, err = run_cli(["serve"], eng, settings=cfg)
+        assert code == 0
+        assert "WARNING" not in err
+        mock_run.assert_called_once()
+        _, kwargs = mock_run.call_args
+        assert kwargs["host"] == "127.0.0.1"
+        assert kwargs["port"] == 8000
+        assert kwargs["workers"] == 1
+
+    with patch("uvicorn.run") as mock_run:
+        code, out, err = run_cli(
+            ["serve", "--host", "0.0.0.0", "--port", "9000"],  # noqa: S104
+            eng,
+            settings=cfg,
+        )
+        assert code == 0
+        assert "WARNING: Binding to non-loopback interface '0.0.0.0'" in err
+        assert "TLS must be terminated" in err
+        mock_run.assert_called_once()
+        _, kwargs = mock_run.call_args
+        assert kwargs["host"] == "0.0.0.0"  # noqa: S104
+        assert kwargs["port"] == 9000
+        assert kwargs["workers"] == 1

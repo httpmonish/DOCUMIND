@@ -327,6 +327,23 @@ def _handle_stats(
     return 0
 
 
+def _handle_serve(args: argparse.Namespace, settings: Settings, stderr: TextIO) -> int:
+    """Run uvicorn server with single worker. Warns if binding to non-loopback."""
+    if args.host not in ("127.0.0.1", "localhost", "::1"):
+        _emit(
+            f"WARNING: Binding to non-loopback interface '{args.host}'. "
+            "TLS must be terminated by a trusted reverse proxy in production.",
+            stderr,
+        )
+    import uvicorn
+
+    from documind.interfaces.api import create_app
+
+    app = create_app(settings=settings)
+    uvicorn.run(app, host=args.host, port=args.port, workers=1)
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     """Construct argument parser with subcommands and options."""
     parser = argparse.ArgumentParser(
@@ -392,6 +409,13 @@ def build_parser() -> argparse.ArgumentParser:
     p_stats.add_argument("--days", type=float, default=None, help="Filter to last N days")
     p_stats.add_argument("--json", action="store_true", help="Output stats as JSON")
 
+    # serve
+    p_serve = subparsers.add_parser("serve", help="Start the DocuMind REST API server")
+    p_serve.add_argument(
+        "--host", default="127.0.0.1", help="Host interface to bind to (default: 127.0.0.1)"
+    )
+    p_serve.add_argument("--port", type=int, default=8000, help="Port to listen on (default: 8000)")
+
     return parser
 
 
@@ -436,6 +460,8 @@ def main(
             return _handle_doctor(args, cfg, stdout_stream)
         if args.command == "stats":
             return _handle_stats(args, cfg, stdout_stream)
+        if args.command == "serve":
+            return _handle_serve(args, cfg, stderr_stream)
 
         # Build engine lazily
         if engine_factory is not None:
@@ -468,3 +494,7 @@ def main(
         else:
             _emit(f"error: {exc}", stderr_stream)
         return code
+
+
+if __name__ == "__main__":
+    sys.exit(main())

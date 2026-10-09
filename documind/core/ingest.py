@@ -5,6 +5,7 @@ Idempotent document ingestion pipeline: scanning, validation, chunking, embeddin
 from __future__ import annotations
 
 import hashlib
+import re
 import time
 from dataclasses import dataclass
 from pathlib import Path, PureWindowsPath
@@ -18,6 +19,62 @@ from documind.core.loader import load_document
 from documind.core.types import Chunk, Embedder, VectorStore
 
 SUPPORTED_EXTENSIONS = {".pdf", ".txt", ".md"}
+
+WINDOWS_RESERVED_NAMES = {
+    "CON",
+    "PRN",
+    "AUX",
+    "NUL",
+    *(f"COM{i}" for i in range(1, 10)),
+    *(f"LPT{i}" for i in range(1, 10)),
+}
+
+
+def safe_upload_name(client_name: str) -> str:
+    """Sanitize and validate an untrusted upload filename.
+    - Reduce to [A-Za-z0-9._-]
+    - Max length: 100 characters
+    - Strip leading dots
+    - Reject empty results
+    - Reject Windows reserved names (case-insensitive, with or without extensions)
+    """
+    if not client_name or not client_name.strip():
+        raise ValueError("Filename cannot be empty")
+
+    if "\x00" in client_name:
+        raise ValueError("Filename cannot contain NUL bytes")
+
+    # Take basename only to prevent directory traversal
+    # Handle both POSIX and Windows separators in untrusted inputs
+    raw_name = client_name.replace("\\", "/").split("/")[-1]
+
+    # Strip leading dots
+    cleaned_base = raw_name.lstrip(".")
+    if not cleaned_base:
+        raise ValueError("Filename cannot consist only of dots or be empty")
+
+    # Reject extension-only filenames like '.pdf'
+    if raw_name.startswith(".") and "." not in cleaned_base:
+        raise ValueError("Filename must have a stem before the extension")
+
+    # Filter to [A-Za-z0-9._-]
+    sanitized = re.sub(r"[^A-Za-z0-9._-]", "_", cleaned_base)
+    sanitized = sanitized[:100]
+    if not sanitized:
+        raise ValueError("Filename cannot be empty after sanitization")
+
+    # Check Windows reserved device names
+    stem = Path(sanitized).stem.upper()
+    full_upper = sanitized.upper()
+    first_part = sanitized.split(".")[0].upper()
+    if (
+        stem in WINDOWS_RESERVED_NAMES
+        or full_upper in WINDOWS_RESERVED_NAMES
+        or first_part in WINDOWS_RESERVED_NAMES
+    ):
+        raise ValueError(f"Filename '{sanitized}' is a reserved Windows device name")
+
+    return sanitized
 
 
 @dataclass(frozen=True, slots=True)

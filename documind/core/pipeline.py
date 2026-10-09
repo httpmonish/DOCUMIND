@@ -11,6 +11,7 @@ from collections.abc import Sequence
 from datetime import datetime, timezone
 from pathlib import Path
 
+from documind.core.chunker import chunk_document
 from documind.core.citations import is_decline, parse_citations
 from documind.core.config import Settings
 from documind.core.errors import LLMAuthError, LLMUnavailable
@@ -21,6 +22,7 @@ from documind.core.prompt import DECLINE_SENTINEL, PROMPT_VERSION, build_prompt
 from documind.core.types import (
     LLM,
     Answer,
+    Chunk,
     Citation,
     Embedder,
     RetrievedChunk,
@@ -70,6 +72,45 @@ class DocuMind:
         else:
             target_root = target_path if target_path.is_dir() else target_path.parent
         return index_path(target_path, target_root, self.embedder, self.store, self.settings)
+
+    def index_text(self, text: str, source: str, sha256: str) -> int:
+        """Chunk, embed, and index raw document text preserving write ordering."""
+        raw_chunks = chunk_document(
+            {"text": text, "source": source},
+            chunk_size=self.settings.chunk_size,
+            overlap=self.settings.overlap,
+        )
+        typed_chunks = [
+            Chunk(
+                id=c["id"],
+                text=c["text"],
+                source=source,
+                chunk_index=c["chunk_index"],
+                doc_sha256=sha256,
+            )
+            for c in raw_chunks
+        ]
+        if not typed_chunks:
+            return 0
+
+        vectors = self.embedder.embed_documents([c.text for c in typed_chunks])
+
+        # Write order:
+        # 1. Delete old data
+        # 2. Upsert chunks 1..n
+        # 3. Upsert chunk 0 last
+        self.delete(source)
+        write_succeeded = False
+        try:
+            if len(typed_chunks) > 1:
+                self.store.upsert(typed_chunks[1:], vectors[1:])
+            self.store.upsert(typed_chunks[:1], vectors[:1])
+            write_succeeded = True
+        finally:
+            if not write_succeeded:
+                self.delete(source)
+
+        return len(typed_chunks)
 
     def search(self, question: str, top_k: int | None = None) -> list[RetrievedChunk]:
         """Pure semantic search without LLM synthesis."""
