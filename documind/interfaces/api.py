@@ -17,6 +17,7 @@ from typing import Any
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request, Response, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel, ConfigDict, field_validator
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from documind.core.config import Settings, load_settings
@@ -29,11 +30,35 @@ from documind.core.errors import (
     LLMUnavailable,
 )
 from documind.core.pipeline import DocuMind
+from documind.core.serialize import answer_to_dict
 from documind.interfaces.ratelimit import TokenBucketLimiter
 
 logger = logging.getLogger(__name__)
 
 REQUEST_ID_REGEX = re.compile(r"^[A-Za-z0-9-]{8,64}$")
+
+
+class AskRequest(BaseModel):
+    question: str
+    top_k: int = 5
+    debug: bool = False
+
+    model_config = ConfigDict(extra="forbid")
+
+    @field_validator("question")
+    @classmethod
+    def validate_question(cls, v: str) -> str:
+        stripped = v.strip()
+        if not (1 <= len(stripped) <= 2000):
+            raise ValueError("question length must be between 1 and 2000 characters")
+        return stripped
+
+    @field_validator("top_k")
+    @classmethod
+    def validate_top_k(cls, v: int) -> int:
+        if not (1 <= v <= 10):
+            raise ValueError("top_k must be an integer between 1 and 10")
+        return v
 
 
 def _get_request_id(request: Request) -> str:
@@ -331,6 +356,67 @@ def create_app(
             }
             for doc in docs
         ]
+
+    @v1_router.post("/ask")
+    def ask(body: AskRequest, request: Request) -> JSONResponse:
+        engine: DocuMind = request.app.state.engine
+        settings: Settings = request.app.state.settings
+        req_id = _get_request_id(request)
+
+        # Empty index: return 409 conflict with index_empty
+        if engine.store.count() == 0:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="index_empty",
+            )
+
+        ans = engine.answer(
+            body.question,
+            top_k=body.top_k,
+            interface="api",
+            req_id=req_id,
+        )
+
+        # LLM failure representation (HTTP 502 with fallback citations)
+        if ans.abstain_reason == "llm_unavailable":
+            fallback_citations = [
+                {
+                    "marker": c.marker,
+                    "source": c.source,
+                    "chunk_index": int(c.chunk_index),
+                    "snippet": c.snippet[:200],
+                    "score": round(float(c.score), 4),
+                }
+                for c in ans.citations
+            ]
+            fallback_payload = {
+                "outcome": ans.outcome,
+                "abstain_reason": ans.abstain_reason,
+                "citations": fallback_citations,
+                "model": ans.model,
+                "usage": {
+                    "input_tokens": int(ans.usage.input_tokens),
+                    "output_tokens": int(ans.usage.output_tokens),
+                },
+                "latency_ms": int(ans.latency_ms),
+            }
+            return error_response(
+                status.HTTP_502_BAD_GATEWAY,
+                code="llm_unavailable",
+                message="Language model service is unavailable.",
+                request_id=req_id,
+                extra={"fallback": fallback_payload},
+            )
+
+        # Normal response shaping
+        include_retrieved = bool(settings.allow_debug and body.debug)
+        data = answer_to_dict(ans, include_retrieved=include_retrieved)
+        headers = {
+            "X-Request-ID": req_id,
+            "X-Content-Type-Options": "nosniff",
+            "Cache-Control": "no-store",
+        }
+        return JSONResponse(status_code=status.HTTP_200_OK, content=data, headers=headers)
 
     app.include_router(v1_router)
 

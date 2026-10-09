@@ -86,6 +86,7 @@ class DocuMind:
         *,
         top_k: int | None = None,
         interface: str = "core",
+        req_id: str | None = None,
     ) -> Answer:
         """Answer a user question strictly grounded in indexed documents.
 
@@ -101,7 +102,7 @@ class DocuMind:
         self._validate_input(question, top_k)
         effective_k = top_k if top_k is not None else self.settings.top_k
 
-        req_id = uuid.uuid4().hex
+        req_id = req_id if req_id is not None else uuid.uuid4().hex
         q_sha = hashlib.sha256(question.encode("utf-8")).hexdigest()
         q_len = len(question)
 
