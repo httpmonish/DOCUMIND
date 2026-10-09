@@ -9,6 +9,7 @@ import argparse
 import os
 import statistics
 import sys
+import tempfile
 import time
 from pathlib import Path
 
@@ -16,29 +17,33 @@ ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from starlette.testclient import TestClient
+from starlette.testclient import TestClient  # noqa: E402
 
-from documind.core.config import Settings
-from documind.core.vector_store import NumpyStore
-from documind.interfaces.api import create_app
-from tests.engine_helpers import make_engine
+from documind.core.config import Settings  # noqa: E402
+from documind.core.vector_store import NumpyStore  # noqa: E402
+from documind.interfaces.api import create_app  # noqa: E402
+from tests.engine_helpers import make_engine  # noqa: E402
 
 BENCHMARK_KEY = "benchmark_key_32_characters_long_for_measurement_test"
 
 
 def run_latency_benchmark(n_queries: int = 50, live: bool = False) -> None:
+    temp_home = Path(tempfile.gettempdir()) / "documind_bench"
+    temp_home.mkdir(parents=True, exist_ok=True)
     settings = Settings(
         api_key=BENCHMARK_KEY,
-        home=Path("/tmp"),
+        home=temp_home,
         rate_limit_per_min=10000,
     )
-    eng, _, _ = make_engine(Path("/tmp"), NumpyStore(), fill=True)
+    eng, _, _ = make_engine(temp_home, NumpyStore(), fill=True)
     eng.settings = settings
 
     if live:
         api_key = os.getenv("ANTHROPIC_API_KEY")
         if not api_key:
-            raise RuntimeError("ANTHROPIC_API_KEY environment variable required for --live benchmark")
+            raise RuntimeError(
+                "ANTHROPIC_API_KEY environment variable required for --live benchmark"
+            )
         from documind.core.llm import ClaudeLLM
 
         eng.llm = ClaudeLLM(api_key=api_key)
