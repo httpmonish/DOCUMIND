@@ -14,7 +14,10 @@ __pycache__/
 .coverage
 
 # Evals and local storage
+evals/data/
 evals/corpus/
+evals/runs/
+evals/home/
 .documind/
 
 # OS clutter
