@@ -125,6 +125,52 @@ $ documind ask "what is a semaphore?" --json
 
 ---
 
+## REST API (Phase 5)
+
+DocuMind provides a high-performance, secure REST interface powered by FastAPI and Uvicorn.
+
+Start the server:
+```console
+$ documind serve --host 127.0.0.1 --port 8000
+```
+
+All endpoints under `/v1` require the `X-API-Key` header with a pre-configured key ($\ge$ 32 characters).
+
+### 1. Upload & Index a Document (`POST /v1/documents`)
+```console
+$ curl -s -X POST "http://127.0.0.1:8000/v1/documents?replace=true" \
+    -H "X-API-Key: test_key_minimum_32_characters_long_for_security_checks" \
+    -F "file=@tests/fixtures/os_notes.md"
+```
+Output:
+```json
+{"status":"indexed","source":"os_notes.md","chunks":9,"sha256":"949a699b56a40c113b45340115b4c68eef4d9309ba1f7e1314683cedea1ec1ae"}
+```
+
+### 2. Ask a Grounded Question (`POST /v1/ask`)
+```console
+$ curl -s -X POST "http://127.0.0.1:8000/v1/ask" \
+    -H "X-API-Key: test_key_minimum_32_characters_long_for_security_checks" \
+    -H "Content-Type: application/json" \
+    -d '{"question":"what is a semaphore","top_k":2}'
+```
+Output:
+```json
+{"text":"No language model is configured; returning relevant passages.","outcome":"abstained","abstain_reason":"no_llm","citations":[{"marker":"S1","source":"os_notes.md","chunk_index":3,"snippet":"Kernel-level threads are managed directly by the operating system kernel scheduler; while kernel context switches incur higher latency due to trap-handling overhead, blocking system calls on one threa","score":0.7833},{"marker":"S2","source":"os_notes.md","chunk_index":4,"snippet":"resume execution. Crucially, the testing, decrementing, and conditional suspension within `wait` and `signal` must execute indivisibly without interruption, typically enforced via hardware atomic inst","score":0.6894}],"model":"claude-haiku-4-5-20251001","usage":{"input_tokens":0,"output_tokens":0},"latency_ms":10}
+```
+
+### 3. Delete an Indexed Document (`DELETE /v1/documents/{source}`)
+```console
+$ curl -s -w "\nHTTP Status: %{http_code}\n" -X DELETE "http://127.0.0.1:8000/v1/documents/os_notes.md" \
+    -H "X-API-Key: test_key_minimum_32_characters_long_for_security_checks"
+```
+Output:
+```text
+HTTP Status: 204
+```
+
+---
+
 ## Privacy & Streams
 
 - **Strict Stream Separation:** Primary machine-readable data (answer text, search lists, or JSON) is emitted exclusively to `stdout`. All logs, stats footers, warnings, and error messages go to `stderr`. Piping `documind ask ... --json | jq .` will never fail due to runtime logs.
