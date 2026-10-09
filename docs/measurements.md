@@ -80,4 +80,20 @@ The original Phase 2 gate of "unanswerable abstained $\ge 0.80$" was split into 
    - *Measured Test Split:* **0.000** (95% Wilson CI: `[0.000, 0.390]`) — **FAIL**
    - High lexical overlap with indexed passages bypasses bi-encoder cosine filtering without a cross-attention reranker (documented in `docs/limitations.md`).
 
+---
+
+## 6. Phase 4 CLI and Packaging Measurements
+
+| Metric / Benchmark | Measured Value | Notes |
+|---|---|---|
+| **Cumulative Import Time** | **97.1 ms** (`97,174 µs`) | Measured via `python -X importtime -c "import documind.interfaces.cli"` (zero torch/chroma imports at root) |
+| **`documind --help` Wall Time** | **0.103 s** | Fast CLI help invocation |
+| **`documind ask` Cold Start** | **5.19 s** | Including initial model weights and embedding initialization |
+| **`documind ask` Warm Query** | **0.015 s (15 ms)** | Fast in-memory inference / passage retrieval latency |
+| **Wheel Package Size** | **40 KB** (`0.04 MB`) | `dist/documind-0.4.0-py3-none-any.whl` |
+| **Source Tarball Size** | **53 KB** (`0.05 MB`) | `dist/documind-0.4.0.tar.gz` |
+| **Clean Venv Install Time** | **~42 s** | Fresh virtual environment installing wheel with `[embed]` extra |
+| **Development Venv Footprint** | **1.5 GB** | `.venv` directory containing PyTorch CPU, ChromaDB, Transformers |
+
+
 
