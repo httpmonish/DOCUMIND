@@ -12,7 +12,7 @@ jobs:
           python-version: "3.12"
           cache: pip
       - run: python -m pip install --upgrade pip
-      - run: pip install -e ".[dev,embed]" --extra-index-url https://download.pytorch.org/whl/cpu
+      - run: pip install -e ".[dev,embed,api]" --extra-index-url https://download.pytorch.org/whl/cpu
       - run: ruff check .
       - run: ruff format --check .
       - run: mypy documind
