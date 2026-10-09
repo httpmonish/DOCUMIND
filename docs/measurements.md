@@ -46,3 +46,20 @@ Evaluated on `tests/fixtures/os_notes.md` (1,494 words) and `tests/fixtures/hell
 | `phase1_search.py` Cold Start Time | **3.23 s** |
 | Top-1 Retrieval Cosine Score ("what is a semaphore") | **0.783** |
 | Top-1 Chunk Retrieved | `os_notes.md#3` (correct semaphore passage) |
+
+---
+
+## 4. Phase 2 Score Calibration (`scripts/phase2_calibrate.py`)
+
+Calibration performed against `tests/fixtures/os_notes.md` using `BAAI/bge-small-en-v1.5` embeddings on 15 on-topic questions vs. 15 off-topic questions:
+
+| Question Group | Sample Count (n) | Min Score | Median Score | Max Score |
+|---|---|---|---|---|
+| **On-Topic** | 15 | 0.7246 | 0.7602 | 0.8349 |
+| **Off-Topic** | 15 | 0.3234 | 0.4251 | 0.5425 |
+
+### Threshold Selection
+- Clean separation gap between max off-topic (`0.5425`) and min on-topic (`0.7246`).
+- Provisional default `DOCUMIND_MIN_SCORE = 0.35` guarantees zero false abstentions on legitimate queries while filtering distant out-of-domain queries.
+- Phase 3 will perform automated grid sweeps and Paired Bootstrap calibration across ≥ 200 SQuAD benchmark queries.
+
