@@ -1,98 +1,131 @@
-<div align="center">
+# DocuMind
 
-![Header](https://capsule-render.vercel.app/api?type=waving&color=0:4F46E5,100:0EA5E9&height=200&section=header&text=DocuMind&fontSize=70&fontColor=ffffff&fontAlignY=35&animation=fadeIn)
+> **Local-first semantic search and question-answering over your documents, returning grounded answers with verifiable citations.**
 
-[![Typing SVG](https://readme-typing-svg.demolab.com/?font=Fira+Code&size=20&pause=1000&color=4F46E5&center=true&vCenter=true&width=650&lines=RAG-powered+document+Q+%26+A;Ask+questions%2C+get+grounded+answers;CLI+%2B+REST+API+%2B+Claude+Desktop+plugin)](https://git.io/typing-svg)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Status: Phase 4](https://img.shields.io/badge/Status-v0.4.0%20(CLI)-green.svg)](#status)
 
-![Python](https://img.shields.io/badge/Python-3.10+-3776AB?logo=python&logoColor=white)
-![License](https://img.shields.io/badge/License-MIT-yellow.svg)
-![Status](https://img.shields.io/badge/Status-In_Progress-orange.svg)
+---
 
-</div>
+## Status
+- **Current (Phase 4):** Production-grade CLI (`documind`) with offline diagnostic tooling (`doctor`), log aggregation (`stats`), and clean stream separation.
+- **Planned:** REST API / FastAPI service (Phase 5) and Model Context Protocol (MCP) server for Claude Desktop (Phase 6).
 
-> **Status note:** this README documents the plan. Nothing here claims to be finished until it's actually built *and* tested.
+---
 
-Ask questions about your own documents — PDFs, text files, markdown notes — and get answers grounded in what those documents actually say, not the AI's general knowledge and not a guess. Built using **RAG (Retrieval-Augmented Generation)**.
+## Installation
 
-## What This Project Is Designed To Demonstrate
+```bash
+# 1. Clone and enter the repository
+git clone https://github.com/httpmonish/DOCUMIND.git && cd DOCUMIND
 
-- A full **RAG pipeline** — retrieval *and* generation, backed by a real vector database, not just a single API call
-- **One engine, three interfaces** — CLI, REST API, and a native **MCP** integration for Claude Desktop, all sharing identical core logic
-- **Security considered from the start** — planned API-key auth, upload validation, and prompt-injection mitigation
-- **Clean separation of concerns** — the retrieval engine has zero knowledge of which interface is calling it
+# 2. Create virtual environment and install DocuMind with local embedding support
+python3 -m venv .venv && source .venv/bin/activate
+pip install -e ".[embed]"
 
-## Table of Contents
-- [The Big Picture](#the-big-picture)
-- [How It Will Work](#how-it-will-work)
-- [Planned Tech Stack](#planned-tech-stack)
-- [Why I'm Building This](#why-im-building-this)
-- [Setup](#setup)
-
-## The Big Picture
-
-One engine, three ways to use it.
-
-```mermaid
-flowchart TB
-    U([You]) --> CLI[CLI]
-    U --> API[REST API]
-    U --> MCP[MCP Server]
-    CLI --> RP["core/rag_pipeline.py"]
-    API --> RP
-    MCP --> RP
-    RP --> VDB[(ChromaDB)]
-    RP --> Claude[Claude API]
+# 3. Configure Anthropic API key (optional; run --no-llm for local retrieval only)
+cp .env.example .env
+echo "ANTHROPIC_API_KEY=your_key_here" >> .env
 ```
 
-All three interfaces call the exact same underlying engine — nothing duplicated between them.
+---
 
-## How It Will Work
+## Quickstart
 
-**Adding a document (indexing):**
+Verify environment and index local documentation:
 
-```mermaid
-flowchart LR
-    A[Document] --> B[loader.py]
-    B -->|raw text| C[chunker.py]
-    C -->|chunks| D[embedder.py]
-    D -->|vectors| E[(ChromaDB)]
+```console
+$ documind doctor
+[ok] python: Python 3.12.14
+[ok] anthropic key: ANTHROPIC_API_KEY is set (sk-ant-...c123)
+[ok] home: Home directory exists at /Users/monish/.documind
+[ok] index meta: Embedding model: BAAI/bge-small-en-v1.5
+[ok] embedder: sentence-transformers is installed
+[ok] vector store: chromadb is installed
+[ok] llm client: anthropic is installed
+
+$ documind index ./docs
+indexed   operating_systems.md
+indexed   memory_management.pdf
+2 indexed, 0 skipped, 0 failed, 8 chunks in 0.4s
+
+$ documind ask "what is a semaphore?"
+A semaphore is a synchronization primitive that uses an integer counter to control access to shared system resources. [S1]
+
+Sources:
+[S1] operating_systems.md#0  (0.8142)  A semaphore is a synchronization variable that controls access to common resources.
+
+$ documind ask "what is a semaphore?" --json
+{
+  "text": "A semaphore is a synchronization primitive...",
+  "outcome": "answered",
+  "abstain_reason": null,
+  "citations": [
+    {
+      "marker": "S1",
+      "source": "operating_systems.md",
+      "chunk_index": 0,
+      "snippet": "A semaphore is a synchronization variable...",
+      "score": 0.8142
+    }
+  ],
+  "model": "claude-haiku-4-5-20251001",
+  "usage": { "input_tokens": 1700, "output_tokens": 300 },
+  "latency_ms": 1120
+}
 ```
 
-**Asking a question (query):**
+---
 
-```mermaid
-flowchart LR
-    Q[Your question] --> M[embedder.py]
-    M -->|vector| S[ChromaDB]
-    S -->|closest chunks| P[build prompt]
-    P --> C[Claude API]
-    C -->|answer + sources| R[Response]
+## Architecture: How It Works
+
+```
+[ Documents (PDF, MD, TXT) ] ──> [ Chunker (200w/30w) ] ──> [ BGE-Small Embedder ] ──> [ Chroma / Numpy Store ]
+                                                                                               │
+[ User Query ] ──────────────────> [ Bi-Encoder Query Vector ] ───(Cosine Similarity)─────────┘
+                                                                │
+                                    ┌───────────────────────────┴────────────────────────────┐
+                                    ▼                                                        ▼
+                        Score >= 0.35 (Grounded)                                   Score < 0.35 (Abstain)
+                                    │                                                        │
+                      [ Context Prompt Builder ]                                  [ Exit Code 3 Abstention ]
+                                    │
+                       [ Claude Haiku Generation ] ──> [ Cited Answer to stdout ]
+                                                   ──> [ Execution Stats to stderr ]
 ```
 
-**Asking through Claude Desktop (MCP):**
+---
 
-```mermaid
-sequenceDiagram
-    participant You
-    participant Desktop as Claude Desktop
-    participant Server as MCP Server
-    participant Engine as rag_pipeline.py
+## Commands
 
-    You->>Desktop: Search my documents for X
-    Desktop->>Server: search_documents(question)
-    Server->>Engine: answer_question(question)
-    Engine-->>Server: answer + sources
-    Server-->>Desktop: formatted result
-    Desktop-->>You: shows the answer
-```
+| Command | Description |
+|---|---|
+| `documind index PATH [--root DIR] [--json]` | Parse, chunk, and index PDFs, text, and markdown files |
+| `documind ask QUESTION [--top-k N] [--json] [--no-llm] [--show-prompt]` | Query documents with grounded citation generation |
+| `documind search QUESTION [--top-k N] [--json]` | Perform semantic similarity search returning ranked chunks |
+| `documind ls [--json]` | List all indexed documents and chunk counts |
+| `documind rm SOURCE [--yes]` | Delete an indexed document from storage |
+| `documind doctor [--json]` | Run diagnostic environment and index consistency checks |
+| `documind stats [--days N] [--json]` | Analyze query volume, abstention rates, and latency percentiles |
 
-## Planned Tech Stack
+---
 
-| Piece | Tool | Why |
-|---|---|---|
-| PDF reading | pypdf | pulls text out of PDF files |
-| Embeddings | sentence-transformers | free, runs locally, no API cost |
-| Vector storage | ChromaDB | stores + searches embeddings, no server setup needed |
-| Answer generation | Claude API | writes the final answer, grounded in retrieved text |
-| REST API | FastAPI | exposes this over HTTP, with free auto-generated docs |
-| Desktop integration | MCP | lets Claude Desktop call this project directly as a tool |
+## Exit Codes
+
+| Code | Status | Meaning |
+|:---:|---|---|
+| `0` | Success | Answer generated, passages returned, document indexed or deleted |
+| `1` | Internal Error | Unexpected internal exception (re-run with `--debug` for traceback) |
+| `2` | Usage Error | Invalid arguments, `top_k` out of bounds, or non-interactive `rm` without `--yes` |
+| `3` | Abstention | Unanswerable query, insufficient retrieval score, or empty index |
+| `4` | Input Error | Unreadable document, missing path, or deleting unknown document |
+| `5` | Configuration | Missing extra dependency or invalid API key |
+| `6` | Index Error | Corrupt index metadata or mismatched embedding schema |
+
+---
+
+## Privacy & Streams
+
+- **Strict Stream Separation:** Primary machine-readable data (answer text, search lists, or JSON) is emitted exclusively to `stdout`. All logs, stats footers, warnings, and error messages go to `stderr`. Piping `documind ask ... --json | jq .` will never fail due to runtime logs.
+- **Privacy Model:** When running `ask` with an LLM, only the user question and the top-$k$ matching chunks are transmitted to the Anthropic API. Running `documind ask --no-llm` or `documind search` runs 100% locally on your machine with zero external network transmission.
