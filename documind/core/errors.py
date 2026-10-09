@@ -33,3 +33,11 @@ class EmbeddingFailed(DocuMindError):
 
 class IndexUnavailable(DocuMindError):
     """Raised when the vector index cannot be accessed or is corrupted."""
+
+
+class LLMUnavailable(DocuMindError):
+    """Raised on LLM timeout, 429, 5xx, connection failure, or empty reply."""
+
+
+class LLMAuthError(DocuMindError):
+    """Raised on 401, 403, missing key, or exhausted credit."""

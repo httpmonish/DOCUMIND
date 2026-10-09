@@ -66,6 +66,7 @@ class Answer:
     usage: Usage
     latency_ms: int
     retrieved: tuple[RetrievedChunk, ...] = field(default=())
+    abstain_reason: str | None = None
 
 
 class Embedder(Protocol):
