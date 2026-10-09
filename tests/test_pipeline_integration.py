@@ -59,3 +59,5 @@ def test_chroma_ingest_and_answer_pipeline(tmp_path: Path):
     assert len(ans.citations) == 1
     assert ans.citations[0].marker == "S1"
     assert ans.citations[0].source == "os_notes.md"
+    assert engine.chunk_count("os_notes.md") == report.chunks
+    assert engine.chunk_count("nonexistent.md") == 0

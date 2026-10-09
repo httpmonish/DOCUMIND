@@ -53,6 +53,10 @@ class DocuMind:
         """Delete all chunks for a source document."""
         return self.store.delete_source(source)
 
+    def chunk_count(self, source: str) -> int:
+        """Return the number of indexed chunks for a source document."""
+        return self.store.count_for(source)
+
     def index(self, path: Path | str, root: Path | str | None = None) -> IndexReport:
         """Index a file or directory into the vector store."""
         target_path = Path(path).resolve()
