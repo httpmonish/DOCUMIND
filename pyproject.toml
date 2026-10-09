@@ -14,6 +14,7 @@ dependencies = [
   "chromadb>=1.5.5,<2",
   "python-dotenv>=1.0,<2",
   "numpy>=1.26",
+  "anthropic>=1.0.0,<2",
 ]
 
 [project.optional-dependencies]
@@ -52,5 +53,8 @@ ignore_missing_imports = true
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
-markers = ["slow: loads the real embedding model (deselect with -m 'not slow')"]
+markers = [
+  "slow: loads the real embedding model (deselect with -m 'not slow')",
+  "live: runs live API calls (costs money; deselect with -m 'not live')",
+]
 addopts = "-q"
