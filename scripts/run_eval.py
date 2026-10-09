@@ -54,9 +54,34 @@ class StubGenerator(LLM):
         sources_text = sources_match.group(1).lower() if sources_match else ""
 
         stopwords = {
-            "what", "who", "when", "where", "why", "how", "is", "are", "the",
-            "a", "an", "in", "on", "of", "to", "for", "did", "does", "do", "by",
-            "due", "that", "this", "from", "with", "about", "into", "their"
+            "what",
+            "who",
+            "when",
+            "where",
+            "why",
+            "how",
+            "is",
+            "are",
+            "the",
+            "a",
+            "an",
+            "in",
+            "on",
+            "of",
+            "to",
+            "for",
+            "did",
+            "does",
+            "do",
+            "by",
+            "due",
+            "that",
+            "this",
+            "from",
+            "with",
+            "about",
+            "into",
+            "their",
         }
         words = [w for w in re.findall(r"\w+", q_text) if w not in stopwords and len(w) > 2]
 
