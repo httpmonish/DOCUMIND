@@ -58,6 +58,10 @@ class DocuMind:
         """Return the number of indexed chunks for a source document."""
         return self.store.count_for(source)
 
+    def doc_sha(self, source: str) -> str | None:
+        """Return the SHA-256 hash for an indexed document source, or None if not found."""
+        return self.store.doc_sha(source)
+
     def index(self, path: Path | str, root: Path | str | None = None) -> IndexReport:
         """Index a file or directory into the vector store."""
         target_path = Path(path).resolve()

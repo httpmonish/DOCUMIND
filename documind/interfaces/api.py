@@ -5,6 +5,7 @@ Strictly decoupled: delegates all search, retrieval, and indexing to DocuMind co
 
 from __future__ import annotations
 
+import hmac
 import logging
 import re
 import sys
@@ -13,7 +14,7 @@ from collections.abc import AsyncGenerator, Mapping
 from contextlib import asynccontextmanager
 from typing import Any
 
-from fastapi import FastAPI, HTTPException, Request, Response, status
+from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request, Response, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
@@ -28,6 +29,7 @@ from documind.core.errors import (
     LLMUnavailable,
 )
 from documind.core.pipeline import DocuMind
+from documind.interfaces.ratelimit import TokenBucketLimiter
 
 logger = logging.getLogger(__name__)
 
@@ -79,6 +81,42 @@ def error_response(
     )
 
 
+def require_api_key(request: Request) -> str:
+    """Validate X-API-Key header in constant time.
+    Never accepts key through query parameters. Never logs the key.
+    """
+    supplied = request.headers.get("X-API-Key")
+    if not supplied:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Unauthorized",
+        )
+    settings: Settings = request.app.state.settings
+    expected = settings.api_key
+    # Compare using bytes to prevent TypeError on non-ASCII characters
+    supplied_bytes = supplied.encode("utf-8", errors="replace")
+    expected_bytes = expected.encode("utf-8")
+    if not hmac.compare_digest(supplied_bytes, expected_bytes):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Unauthorized",
+        )
+    return supplied
+
+
+def check_rate_limit(request: Request, api_key: str = Depends(require_api_key)) -> None:
+    """Enforce per-key token bucket rate limit using hashed identity."""
+    limiter: TokenBucketLimiter = request.app.state.limiter
+    identity = TokenBucketLimiter.derive_identity(api_key)
+    allowed, retry_after = limiter.consume(identity)
+    if not allowed:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=f"Too many requests. Retry in {retry_after} s.",
+            headers={"Retry-After": str(retry_after)},
+        )
+
+
 def register_exception_handlers(app: FastAPI) -> None:
     """Register uniform exception handlers adhering to the API contract."""
 
@@ -86,7 +124,7 @@ def register_exception_handlers(app: FastAPI) -> None:
     def handle_validation_error(request: Request, exc: RequestValidationError) -> JSONResponse:
         req_id = _get_request_id(request)
         return error_response(
-            status.HTTP_422_UNPROCESSABLE_ENTITY,
+            422,
             code="validation_error",
             message="Invalid request payload or parameters.",
             request_id=req_id,
@@ -106,11 +144,11 @@ def register_exception_handlers(app: FastAPI) -> None:
         elif exc.status_code == status.HTTP_409_CONFLICT:
             is_snake = isinstance(exc.detail, str) and "_" in exc.detail
             code = getattr(exc, "detail", "conflict") if is_snake else "conflict"
-        elif exc.status_code == status.HTTP_413_REQUEST_ENTITY_TOO_LARGE:
+        elif exc.status_code == 413:
             code = "payload_too_large"
         elif exc.status_code == status.HTTP_415_UNSUPPORTED_MEDIA_TYPE:
             code = "unsupported_media_type"
-        elif exc.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY:
+        elif exc.status_code == 422:
             code = "unprocessable_entity"
         elif exc.status_code == status.HTTP_429_TOO_MANY_REQUESTS:
             code = "rate_limited"
@@ -128,7 +166,7 @@ def register_exception_handlers(app: FastAPI) -> None:
     def handle_unreadable(request: Request, exc: DocumentUnreadable) -> JSONResponse:
         req_id = _get_request_id(request)
         return error_response(
-            status.HTTP_422_UNPROCESSABLE_ENTITY,
+            422,
             code="document_unreadable",
             message="Document could not be read or parsed.",
             request_id=req_id,
@@ -138,7 +176,7 @@ def register_exception_handlers(app: FastAPI) -> None:
     def handle_too_large(request: Request, exc: DocumentTooLarge) -> JSONResponse:
         req_id = _get_request_id(request)
         return error_response(
-            status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            413,
             code="document_too_large",
             message="Document exceeds size or page count limits.",
             request_id=req_id,
@@ -203,6 +241,7 @@ def register_exception_handlers(app: FastAPI) -> None:
 def create_app(
     dm: DocuMind | None = None,
     settings: Settings | None = None,
+    limiter: TokenBucketLimiter | None = None,
 ) -> FastAPI:
     """FastAPI application factory.
     No side effects on module import.
@@ -241,6 +280,7 @@ def create_app(
 
     app.state.settings = app_settings
     app.state.engine = dm
+    app.state.limiter = limiter or TokenBucketLimiter(rate_per_min=app_settings.rate_limit_per_min)
 
     # Register Request ID and security headers middleware
     @app.middleware("http")
@@ -272,6 +312,27 @@ def create_app(
             "embed_model": model_name,
             "schema_version": 1,
         }
+
+    # Protected v1 API router
+    v1_router = APIRouter(
+        prefix="/v1",
+        dependencies=[Depends(require_api_key), Depends(check_rate_limit)],
+    )
+
+    @v1_router.get("/documents")
+    def list_documents(request: Request) -> list[dict[str, Any]]:
+        engine: DocuMind = request.app.state.engine
+        docs = engine.documents()
+        return [
+            {
+                "source": doc,
+                "chunks": engine.chunk_count(doc),
+                "sha256": engine.doc_sha(doc) or "",
+            }
+            for doc in docs
+        ]
+
+    app.include_router(v1_router)
 
     return app
 
