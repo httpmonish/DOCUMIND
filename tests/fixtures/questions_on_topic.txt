@@ -1,0 +1,15 @@
+What is a process in an operating system?
+What information does a Process Control Block contain?
+What occurs during a process context switch?
+How do threads differ from traditional processes?
+What are the advantages of multithreading in modern applications?
+What is the difference between user-level and kernel-level threads?
+What is a semaphore as defined by Edsger Dijkstra?
+How do wait and signal operations modify a semaphore?
+What is the difference between counting semaphores and binary semaphores?
+What are the four Coffman conditions necessary for deadlock?
+How does Dijkstra's Banker's Algorithm help avoid deadlock?
+How does paging mitigate external memory fragmentation?
+What are the two parts of a virtual memory address in paging?
+What is the purpose of the Translation Lookaside Buffer?
+How does Round Robin scheduling allocate CPU time to processes?
