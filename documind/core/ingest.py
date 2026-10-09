@@ -114,6 +114,8 @@ def index_path(
     """Index a single file or directory into the vector store."""
     t0 = time.perf_counter()
     target_path = Path(path).resolve()
+    if not target_path.exists():
+        raise FileNotFoundError(f"Path does not exist: {target_path}")
     root_path = Path(root).resolve()
 
     files = _collect_files(target_path)

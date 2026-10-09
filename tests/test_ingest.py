@@ -213,3 +213,11 @@ def test_index_crash_cleanup_no_partial_chunks(test_setup: SetupType) -> None:
     # Partial source must be cleaned up
     assert store.count_for("fail.txt") == 0
     assert store.doc_sha("fail.txt") is None
+
+
+def test_index_path_missing_path_raises_file_not_found(test_setup: SetupType) -> None:
+    docs_root, embedder, _, store, settings = test_setup
+    missing = docs_root / "nonexistent.md"
+    with pytest.raises(FileNotFoundError):
+        index_path(missing, docs_root, embedder, store, settings)
+
