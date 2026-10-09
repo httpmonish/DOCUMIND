@@ -16,5 +16,19 @@ jobs:
       - run: ruff check .
       - run: ruff format --check .
       - run: mypy documind
-      - run: pytest -m "not slow" --cov=documind --cov-fail-under=85
+      - run: pytest -m "not slow and not live" --cov=documind --cov-fail-under=85
       - run: pip-audit --local --skip-editable --ignore-vuln PYSEC-2026-311 --ignore-vuln PYSEC-2026-3814 --ignore-vuln PYSEC-2026-3815 --ignore-vuln PYSEC-2026-3813
+
+  wheel-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install build
+      - run: python -m build
+      - run: python -m venv /tmp/v && /tmp/v/bin/pip install dist/*.whl
+      - run: /tmp/v/bin/documind --version
+      - run: /tmp/v/bin/documind doctor || test $? -eq 5
+
