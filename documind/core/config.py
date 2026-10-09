@@ -28,6 +28,11 @@ class Settings:
     max_top_k: int = 10
     max_question_chars: int = 2000
     log_questions: bool = False
+    api_key: str = ""
+    env: str = "dev"
+    rate_limit_per_min: int = 20
+    max_upload_mb: int = 50
+    allow_debug: bool = False
 
     def __post_init__(self) -> None:
         if not self.model or not self.model.strip():
@@ -51,6 +56,12 @@ class Settings:
             )
         if not (1 <= self.top_k <= self.max_top_k):
             raise ValueError(f"top_k must be between 1 and {self.max_top_k}, got {self.top_k}")
+        if self.rate_limit_per_min <= 0:
+            raise ValueError(f"rate_limit_per_min must be positive, got {self.rate_limit_per_min}")
+        if self.max_upload_mb <= 0:
+            raise ValueError(f"max_upload_mb must be positive, got {self.max_upload_mb}")
+        if self.max_pages <= 0:
+            raise ValueError(f"max_pages must be positive, got {self.max_pages}")
 
 
 def _parse_positive_int(var_name: str, raw_val: str | None, default: int) -> int:
@@ -146,6 +157,16 @@ def load_settings() -> Settings:
         "DOCUMIND_LOG_QUESTIONS", os.getenv("DOCUMIND_LOG_QUESTIONS"), False
     )
 
+    api_key = os.getenv("DOCUMIND_API_KEY", "").strip()
+    env = os.getenv("DOCUMIND_ENV", "dev").strip()
+    rate_limit_per_min = _parse_positive_int(
+        "DOCUMIND_RATE_LIMIT_PER_MIN", os.getenv("DOCUMIND_RATE_LIMIT_PER_MIN"), 20
+    )
+    max_upload_mb = _parse_positive_int(
+        "DOCUMIND_MAX_UPLOAD_MB", os.getenv("DOCUMIND_MAX_UPLOAD_MB"), max_file_mb
+    )
+    allow_debug = _parse_bool("DOCUMIND_ALLOW_DEBUG", os.getenv("DOCUMIND_ALLOW_DEBUG"), False)
+
     return Settings(
         home=home,
         embed_model=embed_model,
@@ -160,4 +181,9 @@ def load_settings() -> Settings:
         llm_timeout_s=llm_timeout_s,
         llm_retries=llm_retries,
         log_questions=log_questions,
+        api_key=api_key,
+        env=env,
+        rate_limit_per_min=rate_limit_per_min,
+        max_upload_mb=max_upload_mb,
+        allow_debug=allow_debug,
     )
