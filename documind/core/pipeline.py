@@ -40,6 +40,7 @@ class DocuMind:
         llm: LLM | None = None,
     ) -> None:
         self.settings = settings
+        self.s = settings
         self.embedder = embedder
         self.store = store
         self.llm = llm
@@ -60,7 +61,10 @@ class DocuMind:
     def index(self, path: Path | str, root: Path | str | None = None) -> IndexReport:
         """Index a file or directory into the vector store."""
         target_path = Path(path).resolve()
-        target_root = Path(root).resolve() if root else target_path.parent
+        if root:
+            target_root = Path(root).resolve()
+        else:
+            target_root = target_path if target_path.is_dir() else target_path.parent
         return index_path(target_path, target_root, self.embedder, self.store, self.settings)
 
     def search(self, question: str, top_k: int | None = None) -> list[RetrievedChunk]:
@@ -105,7 +109,7 @@ class DocuMind:
         if self.store.count() == 0:
             total_ms = int((time.perf_counter() - t0) * 1000)
             ans = Answer(
-                text="Your document index is empty.",
+                text="Your document index is empty. No documents indexed.",
                 citations=(),
                 outcome="abstained",
                 model=self.settings.model,
