@@ -220,4 +220,3 @@ def test_index_path_missing_path_raises_file_not_found(test_setup: SetupType) ->
     missing = docs_root / "nonexistent.md"
     with pytest.raises(FileNotFoundError):
         index_path(missing, docs_root, embedder, store, settings)
-
