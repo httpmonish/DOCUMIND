@@ -46,7 +46,8 @@ class Settings:
             raise ValueError(f"overlap must be non-negative, got {self.overlap}")
         if self.overlap >= self.chunk_size:
             raise ValueError(
-                f"DOCUMIND_OVERLAP ({self.overlap}) must be less than DOCUMIND_CHUNK_SIZE ({self.chunk_size})"
+                f"DOCUMIND_OVERLAP ({self.overlap}) must be less than "
+                f"DOCUMIND_CHUNK_SIZE ({self.chunk_size})"
             )
         if not (1 <= self.top_k <= self.max_top_k):
             raise ValueError(f"top_k must be between 1 and {self.max_top_k}, got {self.top_k}")
