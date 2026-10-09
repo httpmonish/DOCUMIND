@@ -6,6 +6,8 @@ venv/
 __pycache__/
 *.pyc
 *.egg-info/
+dist/
+build/
 
 # Testing and linting caches
 .pytest_cache/
