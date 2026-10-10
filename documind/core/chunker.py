@@ -8,13 +8,8 @@ from typing import Any
 def chunk_text(text: str, chunk_size: int = 200, overlap: int = 30) -> list[str]:
     if chunk_size <= 0:
         raise ValueError(f"chunk_size ({chunk_size}) must be positive.")
-    if overlap < 0:
-        raise ValueError(f"overlap ({overlap}) must be non-negative.")
-    if overlap >= chunk_size:
-        raise ValueError(
-            f"chunk_size ({chunk_size}) must be greater than overlap ({overlap}), "
-            f"or each chunk would repeat the last one forever."
-        )
+    if not (0 <= overlap < chunk_size):
+        raise ValueError(f"overlap ({overlap}) must be between 0 and chunk_size.")
 
     words = text.split()
     if not words:
