@@ -96,6 +96,9 @@ class NumpyStore:
     def count(self) -> int:
         return len(self._chunks)
 
+    def chunks_for(self, source: str) -> list[Chunk]:
+        return [c for c in self._chunks.values() if c.source == source]
+
 
 class ChromaStore:
     """ChromaDB embedded PersistentClient implementing VectorStore."""
@@ -277,3 +280,30 @@ class ChromaStore:
 
     def count(self) -> int:
         return int(self._collection.count())
+
+    def chunks_for(self, source: str) -> list[Chunk]:
+        existing = self._collection.get(
+            where={"source": source}, include=["documents", "metadatas"]
+        )
+        
+        ids = existing.get("ids", [])
+        docs = existing.get("documents", [])
+        metas = existing.get("metadatas", [])
+        
+        if not ids or not docs or not metas:
+            return []
+            
+        chunks = []
+        for cid, doc, meta in zip(ids, docs, metas, strict=True):
+            chunks.append(
+                Chunk(
+                    id=cid,
+                    text=str(doc),
+                    source=str(meta["source"]),
+                    chunk_index=int(str(meta["chunk_index"])),
+                    doc_sha256=str(meta["doc_sha256"]),
+                )
+            )
+            
+        chunks.sort(key=lambda c: c.chunk_index)
+        return chunks

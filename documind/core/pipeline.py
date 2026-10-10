@@ -10,6 +10,7 @@ import uuid
 from collections.abc import Sequence
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any
 
 from documind.core.chunker import chunk_document
 from documind.core.citations import is_decline, parse_citations
@@ -47,6 +48,7 @@ class DocuMind:
         self.store = store
         self.llm = llm
         self.logger = QueryLogger(self.settings.home / "logs" / "queries.jsonl")
+        self._events: list[dict[str, Any]] = []
 
     def documents(self) -> list[str]:
         """Return all distinct indexed document source paths."""
@@ -63,6 +65,40 @@ class DocuMind:
     def doc_sha(self, source: str) -> str | None:
         """Return the SHA-256 hash for an indexed document source, or None if not found."""
         return self.store.doc_sha(source)
+
+    def list_documents(self) -> list[dict[str, Any]]:
+        """Return a list of document dicts for the API."""
+        return [
+            {
+                "source": doc,
+                "chunks": self.chunk_count(doc),
+                "sha256": self.doc_sha(doc) or "",
+            }
+            for doc in self.documents()
+        ]
+
+    def delete_document(self, source: str) -> int:
+        """Alias for delete."""
+        return self.delete(source)
+
+    def health(self) -> dict[str, Any]:
+        """Return engine health details."""
+        return {
+            "status": "ok",
+            "index_chunks": self.store.count(),
+            "embed_model": self.settings.embed_model,
+            "schema_version": 1,
+        }
+
+    def write_event(self, event: dict[str, Any]) -> None:
+        """Append to the in-memory ring buffer (max 50)."""
+        self._events.append(event)
+        if len(self._events) > 50:
+            self._events.pop(0)
+
+    def get_events(self) -> list[dict[str, Any]]:
+        """Return the recent events."""
+        return list(self._events)
 
     def index(self, path: Path | str, root: Path | str | None = None) -> IndexReport:
         """Index a file or directory into the vector store."""
@@ -466,3 +502,12 @@ class DocuMind:
             record["question"] = question
 
         self.logger.write(record)
+        self.write_event({
+            "time": record["ts"],
+            "request_id": req_id,
+            "stage": "ask",
+            "msg": f"Ask completed with outcome: {ans.outcome}",
+            "duration_ms": total_ms,
+            "cost_usd": cost,
+            "latency_ms": total_ms,
+        })

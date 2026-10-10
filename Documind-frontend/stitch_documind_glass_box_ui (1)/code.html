@@ -1,0 +1,696 @@
+<!DOCTYPE html><html class="dark" lang="en"><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0" name="viewport"><meta content="web_standard" name="shell-type"><link href="https://fonts.googleapis.com" rel="preconnect"><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+          "on-surface-variant": "#e6beb2",
+          "primary-fixed": "#ffdbd1",
+          "on-error-container": "#ffdad6",
+          "on-error": "#690005",
+          "inverse-primary": "#af3100",
+          "on-tertiary-container": "#00311f",
+          "tertiary-fixed": "#6ffbbe",
+          "background": "#131313",
+          "surface-variant": "#353534",
+          "error": "#ffb4ab",
+          "on-primary": "#5f1600",
+          "inverse-surface": "#e5e2e1",
+          "on-tertiary": "#003824",
+          "on-secondary-fixed-variant": "#004395",
+          "on-secondary-fixed": "#001a42",
+          "secondary-container": "#0566d9",
+          "error-container": "#93000a",
+          "on-tertiary-fixed-variant": "#005236",
+          "surface-container-low": "#1c1b1b",
+          "surface-container": "#201f1f",
+          "surface-dim": "#131313",
+          "primary-container": "#ff571d",
+          "secondary": "#adc6ff",
+          "on-secondary-container": "#e6ecff",
+          "surface-container-highest": "#353534",
+          "on-tertiary-fixed": "#002113",
+          "tertiary": "#4edea3",
+          "primary": "#ffb59f",
+          "inverse-on-surface": "#313030",
+          "on-primary-fixed": "#3a0a00",
+          "on-background": "#e5e2e1",
+          "outline-variant": "#5c4038",
+          "surface-tint": "#ffb59f",
+          "secondary-fixed-dim": "#adc6ff",
+          "tertiary-container": "#00a572",
+          "on-primary-container": "#531200",
+          "surface-container-lowest": "#0e0e0e",
+          "surface-container-high": "#2a2a2a",
+          "outline": "#ad897e",
+          "surface": "#131313",
+          "on-secondary": "#002e6a",
+          "on-primary-fixed-variant": "#862300",
+          "primary-fixed-dim": "#ffb59f",
+          "tertiary-fixed-dim": "#4edea3",
+          "on-surface": "#e5e2e1",
+          "surface-bright": "#3a3939",
+          "secondary-fixed": "#d8e2ff"
+        },
+        "borderRadius": {
+          "DEFAULT": "0.125rem",
+          "lg": "0.25rem",
+          "xl": "0.5rem",
+          "full": "0.75rem"
+        },
+        "spacing": {
+          "gutter-dense": "0.5rem",
+          "gutter": "1rem",
+          "margin-mobile": "0.75rem",
+          "space-sm": "0.5rem",
+          "space-lg": "1rem",
+          "space-xl": "1.5rem",
+          "margin": "1.5rem",
+          "space-xs": "0.25rem",
+          "space-md": "0.75rem"
+        },
+        "fontFamily": {
+          "headline-sm": [
+            "Inter"
+          ],
+          "metric-display": [
+            "JetBrains Mono"
+          ],
+          "headline-lg": [
+            "Inter"
+          ],
+          "code-lg": [
+            "JetBrains Mono"
+          ],
+          "label-caps": [
+            "JetBrains Mono"
+          ],
+          "code-sm": [
+            "JetBrains Mono"
+          ],
+          "body-lg": [
+            "Inter"
+          ],
+          "body-sm": [
+            "Inter"
+          ],
+          "headline-xl": [
+            "Inter"
+          ]
+        },
+        "fontSize": {
+          "headline-sm": [
+            "18px",
+            {
+              "lineHeight": "24px",
+              "letterSpacing": "-0.015em",
+              "fontWeight": "500"
+            }
+          ],
+          "metric-display": [
+            "28px",
+            {
+              "lineHeight": "32px",
+              "letterSpacing": "-0.04em",
+              "fontWeight": "600"
+            }
+          ],
+          "headline-lg": [
+            "24px",
+            {
+              "lineHeight": "30px",
+              "letterSpacing": "-0.025em",
+              "fontWeight": "600"
+            }
+          ],
+          "code-lg": [
+            "13px",
+            {
+              "lineHeight": "20px",
+              "letterSpacing": "-0.01em",
+              "fontWeight": "500"
+            }
+          ],
+          "label-caps": [
+            "10px",
+            {
+              "lineHeight": "14px",
+              "letterSpacing": "0.08em",
+              "fontWeight": "600"
+            }
+          ],
+          "code-sm": [
+            "11px",
+            {
+              "lineHeight": "16px",
+              "letterSpacing": "0em",
+              "fontWeight": "400"
+            }
+          ],
+          "body-lg": [
+            "15px",
+            {
+              "lineHeight": "22px",
+              "letterSpacing": "-0.01em",
+              "fontWeight": "400"
+            }
+          ],
+          "body-sm": [
+            "13px",
+            {
+              "lineHeight": "18px",
+              "letterSpacing": "0em",
+              "fontWeight": "400"
+            }
+          ],
+          "headline-xl": [
+            "32px",
+            {
+              "lineHeight": "38px",
+              "letterSpacing": "-0.03em",
+              "fontWeight": "600"
+            }
+          ]
+        }
+      },
+    },
+  }</script></head><body class="bg-surface-container-lowest font-body-sm text-body-sm text-on-surface antialiased"><header class="fixed top-0 left-0 w-full z-50 bg-surface-container-lowest border-b border-surface-variant"><div class="h-14 w-full px-space-xl flex items-center justify-between"><div class="flex items-center gap-space-xl"><div class="flex items-center gap-space-md"><img alt="DocuMind Hexagon Logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1XRUD2oweWEAtgxPVNbtPRwkJBF3wYgDRNl667CBlLF3HQ31f4sfjCwfqQC2nYjTAuHLW1VsP8pPLfhUq1cNTTaBmbEfIHCI9SCIRG_36__XRSX64FrdugNgTz8ksrNWRKuIi-WVVw6T1qqifdi0BPtJK52Yekh2M5xrl-F5t_SHHcd9QseCPZx59tSiEPBBn2SYYeOUhiJfh3f9Z8i31cgnI3des34gNidZv4fPfO2qk1326o423BtxCTj"><span class="font-headline-sm text-headline-sm text-on-surface tracking-tight">DocuMind</span></div><nav class="hidden md:flex items-center gap-space-xl" data-active-classes="text-on-surface font-headline-sm text-headline-sm"><a class="font-headline-sm text-headline-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="architecture" href="#">Architecture</a><a aria-current="page" class="transition-colors text-on-surface font-headline-sm text-headline-sm" data-path="console" href="#">Console</a><a class="font-headline-sm text-headline-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="library" href="#">Library</a><a class="font-headline-sm text-headline-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="proof" href="#">Proof</a></nav></div><div class="flex items-center gap-space-lg"><div class="hidden sm:flex items-center gap-space-xs px-space-md py-space-xs bg-surface-container-low border border-surface-variant rounded-DEFAULT"><span class="w-1.5 h-1.5 rounded-full bg-tertiary inline-block"></span></div><a class="inline-flex items-center justify-center px-space-lg py-space-xs bg-primary-container hover:bg-inverse-primary text-on-primary-container font-code-sm text-code-sm tracking-wider uppercase rounded-xl transition-colors font-medium" data-path="console" href="#">OPEN CONSOLE ↗</a><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="w-full pt-14 bg-surface-container-lowest min-h-screen"><div class="flex flex-col w-full">
+<!-- Metadata Ribbon -->
+<div class="w-full bg-surface-container-lowest px-space-xl py-space-xs flex flex-wrap items-center justify-between gap-space-sm">
+<div class="flex items-center gap-space-md flex-wrap font-code-sm text-code-sm text-on-surface-variant">
+<span class="flex items-center gap-space-xs">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary inline-block"></span>
+<span class="text-on-surface">INDEX READY:</span>
+<span class="text-on-surface">1,240 chunks</span>
+</span>
+<span class="text-surface-variant">/</span>
+<span class="">12 documents</span>
+<span class="text-surface-variant">/</span>
+<span class="text-secondary font-code-sm">bge-small-en-v1.5 (384-d)</span>
+<span class="text-surface-variant">/</span>
+<span class="text-primary-container font-code-sm">τ 0.45</span>
+<span class="text-surface-variant">/</span>
+<span class="text-on-surface">top-k: 5</span>
+</div>
+<!-- Secondary Controls -->
+<div class="flex items-center gap-space-md">
+<div class="inline-flex rounded-lg bg-surface-container p-0.5">
+<button class="px-space-sm py-0.5 rounded-DEFAULT text-on-primary bg-primary-container font-code-sm text-code-sm transition-colors" id="toggle-live">LIVE</button>
+<button class="px-space-sm py-0.5 rounded-DEFAULT text-on-surface-variant hover:text-on-surface font-code-sm text-code-sm transition-colors" id="toggle-demo">DEMO</button>
+</div>
+<span class="px-space-sm py-0.5 bg-surface-container-high text-primary font-code-sm text-code-sm tracking-wider uppercase rounded-DEFAULT">DEMO DATA</span>
+<label class="flex items-center gap-space-xs cursor-pointer select-none">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">INSPECT</span>
+<input checked="" class="accent-primary-container w-3.5 h-3.5 rounded-DEFAULT cursor-pointer" id="inspect-toggle" type="checkbox">
+</label>
+</div>
+</div>
+<!-- Primary Workspace: 8 / 12 and 4 / 12 Split -->
+<div class="w-full grid grid-cols-1 lg:grid-cols-12 min-h-[calc(100vh-88px)]">
+<!-- Main Execution & Diagnostics Viewport (8 cols) -->
+<div class="lg:col-span-8 flex flex-col p-space-xl gap-space-xl bg-surface-container-lowest">
+<!-- Query Command Unit -->
+<div class="flex flex-col gap-space-sm">
+<div class="h-14 w-full bg-surface-container-low rounded-xl px-space-md flex items-center gap-space-md shadow-sm focus-within:bg-surface-container">
+<span class="font-code-lg text-code-lg text-primary-container font-semibold select-none">›</span>
+<input class="flex-1 bg-transparent border-0 outline-none font-body-lg text-body-lg text-on-surface placeholder-on-surface-variant" id="query-input" placeholder="Enter retrieval prompt or technical inquiry..." type="text" value="Explain process scheduling in the OS kernel">
+<div class="flex items-center gap-space-md shrink-0">
+<span class="font-code-sm text-code-sm text-on-surface-variant">47 / 2000</span>
+<button class="h-9 px-space-lg rounded-xl bg-primary-container hover:bg-inverse-primary text-on-primary-container font-code-sm text-code-sm tracking-wider uppercase font-semibold flex items-center gap-space-xs transition-colors shadow-sm">
+<span class="">RUN QUERY</span>
+<span class="text-[10px]">▸</span>
+</button>
+</div>
+</div>
+<!-- Inline Shortcut Links -->
+<div class="flex items-center justify-between px-space-xs font-body-sm text-body-sm">
+<div class="flex items-center gap-space-xl">
+<button class="text-on-surface-variant hover:text-primary transition-colors flex items-center gap-1">
+<span class="material-symbols-outlined text-[15px]">add_circle</span> Add document
+            </button>
+<button class="text-on-surface-variant hover:text-primary transition-colors flex items-center gap-1">
+<span class="material-symbols-outlined text-[15px]">swords</span> Challenge mode
+            </button>
+<button class="text-primary-container hover:underline transition-colors flex items-center gap-1">
+              Try the abstention demo →
+            </button>
+</div>
+<span class="font-code-sm text-code-sm text-on-surface-variant">Engine: RAG-Vectorized-v3</span>
+</div>
+</div>
+<!-- Pipeline Telemetry Ribbon (Seven Nodes + Diamond Gate + Abstain Branch) -->
+<div class="w-full bg-surface-container-low rounded-xl p-space-lg relative overflow-x-auto shadow-sm">
+<div class="flex items-center justify-between mb-space-md">
+<div class="flex items-center gap-space-xs">
+<span class="w-2 h-2 rounded-full bg-primary-container animate-ping"></span>
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">LIVE EXECUTION TRACE #9f1c2a7b</span>
+</div>
+<div class="flex items-center gap-space-xs font-code-sm text-code-sm text-tertiary">
+<span class="text-on-surface-variant font-label-caps">END TO END</span>
+<span class="font-bold">3,006 ms</span>
+</div>
+</div>
+<!-- Interactive SVG Pipeline Diagram -->
+<div class="min-w-[700px] w-full pt-space-xs pb-space-sm select-none">
+<svg class="w-full h-auto overflow-visible" viewBox="0 0 780 140">
+<!-- Continuous Connection Line -->
+<path d="M 40 40 L 740 40" fill="none" stroke="#353534" stroke-width="2"></path>
+<!-- Active Sub-segment highlight -->
+<path d="M 40 40 L 255 40" fill="none" stroke="#ff571d" stroke-linecap="round" stroke-width="2"></path>
+<!-- Abstain Fallback Dashed Branch -->
+<path d="M 370 40 L 370 100 L 480 100" fill="none" opacity="0.6" stroke="#ff571d" stroke-dasharray="4 3" stroke-width="1.5"></path>
+<circle cx="480" cy="100" fill="#ff571d" opacity="0.8" r="3"></circle>
+<text fill="#ffb59f" font-family="JetBrains Mono" font-size="10" font-weight="600" letter-spacing="0.04em" x="490" y="104">ABSTAIN · LLM SKIPPED</text>
+<text fill="#e6beb2" font-family="JetBrains Mono" font-size="9" x="490" y="116">Threshold: τ &lt; 0.45</text>
+<!-- Node 1: Question -->
+<g class="cursor-pointer">
+<circle cx="40" cy="40" fill="#201f1f" r="14" stroke="#ff571d" stroke-width="2"></circle>
+<text fill="#e5e2e1" font-family="JetBrains Mono" font-size="11" font-weight="600" text-anchor="middle" x="40" y="44">1</text>
+<text fill="#e5e2e1" font-family="Inter" font-size="12" font-weight="500" text-anchor="middle" x="40" y="70">Question</text>
+<text fill="#e6beb2" font-family="JetBrains Mono" font-size="11" text-anchor="middle" x="40" y="84">0 ms</text>
+</g>
+<!-- Node 2: Embed -->
+<g class="cursor-pointer">
+<circle cx="145" cy="40" fill="#201f1f" r="14" stroke="#ff571d" stroke-width="2"></circle>
+<text fill="#e5e2e1" font-family="JetBrains Mono" font-size="11" font-weight="600" text-anchor="middle" x="145" y="44">2</text>
+<text fill="#e5e2e1" font-family="Inter" font-size="12" font-weight="500" text-anchor="middle" x="145" y="70">Embed</text>
+<text fill="#e6beb2" font-family="JetBrains Mono" font-size="11" text-anchor="middle" x="145" y="84">38 ms</text>
+</g>
+<!-- Node 3: Retrieve (ACTIVE / INSPECTED) -->
+<g class="cursor-pointer">
+<!-- Glow ring -->
+<circle cx="255" cy="40" fill="#201f1f" r="22" stroke="#adc6ff" stroke-width="1.5"></circle>
+<circle cx="255" cy="40" fill="#0566d9" r="17" stroke="#adc6ff" stroke-width="2"></circle>
+<text fill="#e6ecff" font-family="JetBrains Mono" font-size="12" font-weight="700" text-anchor="middle" x="255" y="44">3</text>
+<rect fill="#0566d9" height="15" rx="3" width="70" x="220" y="2"></rect>
+<text fill="#e6ecff" font-family="JetBrains Mono" font-size="9" font-weight="600" letter-spacing="0.05em" text-anchor="middle" x="255" y="13">INSPECTING</text>
+<text fill="#adc6ff" font-family="Inter" font-size="12" font-weight="600" text-anchor="middle" x="255" y="72">Retrieve</text>
+<text fill="#4edea3" font-family="JetBrains Mono" font-size="11" font-weight="500" text-anchor="middle" x="255" y="86">6 ms</text>
+</g>
+<!-- Node 4: Confidence Gate (Diamond) -->
+<g class="cursor-pointer">
+<polygon fill="#201f1f" points="370,26 384,40 370,54 356,40" stroke="#ff571d" stroke-width="2"></polygon>
+<text fill="#ffb59f" font-family="JetBrains Mono" font-size="10" font-weight="700" text-anchor="middle" x="370" y="44">4</text>
+<text fill="#e5e2e1" font-family="Inter" font-size="12" font-weight="500" text-anchor="middle" x="370" y="70">Conf. Gate</text>
+<text fill="#e6beb2" font-family="JetBrains Mono" font-size="11" text-anchor="middle" x="370" y="84">0 ms</text>
+</g>
+<!-- Node 5: Build Prompt -->
+<g class="cursor-pointer">
+<circle cx="490" cy="40" fill="#201f1f" r="14" stroke="#353534" stroke-width="2"></circle>
+<text fill="#e5e2e1" font-family="JetBrains Mono" font-size="11" font-weight="600" text-anchor="middle" x="490" y="44">5</text>
+<text fill="#e5e2e1" font-family="Inter" font-size="12" font-weight="500" text-anchor="middle" x="490" y="70">Build Prompt</text>
+<text fill="#e6beb2" font-family="JetBrains Mono" font-size="11" text-anchor="middle" x="490" y="84">1 ms</text>
+</g>
+<!-- Node 6: LLM -->
+<g class="cursor-pointer">
+<circle cx="615" cy="40" fill="#201f1f" r="15" stroke="#353534" stroke-width="2"></circle>
+<text fill="#e5e2e1" font-family="JetBrains Mono" font-size="11" font-weight="600" text-anchor="middle" x="615" y="44">6</text>
+<text fill="#e5e2e1" font-family="Inter" font-size="12" font-weight="500" text-anchor="middle" x="615" y="70">LLM</text>
+<text fill="#e6beb2" font-family="JetBrains Mono" font-size="11" text-anchor="middle" x="615" y="84">2,950 ms</text>
+</g>
+<!-- Node 7: Citations -->
+<g class="cursor-pointer">
+<circle cx="730" cy="40" fill="#201f1f" r="14" stroke="#4edea3" stroke-width="2"></circle>
+<text fill="#4edea3" font-family="JetBrains Mono" font-size="11" font-weight="600" text-anchor="middle" x="730" y="44">7</text>
+<text fill="#e5e2e1" font-family="Inter" font-size="12" font-weight="500" text-anchor="middle" x="730" y="70">Citations</text>
+<text fill="#4edea3" font-family="JetBrains Mono" font-size="11" text-anchor="middle" x="730" y="84">11 ms</text>
+</g>
+</svg>
+</div>
+</div>
+<!-- Collapsible Indexing Pipeline Strip -->
+<div class="w-full bg-surface-container-low rounded-xl px-space-lg py-space-sm shadow-sm">
+<button class="w-full flex items-center justify-between text-left text-on-surface-variant hover:text-on-surface transition-colors" id="toggle-index-strip">
+<div class="flex items-center gap-space-md font-code-sm text-code-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span>
+<span class="text-on-surface font-semibold tracking-wider">INDEXING TOPOLOGY</span>
+<span class="text-surface-variant">·</span>
+<span class="">12 documents</span>
+<span class="text-surface-variant">·</span>
+<span class="">1,240 chunks</span>
+<span class="text-surface-variant">·</span>
+<span class="">last run 16:40:12</span>
+</div>
+<span class="material-symbols-outlined text-[18px] transition-transform duration-200" id="index-chevron">expand_more</span>
+</button>
+<!-- Collapsible Content with 6-node Index Pipeline -->
+<div class="mt-space-md pt-space-sm hidden" id="index-pipeline-container">
+<div class="grid grid-cols-2 sm:grid-cols-6 gap-space-sm py-space-xs font-code-sm text-code-sm">
+<div class="p-space-sm bg-surface-container rounded-lg flex flex-col gap-0.5">
+<span class="font-label-caps text-label-caps text-on-surface-variant">STEP 1</span>
+<span class="text-on-surface font-medium">Ingest PDF</span>
+<span class="text-tertiary text-[10px]">1,200 ms</span>
+</div>
+<div class="p-space-sm bg-surface-container rounded-lg flex flex-col gap-0.5">
+<span class="font-label-caps text-label-caps text-on-surface-variant">STEP 2</span>
+<span class="text-on-surface font-medium">Layout Parse</span>
+<span class="text-tertiary text-[10px]">420 ms</span>
+</div>
+<div class="p-space-sm bg-surface-container rounded-lg flex flex-col gap-0.5">
+<span class="font-label-caps text-label-caps text-on-surface-variant">STEP 3</span>
+<span class="text-on-surface font-medium">Chunk Splitting</span>
+<span class="text-tertiary text-[10px]">110 ms</span>
+</div>
+<div class="p-space-sm bg-surface-container rounded-lg flex flex-col gap-0.5">
+<span class="font-label-caps text-label-caps text-on-surface-variant">STEP 4</span>
+<span class="text-on-surface font-medium">Embedding Gen</span>
+<span class="text-tertiary text-[10px]">3,410 ms</span>
+</div>
+<div class="p-space-sm bg-surface-container rounded-lg flex flex-col gap-0.5">
+<span class="font-label-caps text-label-caps text-on-surface-variant">STEP 5</span>
+<span class="text-on-surface font-medium">HNSW Index</span>
+<span class="text-tertiary text-[10px]">95 ms</span>
+</div>
+<div class="p-space-sm bg-surface-container rounded-lg flex flex-col gap-0.5">
+<span class="font-label-caps text-label-caps text-on-surface-variant">STEP 6</span>
+<span class="text-on-surface font-medium">Commit State</span>
+<span class="text-tertiary text-[10px]">14 ms</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Dual Inspection Split: Answer (Left) vs Retreive Inspector (Right) -->
+<div class="w-full grid grid-cols-1 md:grid-cols-2 gap-space-lg flex-1">
+<!-- ANSWER Container -->
+<div class="bg-surface-container-low rounded-xl p-space-lg flex flex-col justify-between shadow-sm">
+<div class="flex flex-col gap-space-md">
+<div class="flex items-center justify-between pb-space-xs">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-[16px] text-tertiary">check_circle</span>
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">SYNTHESIZED ANSWER</span>
+</div>
+<span class="px-space-xs py-0.5 rounded-DEFAULT bg-surface-container-high text-tertiary font-code-sm text-code-sm">
+                3 CITATIONS VERIFIED
+              </span>
+</div>
+<div class="font-body-lg text-body-lg text-on-surface leading-relaxed flex flex-col gap-space-sm">
+<p class="">
+                In an operating system kernel, process scheduling manages the allocation of CPU execution units among ready processes. The core component is the 
+                <span class="text-on-surface font-medium">dispatcher</span>, which executes context switches between runnable states based on algorithmic preemption policies.
+              </p>
+<p class="">
+                Preemptive algorithms, such as the Completely Fair Scheduler (CFS), maintain a red-black tree indexed by virtual runtime (vruntime)
+                <button class="inline-flex items-center text-primary-container font-code-sm text-code-sm hover:underline ml-1">
+                  [os_unit3.pdf · c12]
+                </button>
+                to ensure deterministic resource parity.
+              </p>
+<p class="">
+                When higher priority tasks transition from I/O wait state
+                <button class="inline-flex items-center text-primary-container font-code-sm text-code-sm hover:underline ml-1">
+                  [kernel_arch.md · c88]
+                </button>,
+                inter-processor interrupts (IPI) force involuntary context saves
+                <button class="inline-flex items-center text-primary-container font-code-sm text-code-sm hover:underline ml-1">
+                  [sys_sched_v2.txt · c04]
+                </button>.
+              </p>
+</div>
+</div>
+<div class="pt-space-md mt-space-md flex items-center justify-between font-code-sm text-code-sm text-on-surface-variant">
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px] text-tertiary">verified_user</span>
+              Provenance: Level 1 Rigorous
+            </span>
+<span class="hover:text-on-surface cursor-pointer">Export Markdown ↗</span>
+</div>
+</div>
+<!-- INSPECTOR · RETRIEVE Container -->
+<div class="bg-surface-container-low rounded-xl p-space-lg flex flex-col justify-between shadow-sm">
+<div class="flex flex-col gap-space-md">
+<div class="flex items-center justify-between pb-space-xs">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-[16px] text-secondary">manage_search</span>
+<span class="font-label-caps text-label-caps text-secondary uppercase tracking-wider font-semibold">INSPECTOR · RETRIEVE</span>
+</div>
+<span class="font-code-sm text-code-sm text-on-surface-variant">Source: core/retrieval.py</span>
+</div>
+<!-- Score Bars Relative to Threshold Tau 0.45 -->
+<div class="flex flex-col gap-space-sm pt-space-xs">
+<div class="flex items-center justify-between font-label-caps text-label-caps text-on-surface-variant">
+<span class="">CANDIDATE CHUNKS</span>
+<span class="text-primary-container font-semibold">THRESHOLD τ 0.45</span>
+</div>
+<!-- Relative visual scale container -->
+<div class="relative flex flex-col gap-space-xs py-space-xs">
+<!-- Threshold indicator vertical marker line -->
+<div class="absolute top-0 bottom-0 left-[45%] w-0.5 bg-primary-container z-10 pointer-events-none opacity-80">
+<div class="bg-primary-container text-on-primary-container text-[8px] font-code-sm px-1 rounded-DEFAULT absolute -top-3.5 -left-3">
+                    τ 0.45
+                  </div>
+</div>
+<!-- Chunk #1 -->
+<div class="flex items-center gap-space-sm p-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high transition-colors">
+<span class="font-code-sm text-code-sm text-on-surface font-semibold w-6">#1</span>
+<div class="flex-1 bg-surface-container-lowest h-3.5 rounded-DEFAULT overflow-hidden">
+<div class="bg-tertiary h-full rounded-DEFAULT" style="width: 71%;"></div>
+</div>
+<span class="font-code-sm text-code-sm text-tertiary font-bold w-12 text-right">0.71</span>
+<span class="px-space-xs py-0.2 bg-tertiary-container text-on-tertiary-container font-label-caps text-[9px] rounded-DEFAULT">PASS</span>
+</div>
+<!-- Chunk #2 -->
+<div class="flex items-center gap-space-sm p-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high transition-colors">
+<span class="font-code-sm text-code-sm text-on-surface font-semibold w-6">#2</span>
+<div class="flex-1 bg-surface-container-lowest h-3.5 rounded-DEFAULT overflow-hidden">
+<div class="bg-tertiary h-full rounded-DEFAULT" style="width: 58%;"></div>
+</div>
+<span class="font-code-sm text-code-sm text-tertiary font-bold w-12 text-right">0.58</span>
+<span class="px-space-xs py-0.2 bg-tertiary-container text-on-tertiary-container font-label-caps text-[9px] rounded-DEFAULT">PASS</span>
+</div>
+<!-- Chunk #3 -->
+<div class="flex items-center gap-space-sm p-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high transition-colors">
+<span class="font-code-sm text-code-sm text-on-surface font-semibold w-6">#3</span>
+<div class="flex-1 bg-surface-container-lowest h-3.5 rounded-DEFAULT overflow-hidden">
+<div class="bg-tertiary h-full rounded-DEFAULT" style="width: 49%;"></div>
+</div>
+<span class="font-code-sm text-code-sm text-tertiary font-bold w-12 text-right">0.49</span>
+<span class="px-space-xs py-0.2 bg-tertiary-container text-on-tertiary-container font-label-caps text-[9px] rounded-DEFAULT">PASS</span>
+</div>
+<!-- Chunk #4 -->
+<div class="flex items-center gap-space-sm p-1.5 rounded-lg bg-surface-container/60 hover:bg-surface-container-high transition-colors">
+<span class="font-code-sm text-code-sm text-on-surface-variant font-semibold w-6">#4</span>
+<div class="flex-1 bg-surface-container-lowest h-3.5 rounded-DEFAULT overflow-hidden">
+<div class="bg-error h-full rounded-DEFAULT" style="width: 38%;"></div>
+</div>
+<span class="font-code-sm text-code-sm text-error font-bold w-12 text-right">0.38</span>
+<span class="px-space-xs py-0.2 bg-error-container text-on-error-container font-label-caps text-[9px] rounded-DEFAULT">PRUNED</span>
+</div>
+<!-- Chunk #5 -->
+<div class="flex items-center gap-space-sm p-1.5 rounded-lg bg-surface-container/60 hover:bg-surface-container-high transition-colors">
+<span class="font-code-sm text-code-sm text-on-surface-variant font-semibold w-6">#5</span>
+<div class="flex-1 bg-surface-container-lowest h-3.5 rounded-DEFAULT overflow-hidden">
+<div class="bg-error h-full rounded-DEFAULT" style="width: 22%;"></div>
+</div>
+<span class="font-code-sm text-code-sm text-error font-bold w-12 text-right">0.22</span>
+<span class="px-space-xs py-0.2 bg-error-container text-on-error-container font-label-caps text-[9px] rounded-DEFAULT">PRUNED</span>
+</div>
+</div>
+</div>
+<!-- Wireframe Isometric Chunk Match Visualizer -->
+<div class="w-full bg-surface-container rounded-lg p-space-sm flex items-center justify-between">
+<div class="flex flex-col gap-0.5">
+<span class="font-label-caps text-label-caps text-on-surface-variant">VECTOR HYPERSPACE</span>
+<span class="font-code-sm text-code-sm text-on-surface">k-NN Nearest Neighbor Hit</span>
+<span class="font-code-sm text-code-sm text-primary-container">Cosine distance: 0.290</span>
+</div>
+<!-- 160px isometric wireframe line illustration -->
+<div class="w-[160px] h-[78px] flex items-center justify-center">
+<svg class="w-full h-full" viewBox="0 0 160 80">
+<defs>
+<linearGradient id="wireframeGrad" x1="0%" x2="100%" y1="0%" y2="100%">
+<stop offset="0%" stop-color="#ff571d" stop-opacity="0.8"></stop>
+<stop offset="100%" stop-color="#0566d9" stop-opacity="0.2"></stop>
+</linearGradient>
+</defs>
+<!-- Isometric tile grid -->
+<!-- Tile 1 (Inactive) -->
+<polygon fill="#201f1f" points="40,24 75,10 110,24 75,38" stroke="#353534" stroke-width="1"></polygon>
+<!-- Tile 2 (Inactive) -->
+<polygon fill="#201f1f" points="10,40 45,26 80,40 45,54" stroke="#353534" stroke-width="1"></polygon>
+<!-- Tile 3 (MATCHED / ORANGE ACCENT) -->
+<polygon fill="#353534" points="75,40 110,26 145,40 110,54" stroke="#ff571d" stroke-width="1.8"></polygon>
+<!-- Tile 4 (Inactive) -->
+<polygon fill="#201f1f" points="45,56 80,42 115,56 80,70" stroke="#353534" stroke-width="1"></polygon>
+<!-- Projection Vector ray -->
+<line stroke="#ff571d" stroke-dasharray="2 2" stroke-width="1.5" x1="110" x2="110" y1="2" y2="40"></line>
+<circle cx="110" cy="40" fill="#ff571d" r="3"></circle>
+<circle cx="110" cy="2" fill="#adc6ff" r="2.5"></circle>
+<text fill="#ffb59f" font-family="JetBrains Mono" font-size="8" x="115" y="10">q_emb</text>
+</svg>
+</div>
+</div>
+</div>
+<div class="font-code-sm text-code-sm text-on-surface-variant flex items-center justify-between pt-space-xs">
+<span class="">HNSW: efSearch = 64 · M = 16</span>
+<span class="text-tertiary">3 chunks above τ</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Live Events Stream Column (4 cols, #111113 style surface) -->
+<div class="lg:col-span-4 bg-surface-container flex flex-col justify-between p-space-lg gap-space-md">
+<!-- Live Events Header & Segment Tabs -->
+<div class="flex flex-col gap-space-md">
+<div class="flex items-center justify-between pb-space-xs">
+<div class="flex items-center gap-space-sm">
+<span class="w-2.5 h-2.5 rounded-full bg-tertiary shadow-sm"></span>
+<span class="font-headline-sm text-headline-sm text-on-surface font-semibold tracking-tight">LIVE EVENTS</span>
+</div>
+<span class="font-code-sm text-code-sm text-tertiary font-medium">STREAMING</span>
+</div>
+<!-- Filter Tabs -->
+<div class="flex items-center gap-space-md font-body-sm text-body-sm">
+<button class="text-on-surface font-medium border-b-2 border-primary-container pb-1 transition-colors">All</button>
+<button class="text-on-surface-variant hover:text-on-surface pb-1 transition-colors">Query</button>
+<button class="text-on-surface-variant hover:text-on-surface pb-1 transition-colors">Index</button>
+<button class="text-on-surface-variant hover:text-on-surface pb-1 transition-colors">Errors (0)</button>
+</div>
+<!-- Chronological Monospace Event Log -->
+<div class="flex flex-col gap-1.5 overflow-y-auto max-h-[calc(100vh-270px)] pr-1" id="events-log-container">
+<!-- Event Line 1 -->
+<div class="p-2 rounded-lg bg-surface-container-low hover:bg-surface-container-high transition-colors flex flex-col gap-1">
+<div class="flex items-center justify-between font-code-sm text-code-sm">
+<span class="text-on-surface-variant">16:42:01.892</span>
+<span class="text-tertiary font-semibold">11 ms</span>
+</div>
+<div class="flex items-center justify-between font-code-sm text-code-sm">
+<span class="text-on-surface font-medium truncate">citations_verify</span>
+<span class="text-secondary font-mono text-[10px]">9f1c2a7b</span>
+</div>
+</div>
+<!-- Event Line 2 -->
+<div class="p-2 rounded-lg bg-surface-container-low hover:bg-surface-container-high transition-colors flex flex-col gap-1">
+<div class="flex items-center justify-between font-code-sm text-code-sm">
+<span class="text-on-surface-variant">16:42:01.881</span>
+<span class="text-on-surface font-semibold">2,950 ms</span>
+</div>
+<div class="flex items-center justify-between font-code-sm text-code-sm">
+<span class="text-on-surface font-medium truncate">llm_completion_stream</span>
+<span class="text-secondary font-mono text-[10px]">9f1c2a7b</span>
+</div>
+</div>
+<!-- Event Line 3 -->
+<div class="p-2 rounded-lg bg-surface-container-low hover:bg-surface-container-high transition-colors flex flex-col gap-1">
+<div class="flex items-center justify-between font-code-sm text-code-sm">
+<span class="text-on-surface-variant">16:41:58.931</span>
+<span class="text-tertiary font-semibold">1 ms</span>
+</div>
+<div class="flex items-center justify-between font-code-sm text-code-sm">
+<span class="text-on-surface font-medium truncate">build_prompt_context</span>
+<span class="text-secondary font-mono text-[10px]">9f1c2a7b</span>
+</div>
+</div>
+<!-- Event Line 4 -->
+<div class="p-2 rounded-lg bg-surface-container-low hover:bg-surface-container-high transition-colors flex flex-col gap-1">
+<div class="flex items-center justify-between font-code-sm text-code-sm">
+<span class="text-on-surface-variant">16:41:58.930</span>
+<span class="text-tertiary font-semibold">0 ms</span>
+</div>
+<div class="flex items-center justify-between font-code-sm text-code-sm">
+<span class="text-primary-container font-medium truncate">confidence_gate_pass</span>
+<span class="text-secondary font-mono text-[10px]">9f1c2a7b</span>
+</div>
+</div>
+<!-- Event Line 5 -->
+<div class="p-2 rounded-lg bg-surface-container-low hover:bg-surface-container-high transition-colors flex flex-col gap-1">
+<div class="flex items-center justify-between font-code-sm text-code-sm">
+<span class="text-on-surface-variant">16:41:58.924</span>
+<span class="text-tertiary font-semibold">6 ms</span>
+</div>
+<div class="flex items-center justify-between font-code-sm text-code-sm">
+<span class="text-on-surface font-medium truncate">retrieve_knn_candidates</span>
+<span class="text-secondary font-mono text-[10px]">9f1c2a7b</span>
+</div>
+</div>
+<!-- Event Line 6 -->
+<div class="p-2 rounded-lg bg-surface-container-low hover:bg-surface-container-high transition-colors flex flex-col gap-1">
+<div class="flex items-center justify-between font-code-sm text-code-sm">
+<span class="text-on-surface-variant">16:41:58.886</span>
+<span class="text-on-surface font-semibold">38 ms</span>
+</div>
+<div class="flex items-center justify-between font-code-sm text-code-sm">
+<span class="text-on-surface font-medium truncate">bge_embed_question</span>
+<span class="text-secondary font-mono text-[10px]">9f1c2a7b</span>
+</div>
+</div>
+<!-- Event Line 7 -->
+<div class="p-2 rounded-lg bg-surface-container-low hover:bg-surface-container-high transition-colors flex flex-col gap-1">
+<div class="flex items-center justify-between font-code-sm text-code-sm">
+<span class="text-on-surface-variant">16:40:12.440</span>
+<span class="text-tertiary font-semibold">14 ms</span>
+</div>
+<div class="flex items-center justify-between font-code-sm text-code-sm">
+<span class="text-on-surface-variant font-medium truncate">index_commit_hnsw</span>
+<span class="text-secondary font-mono text-[10px]">5e3d1a89</span>
+</div>
+</div>
+<!-- Event Line 8 -->
+<div class="p-2 rounded-lg bg-surface-container-low hover:bg-surface-container-high transition-colors flex flex-col gap-1">
+<div class="flex items-center justify-between font-code-sm text-code-sm">
+<span class="text-on-surface-variant">16:40:12.345</span>
+<span class="text-on-surface font-semibold">95 ms</span>
+</div>
+<div class="flex items-center justify-between font-code-sm text-code-sm">
+<span class="text-on-surface-variant font-medium truncate">index_build_graph</span>
+<span class="text-secondary font-mono text-[10px]">5e3d1a89</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Events Bottom Operations Toolbar -->
+<div class="pt-space-md flex items-center justify-between font-code-sm text-code-sm text-on-surface-variant">
+<div class="flex items-center gap-space-lg">
+<button class="hover:text-primary-container transition-colors" id="btn-pause-log">Pause</button>
+<button class="hover:text-on-surface transition-colors" id="btn-copy-log">Copy JSON</button>
+</div>
+<span class="text-[11px]">Ring buffer 50 / 500</span>
+</div>
+</div>
+</div>
+</div>
+<script>
+  // Simple interactive client-side toggle behaviors
+  const stripBtn = document.getElementById('toggle-index-strip');
+  const indexContainer = document.getElementById('index-pipeline-container');
+  const indexChevron = document.getElementById('index-chevron');
+
+  if (stripBtn && indexContainer && indexChevron) {
+    stripBtn.addEventListener('click', () => {
+      const isHidden = indexContainer.classList.contains('hidden');
+      if (isHidden) {
+        indexContainer.classList.remove('hidden');
+        indexChevron.style.transform = 'rotate(180deg)';
+      } else {
+        indexContainer.classList.add('hidden');
+        indexChevron.style.transform = 'rotate(0deg)';
+      }
+    });
+  }
+
+  // Toggle Live vs Demo buttons
+  const btnLive = document.getElementById('toggle-live');
+  const btnDemo = document.getElementById('toggle-demo');
+  if (btnLive && btnDemo) {
+    btnLive.addEventListener('click', () => {
+      btnLive.className = 'px-space-sm py-0.5 rounded-DEFAULT text-on-primary bg-primary-container font-code-sm text-code-sm transition-colors';
+      btnDemo.className = 'px-space-sm py-0.5 rounded-DEFAULT text-on-surface-variant hover:text-on-surface font-code-sm text-code-sm transition-colors';
+    });
+    btnDemo.addEventListener('click', () => {
+      btnDemo.className = 'px-space-sm py-0.5 rounded-DEFAULT text-on-primary bg-primary-container font-code-sm text-code-sm transition-colors';
+      btnLive.className = 'px-space-sm py-0.5 rounded-DEFAULT text-on-surface-variant hover:text-on-surface font-code-sm text-code-sm transition-colors';
+    });
+  }
+
+  // Pause / Resume Event Log
+  const pauseBtn = document.getElementById('btn-pause-log');
+  if (pauseBtn) {
+    let paused = false;
+    pauseBtn.addEventListener('click', () => {
+      paused = !paused;
+      pauseBtn.textContent = paused ? 'Resume' : 'Pause';
+      pauseBtn.classList.toggle('text-primary-container', paused);
+    });
+  }
+</script></main><footer class="w-full bg-surface-container-lowest border-t border-surface-variant"><div class="w-full px-space-xl py-space-xl"><div class="grid grid-cols-2 md:grid-cols-4 gap-space-xl pb-space-xl border-b border-surface-variant"><div class="flex flex-col gap-space-sm"><span class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Architecture</span><a class="font-code-sm text-code-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="architecture" href="#">Overview &amp; Pipeline</a><a class="font-code-sm text-code-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="architecture" href="#">Keyframe Visualizer</a><a class="font-code-sm text-code-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="architecture" href="#">Chunking Topology</a></div><div class="flex flex-col gap-space-sm"><span class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Benchmarks</span><a class="font-code-sm text-code-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="benchmarks" href="#">Retrieval Latency</a><a class="font-code-sm text-code-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="benchmarks" href="#">Token Dissipation</a><a class="font-code-sm text-code-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="benchmarks" href="#">Vector Recall Index</a></div><div class="flex flex-col gap-space-sm"><span class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Reproduce</span><a class="font-code-sm text-code-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="proof" href="#">Trace Receipts</a><a class="font-code-sm text-code-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="proof" href="#">Dataset Artifacts</a><a class="font-code-sm text-code-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="proof" href="#">Verification CLI</a></div><div class="flex flex-col gap-space-sm"><span class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Compliance</span><a class="font-code-sm text-code-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="compliance" href="#">Cryptographic Audit</a><a class="font-code-sm text-code-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="compliance" href="#">Privacy Enclave</a><a class="font-code-sm text-code-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="compliance" href="#">MIT License Spec</a></div></div><div class="pt-space-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-space-md"><div class="font-code-sm text-code-sm text-on-surface-variant">DocuMind · v1.0.0 · MIT</div><div class="font-code-sm text-code-sm text-on-surface-variant">2025-05-18T09:41:22Z · SHA-256: 7f83b165...8e01 · OPEN SOURCE LICENSE</div></div></div></footer>
+<script src="../api.js"></script>
+</body></html>

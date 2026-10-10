@@ -33,6 +33,7 @@ from fastapi import (
     status,
 )
 from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, field_validator
 from starlette.exceptions import HTTPException as StarletteHTTPException
@@ -326,6 +327,14 @@ def create_app(
     app.state.limiter = limiter or TokenBucketLimiter(rate_per_min=app_settings.rate_limit_per_min)
     app.state.write_lock = threading.Lock()
 
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["http://localhost:5500", "http://127.0.0.1:5500"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
     # Register Request ID and security headers middleware
     @app.middleware("http")
     async def request_middleware(request: Request, call_next: Any) -> Response:
@@ -355,6 +364,7 @@ def create_app(
             "index_chunks": int(index_chunks),
             "embed_model": model_name,
             "schema_version": 1,
+            "tau": engine.settings.min_score if engine else 0.45,
         }
 
     # Protected v1 API router
@@ -634,6 +644,61 @@ def create_app(
                 "X-Request-ID": req_id,
                 "X-Content-Type-Options": "nosniff",
                 "Cache-Control": "no-store",
+            },
+        )
+
+    @v1_router.get("/documents/{source:path}/chunks")
+    def list_chunks(source: str, request: Request) -> JSONResponse:
+        engine: DocuMind = request.app.state.engine
+        chunks = engine.store.chunks_for(source)
+        data = [
+            {
+                "id": c.id,
+                "text": c.text,
+                "chunk_index": c.chunk_index,
+                "score": None,
+            }
+            for c in chunks
+        ]
+        return JSONResponse(status_code=status.HTTP_200_OK, content=data)
+
+    @v1_router.get("/events")
+    def get_events(request: Request) -> JSONResponse:
+        engine: DocuMind = request.app.state.engine
+        return JSONResponse(status_code=status.HTTP_200_OK, content=engine.get_events())
+
+    @v1_router.get("/eval")
+    def get_eval(request: Request) -> JSONResponse:
+        import json
+
+        report_path = Path("evals/REPORT.json")
+        if report_path.exists():
+            return JSONResponse(
+                status_code=status.HTTP_200_OK,
+                content=json.loads(report_path.read_text()),
+            )
+        return JSONResponse(
+            status_code=status.HTTP_200_OK,
+            content={"available": False, "message": "run scripts/run_eval.py first"},
+        )
+
+    @v1_router.get("/meta")
+    def get_meta(request: Request) -> JSONResponse:
+        import json
+
+        meta_path = Path("docs/meta.json")
+        if meta_path.exists():
+            return JSONResponse(
+                status_code=status.HTTP_200_OK,
+                content=json.loads(meta_path.read_text()),
+            )
+        return JSONResponse(
+            status_code=status.HTTP_200_OK,
+            content={
+                "adrs": [],
+                "threats": [],
+                "timeline": [],
+                "build": {"tests": "N/A", "coverage": "N/A"},
             },
         )
 

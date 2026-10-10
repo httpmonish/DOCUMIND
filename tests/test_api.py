@@ -43,6 +43,7 @@ def test_healthz_unauthenticated_and_clean_response(api_engine):
             "index_chunks": 2,
             "embed_model": cfg.embed_model,
             "schema_version": 1,
+            "tau": cfg.min_score,
         }
         assert "paths" not in str(data)
         assert resp.headers.get("X-Content-Type-Options") == "nosniff"

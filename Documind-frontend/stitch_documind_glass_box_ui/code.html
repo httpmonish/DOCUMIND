@@ -1,0 +1,1237 @@
+<!DOCTYPE html><html class="dark" lang="en"><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0" name="viewport"><meta content="web_standard" name="shell-type"><link href="https://fonts.googleapis.com" rel="preconnect"><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+          "on-surface-variant": "#e6beb2",
+          "primary-fixed": "#ffdbd1",
+          "on-error-container": "#ffdad6",
+          "on-error": "#690005",
+          "inverse-primary": "#af3100",
+          "on-tertiary-container": "#00311f",
+          "tertiary-fixed": "#6ffbbe",
+          "background": "#131313",
+          "surface-variant": "#353534",
+          "error": "#ffb4ab",
+          "on-primary": "#5f1600",
+          "inverse-surface": "#e5e2e1",
+          "on-tertiary": "#003824",
+          "on-secondary-fixed-variant": "#004395",
+          "on-secondary-fixed": "#001a42",
+          "secondary-container": "#0566d9",
+          "error-container": "#93000a",
+          "on-tertiary-fixed-variant": "#005236",
+          "surface-container-low": "#1c1b1b",
+          "surface-container": "#201f1f",
+          "surface-dim": "#131313",
+          "primary-container": "#ff571d",
+          "secondary": "#adc6ff",
+          "on-secondary-container": "#e6ecff",
+          "surface-container-highest": "#353534",
+          "on-tertiary-fixed": "#002113",
+          "tertiary": "#4edea3",
+          "primary": "#ffb59f",
+          "inverse-on-surface": "#313030",
+          "on-primary-fixed": "#3a0a00",
+          "on-background": "#e5e2e1",
+          "outline-variant": "#5c4038",
+          "surface-tint": "#ffb59f",
+          "secondary-fixed-dim": "#adc6ff",
+          "tertiary-container": "#00a572",
+          "on-primary-container": "#531200",
+          "surface-container-lowest": "#0e0e0e",
+          "surface-container-high": "#2a2a2a",
+          "outline": "#ad897e",
+          "surface": "#131313",
+          "on-secondary": "#002e6a",
+          "on-primary-fixed-variant": "#862300",
+          "primary-fixed-dim": "#ffb59f",
+          "tertiary-fixed-dim": "#4edea3",
+          "on-surface": "#e5e2e1",
+          "surface-bright": "#3a3939",
+          "secondary-fixed": "#d8e2ff"
+        },
+        "borderRadius": {
+          "DEFAULT": "0.125rem",
+          "lg": "0.25rem",
+          "xl": "0.5rem",
+          "full": "0.75rem"
+        },
+        "spacing": {
+          "gutter-dense": "0.5rem",
+          "gutter": "1rem",
+          "margin-mobile": "0.75rem",
+          "space-sm": "0.5rem",
+          "space-lg": "1rem",
+          "space-xl": "1.5rem",
+          "margin": "1.5rem",
+          "space-xs": "0.25rem",
+          "space-md": "0.75rem"
+        },
+        "fontFamily": {
+          "headline-sm": [
+            "Inter"
+          ],
+          "metric-display": [
+            "JetBrains Mono"
+          ],
+          "headline-lg": [
+            "Inter"
+          ],
+          "code-lg": [
+            "JetBrains Mono"
+          ],
+          "label-caps": [
+            "JetBrains Mono"
+          ],
+          "code-sm": [
+            "JetBrains Mono"
+          ],
+          "body-lg": [
+            "Inter"
+          ],
+          "body-sm": [
+            "Inter"
+          ],
+          "headline-xl": [
+            "Inter"
+          ]
+        },
+        "fontSize": {
+          "headline-sm": [
+            "18px",
+            {
+              "lineHeight": "24px",
+              "letterSpacing": "-0.015em",
+              "fontWeight": "500"
+            }
+          ],
+          "metric-display": [
+            "28px",
+            {
+              "lineHeight": "32px",
+              "letterSpacing": "-0.04em",
+              "fontWeight": "600"
+            }
+          ],
+          "headline-lg": [
+            "24px",
+            {
+              "lineHeight": "30px",
+              "letterSpacing": "-0.025em",
+              "fontWeight": "600"
+            }
+          ],
+          "code-lg": [
+            "13px",
+            {
+              "lineHeight": "20px",
+              "letterSpacing": "-0.01em",
+              "fontWeight": "500"
+            }
+          ],
+          "label-caps": [
+            "10px",
+            {
+              "lineHeight": "14px",
+              "letterSpacing": "0.08em",
+              "fontWeight": "600"
+            }
+          ],
+          "code-sm": [
+            "11px",
+            {
+              "lineHeight": "16px",
+              "letterSpacing": "0em",
+              "fontWeight": "400"
+            }
+          ],
+          "body-lg": [
+            "15px",
+            {
+              "lineHeight": "22px",
+              "letterSpacing": "-0.01em",
+              "fontWeight": "400"
+            }
+          ],
+          "body-sm": [
+            "13px",
+            {
+              "lineHeight": "18px",
+              "letterSpacing": "0em",
+              "fontWeight": "400"
+            }
+          ],
+          "headline-xl": [
+            "32px",
+            {
+              "lineHeight": "38px",
+              "letterSpacing": "-0.03em",
+              "fontWeight": "600"
+            }
+          ]
+        }
+      },
+    },
+  }</script></head><body class="bg-surface-container-lowest font-body-sm text-body-sm text-on-surface antialiased"><header class="fixed top-0 left-0 w-full z-50 bg-surface-container-lowest border-b border-surface-variant"><div class="h-14 w-full px-space-xl flex items-center justify-between"><div class="flex items-center gap-space-xl"><div class="flex items-center gap-space-md"><img alt="DocuMind Hexagon Logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1XRUD2oweWEAtgxPVNbtPRwkJBF3wYgDRNl667CBlLF3HQ31f4sfjCwfqQC2nYjTAuHLW1VsP8pPLfhUq1cNTTaBmbEfIHCI9SCIRG_36__XRSX64FrdugNgTz8ksrNWRKuIi-WVVw6T1qqifdi0BPtJK52Yekh2M5xrl-F5t_SHHcd9QseCPZx59tSiEPBBn2SYYeOUhiJfh3f9Z8i31cgnI3des34gNidZv4fPfO2qk1326o423BtxCTj"><span class="font-headline-sm text-headline-sm text-on-surface tracking-tight">DocuMind</span></div><nav class="hidden md:flex items-center gap-space-xl" data-active-classes="text-on-surface font-headline-sm text-headline-sm"><a aria-current="page" class="transition-colors text-on-surface font-headline-sm text-headline-sm" data-path="architecture" href="#">Architecture</a><a class="font-headline-sm text-headline-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="console" href="#">Console</a><a class="font-headline-sm text-headline-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="library" href="#">Library</a><a class="font-headline-sm text-headline-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="proof" href="#">Proof</a></nav></div><div class="flex items-center gap-space-lg"><div class="hidden sm:flex items-center gap-space-xs px-space-md py-space-xs bg-surface-container-low border border-surface-variant rounded-DEFAULT"><span class="w-1.5 h-1.5 rounded-full bg-tertiary inline-block"></span><span class="font-code-sm text-code-sm text-on-surface tracking-wider uppercase">LIVE · v1.0.0 · a1b2c3d</span></div><a class="inline-flex items-center justify-center px-space-lg py-space-xs bg-primary-container hover:bg-inverse-primary text-on-primary-container font-code-sm text-code-sm tracking-wider uppercase rounded-xl transition-colors font-medium" data-path="console" href="#">OPEN CONSOLE ↗</a><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="w-full pt-14 bg-surface-container-lowest min-h-screen"><div class="flex flex-col w-full text-on-surface bg-background antialiased selection:bg-primary-container selection:text-on-primary-container">
+<!-- TOP RUNTIME BANNER TICKER -->
+<div class="w-full bg-surface-container-lowest border-b border-surface-variant px-space-lg py-1.5 flex items-center justify-between overflow-x-auto text-[11px] font-code-sm">
+<div class="flex items-center gap-space-lg shrink-0">
+<span class="flex items-center gap-1.5 text-tertiary">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary animate-pulse"></span>
+        GATEWAY: DETERMINISTIC PIPELINE ACTIVE
+      </span>
+<span class="text-surface-variant">/</span>
+<span class="text-on-surface-variant font-code-sm">EMBEDDINGS: all-MiniLM-L6-v2 (384-d)</span>
+<span class="text-surface-variant">/</span>
+<span class="text-on-surface-variant font-code-sm">TAU CONFIDENCE: τ = 0.45</span>
+<span class="text-surface-variant">/</span>
+<span class="text-on-surface-variant font-code-sm">STORE: CHROMA LOCAL ENGINE</span>
+</div>
+<div class="flex items-center gap-space-md shrink-0 text-on-surface-variant">
+<span class="font-code-sm uppercase tracking-widest text-[10px]">VERIFIED RECEIPT SHA: 9f8a32d..c4</span>
+<span class="text-tertiary text-[10px]">● ZERO NETWORK PORTS</span>
+</div>
+</div>
+<!-- MAIN CANVAS CONTAINER -->
+<div class="w-full max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-12 flex flex-col gap-[120px]">
+<!-- ========================================================================= -->
+<!-- SECTION 1: HERO -->
+<!-- ========================================================================= -->
+<section class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center relative">
+<!-- 4 Orange Pixel Squares Accent -->
+<div class="absolute -top-6 left-0 flex gap-1 opacity-60 pointer-events-none">
+<div class="w-1.5 h-1.5 bg-primary-container"></div>
+<div class="w-1.5 h-1.5 bg-primary-container"></div>
+<div class="w-1.5 h-1.5 bg-primary-container opacity-40"></div>
+<div class="w-1.5 h-1.5 bg-primary-container opacity-20"></div>
+</div>
+<!-- Left Column: Copy & Command Telemetry -->
+<div class="lg:col-span-6 flex flex-col justify-center">
+<div class="flex items-center gap-2 mb-4">
+<span class="font-label-caps text-label-caps text-primary-container tracking-widest">01 / GLASS-BOX RAG</span>
+<span class="h-px w-10 bg-outline-variant"></span>
+<span class="font-code-sm text-code-sm text-on-surface-variant">FULL RETRIEVAL AUDIT</span>
+</div>
+<h1 class="text-[44px] sm:text-[56px] lg:text-[68px] leading-[1.04] font-headline-xl font-semibold tracking-[-0.035em] text-on-surface mb-6">
+          Ask your documents.<br>
+<span class="text-on-surface-variant">Watch every step.</span>
+</h1>
+<p class="text-body-lg font-body-lg text-on-surface-variant max-w-xl mb-8 leading-relaxed">
+          DocuMind indexes your PDFs, answers with verified citations, and abstains when it isn’t sure. Every mathematical stage is measured, logged, and inspectable in real-time.
+        </p>
+<!-- CTAs -->
+<div class="flex flex-wrap items-center gap-4 mb-10">
+<a class="inline-flex items-center justify-center px-6 py-3 bg-primary-container hover:bg-inverse-primary text-on-primary-container font-code-sm text-code-sm tracking-wider uppercase rounded-xl transition-all font-semibold shadow-lg shadow-primary-container/20" data-path="console" href="#">
+            OPEN LIVE CONSOLE ↗
+          </a>
+<a class="inline-flex items-center justify-center px-6 py-3 bg-surface-container-high border border-outline-variant hover:border-primary-container text-on-surface font-code-sm text-code-sm tracking-wider uppercase rounded-xl transition-colors" href="#section-evidence">
+            SEE THE EVIDENCE
+          </a>
+</div>
+<!-- 4 Monospace Stats Separated by hairlines -->
+<div class="grid grid-cols-2 sm:grid-cols-4 border-t border-b border-surface-variant py-4 divide-y sm:divide-y-0 sm:divide-x divide-surface-variant">
+<div class="px-3 py-2 flex flex-col">
+<span class="font-label-caps text-label-caps text-on-surface-variant mb-1">TOTAL VECTORS</span>
+<span id="hero-chunks" class="font-metric-display text-[18px] text-on-surface">1,240</span>
+<span class="font-code-sm text-[10px] text-tertiary">CHUNKS INDEXED</span>
+</div>
+<div class="px-3 py-2 flex flex-col">
+<span class="font-label-caps text-label-caps text-on-surface-variant mb-1">E2E LATENCY</span>
+<span id="hero-latency" class="font-metric-display text-[18px] text-on-surface">3.0 s</span>
+<span class="font-code-sm text-[10px] text-tertiary">MEDIAN EXECUTION</span>
+</div>
+<div class="px-3 py-2 flex flex-col">
+<span class="font-label-caps text-label-caps text-on-surface-variant mb-1">COST EQUIVALENT</span>
+<span id="hero-cost" class="font-metric-display text-[18px] text-on-surface">₹0.31</span>
+<span class="font-code-sm text-[10px] text-on-surface-variant">PER QUERY</span>
+</div>
+<div class="px-3 py-2 flex flex-col">
+<span class="font-label-caps text-label-caps text-on-surface-variant mb-1">COSINE CUTOFF</span>
+<span id="hero-tau" class="font-metric-display text-[18px] text-primary-container">τ 0.45</span>
+<span class="font-code-sm text-[10px] text-primary-container">GATE THRESHOLD</span>
+</div>
+</div>
+</div>
+<!-- Right Column: Isometric Exploded Stack -->
+<div class="lg:col-span-6 bg-surface-container-low border border-surface-variant rounded-xl p-6 relative overflow-hidden flex items-center justify-center min-h-[460px]">
+<!-- Blueprint Grid Mesh -->
+<div class="absolute inset-0 opacity-15 pointer-events-none" style="background-image: radial-gradient(#ad897e 1px, transparent 1px); background-size: 16px 16px;"></div>
+<svg class="w-full h-auto max-w-[500px] select-none" fill="none" stroke="currentColor" viewBox="0 0 540 440">
+<!-- Guide lines (Exploded axis) -->
+<line stroke="#5c4038" stroke-dasharray="3 3" stroke-width="1" x1="270" x2="270" y1="40" y2="390"></line>
+<line stroke="#353534" stroke-dasharray="2 2" stroke-width="0.8" x1="120" x2="120" y1="130" y2="350"></line>
+<line stroke="#353534" stroke-dasharray="2 2" stroke-width="0.8" x1="420" x2="420" y1="130" y2="350"></line>
+<!-- LAYER 1: Top Document Sheet -->
+<g transform="translate(0, -10)">
+<!-- Top Face -->
+<polygon fill="#1c1b1b" points="270,45 420,105 270,165 120,105" stroke="#e5e2e1" stroke-width="1.2"></polygon>
+<!-- Thickness / Droop -->
+<polygon fill="#0e0e0e" points="120,105 120,113 270,173 420,113 420,105 270,165" stroke="#5c4038" stroke-width="1"></polygon>
+<!-- Wireframe text lines on isometric plane -->
+<line stroke="#8A8690" stroke-width="1.2" x1="180" x2="250" y1="100" y2="128"></line>
+<line stroke="#8A8690" stroke-width="1.2" x1="170" x2="310" y1="110" y2="132"></line>
+<line stroke="#8A8690" stroke-width="1.2" x1="200" x2="340" y1="120" y2="142"></line>
+<!-- Callout -->
+<circle cx="390" cy="118" fill="#e5e2e1" r="2.5"></circle>
+<line stroke="#e5e2e1" stroke-width="0.8" x1="390" x2="475" y1="118" y2="85"></line>
+<text fill="#e5e2e1" font-family="JetBrains Mono" font-size="10" letter-spacing="0.08em" x="480" y="88">DOCUMENT LAYER</text>
+</g>
+<!-- LAYER 2: Chunk Tiles Grid -->
+<g transform="translate(0, 80)">
+<!-- 4 Iso Chunks -->
+<!-- Chunk 0 -->
+<polygon fill="#201f1f" points="200,90 250,110 200,130 150,110" stroke="#e5e2e1" stroke-width="1"></polygon>
+<text fill="#8A8690" font-family="JetBrains Mono" font-size="8" x="195" y="113">C_0</text>
+<!-- Chunk 1 -->
+<polygon fill="#201f1f" points="270,118 320,138 270,158 220,138" stroke="#e5e2e1" stroke-width="1"></polygon>
+<text fill="#8A8690" font-family="JetBrains Mono" font-size="8" x="265" y="141">C_1</text>
+<!-- Chunk 2 -->
+<polygon fill="#201f1f" points="340,90 390,110 340,130 290,110" stroke="#e5e2e1" stroke-width="1"></polygon>
+<text fill="#8A8690" font-family="JetBrains Mono" font-size="8" x="335" y="113">C_2</text>
+<!-- Chunk 3 -->
+<polygon fill="#201f1f" points="270,62 320,82 270,102 220,82" stroke="#e5e2e1" stroke-width="1"></polygon>
+<text fill="#8A8690" font-family="JetBrains Mono" font-size="8" x="265" y="85">C_3</text>
+<!-- Callout -->
+<circle cx="150" cy="110" fill="#e5e2e1" r="2.5"></circle>
+<line stroke="#e5e2e1" stroke-width="0.8" x1="150" x2="65" y1="110" y2="95"></line>
+<text fill="#e5e2e1" font-family="JetBrains Mono" font-size="10" letter-spacing="0.08em" x="15" y="98">200-W CHUNKS</text>
+</g>
+<!-- LAYER 3: 384-d Vector Layer (Orange Highlighted) -->
+<g transform="translate(0, 180)">
+<!-- Iso Plate base -->
+<polygon fill="#131313" points="270,55 390,105 270,155 150,105" stroke="#5c4038" stroke-dasharray="2 2" stroke-width="0.8"></polygon>
+<!-- Vertical Vector Spikes (Highlighted strictly in Rust Orange #F05A24 / primary-container) -->
+<line stroke="#ff571d" stroke-width="2.5" x1="210" x2="210" y1="105" y2="70"></line>
+<line stroke="#ff571d" stroke-width="2.5" x1="230" x2="230" y1="115" y2="60"></line>
+<line stroke="#ff571d" stroke-width="2.5" x1="250" x2="250" y1="125" y2="82"></line>
+<line stroke="#ff571d" stroke-width="3" x1="270" x2="270" y1="135" y2="50"></line>
+<line stroke="#ff571d" stroke-width="2.5" x1="290" x2="290" y1="125" y2="75"></line>
+<line stroke="#ff571d" stroke-width="2.5" x1="310" x2="310" y1="115" y2="65"></line>
+<line stroke="#ff571d" stroke-width="2.5" x1="330" x2="330" y1="105" y2="80"></line>
+<!-- Peak Spark Node -->
+<circle cx="270" cy="50" fill="#ff571d" r="3.5"></circle>
+<!-- Callout -->
+<line stroke="#ff571d" stroke-width="1" x1="270" x2="475" y1="50" y2="35"></line>
+<circle cx="475" cy="35" fill="#ff571d" r="2"></circle>
+<text fill="#ff571d" font-family="JetBrains Mono" font-size="10" font-weight="600" letter-spacing="0.08em" x="480" y="38">384-D VECTORS</text>
+</g>
+<!-- LAYER 4: Chroma Vector Store (Cylinder at Bottom) -->
+<g transform="translate(0, 275)">
+<!-- Top Ellipse -->
+<ellipse cx="270" cy="65" fill="#201f1f" rx="110" ry="32" stroke="#e5e2e1" stroke-width="1"></ellipse>
+<!-- Body -->
+<path d="M 160,65 v 45 a 110,32 0 0,0 220,0 v -45" fill="#131313" stroke="#e5e2e1" stroke-width="1"></path>
+<!-- Center Ring Division -->
+<path d="M 160,88 a 110,32 0 0,0 220,0" stroke="#5c4038" stroke-dasharray="2 2" stroke-width="1"></path>
+<!-- Internal DB Sector -->
+<ellipse cx="270" cy="65" fill="none" rx="70" ry="20" stroke="#5c4038" stroke-width="0.8"></ellipse>
+<!-- Callout -->
+<circle cx="270" cy="98" fill="#e5e2e1" r="2.5"></circle>
+<line stroke="#e5e2e1" stroke-width="0.8" x1="270" x2="90" y1="98" y2="125"></line>
+<text fill="#e5e2e1" font-family="JetBrains Mono" font-size="10" letter-spacing="0.08em" x="15" y="128">CHROMA STORE</text>
+</g>
+</svg>
+<div class="absolute bottom-3 right-4 font-code-sm text-[10px] text-on-surface-variant flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 bg-primary-container inline-block"></span>
+          STACK TOPOLOGY: ISOLATED PERSISTENCE
+        </div>
+</div>
+</section>
+<!-- ========================================================================= -->
+<!-- SECTION 2: 02 / THE JOURNEY OF A DOCUMENT (INDEXING, 6 Keyframes) -->
+<!-- ========================================================================= -->
+<section class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 relative">
+<!-- Section Pixel Motif -->
+<div class="absolute -top-6 left-0 flex gap-1 opacity-60 pointer-events-none">
+<div class="w-1.5 h-1.5 bg-primary-container"></div>
+<div class="w-1.5 h-1.5 bg-primary-container"></div>
+<div class="w-1.5 h-1.5 bg-primary-container"></div>
+<div class="w-1.5 h-1.5 bg-primary-container opacity-20"></div>
+</div>
+<!-- Left Column: Pipeline Steps (5 cols) -->
+<div class="lg:col-span-5 flex flex-col justify-between">
+<div>
+<div class="flex items-center gap-2 mb-3">
+<span class="font-label-caps text-label-caps text-primary-container tracking-widest">02 / INGESTION &amp; PARSING</span>
+<span class="h-px w-8 bg-outline-variant"></span>
+<span class="font-code-sm text-code-sm text-on-surface-variant">TOTAL: 131.8 ms</span>
+</div>
+<h2 class="font-headline-lg text-[32px] sm:text-[38px] leading-tight text-on-surface font-semibold mb-4">
+            The Journey of a Document
+          </h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-8 leading-relaxed">
+            From raw filesystem drop to normalized 384-dimensional vector embedding. Ingestion enforces monotonic atomic chunk ordering to eliminate race states.
+          </p>
+<!-- Monotonic Steps List -->
+<div class="flex flex-col border-t border-surface-variant divide-y divide-surface-variant">
+<div class="py-3.5 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="font-label-caps text-primary-container">01</span>
+<span class="font-headline-sm text-headline-sm text-on-surface">Upload &amp; Ingest</span>
+</div>
+<span class="font-code-sm text-code-sm text-on-surface-variant">14 ms</span>
+</div>
+<div class="py-3.5 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="font-label-caps text-primary-container">02</span>
+<span class="font-headline-sm text-headline-sm text-on-surface">Magic-Byte Validation</span>
+</div>
+<span class="font-code-sm text-code-sm text-on-surface-variant">0.8 ms</span>
+</div>
+<div class="py-3.5 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="font-label-caps text-primary-container">03</span>
+<span class="font-headline-sm text-headline-sm text-on-surface">Layer Separation</span>
+</div>
+<span class="font-code-sm text-code-sm text-on-surface-variant">14 ms</span>
+</div>
+<div class="py-3.5 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="font-label-caps text-primary-container">04</span>
+<span class="font-headline-sm text-headline-sm text-on-surface">Sliding Chunk Window</span>
+</div>
+<span class="font-code-sm text-code-sm text-on-surface-variant">2 ms</span>
+</div>
+<div class="py-3.5 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="font-label-caps text-primary-container">05</span>
+<span class="font-headline-sm text-headline-sm text-on-surface">Dense Embedding</span>
+</div>
+<span class="font-code-sm text-code-sm text-on-surface-variant">92 ms</span>
+</div>
+<div class="py-3.5 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="font-label-caps text-primary-container">06</span>
+<span class="font-headline-sm text-headline-sm text-on-surface">Atomic Zero-Last Write</span>
+</div>
+<span class="font-code-sm text-code-sm text-on-surface-variant">11 ms</span>
+</div>
+</div>
+</div>
+<div class="mt-8 p-4 bg-surface-container border border-surface-variant rounded-xl flex items-center gap-3">
+<span class="material-symbols-outlined text-primary-container text-lg">lock_clock</span>
+<p class="font-code-sm text-code-sm text-on-surface-variant">
+            Guaranteed idempotency: SHA-256 fingerprint deduplicates exact files before chunking engine initiation.
+          </p>
+</div>
+</div>
+<!-- Right Column: 6 Stacked Keyframe Technical Blueprints (7 cols) -->
+<div class="lg:col-span-7 flex flex-col gap-4">
+<!-- K1 UPLOAD -->
+<div class="p-4 bg-surface-container-low border border-surface-variant rounded-xl">
+<div class="flex items-center justify-between mb-2">
+<span class="font-label-caps text-label-caps text-primary-container">KEYFRAME 01 · UPLOAD DISPATCH</span>
+<span class="font-code-sm text-code-sm text-on-surface-variant">14 ms</span>
+</div>
+<svg class="w-full h-auto" fill="none" viewBox="0 0 600 110">
+<!-- Tray -->
+<path d="M 50,85 L 180,85 L 200,60 L 70,60 Z" fill="#131313" stroke="#353534" stroke-width="1.2"></path>
+<!-- Sliding Sheet -->
+<path d="M 100,55 L 230,55 L 210,20 L 80,20 Z" fill="#201f1f" stroke="#e5e2e1" stroke-width="1.2"></path>
+<line stroke="#8A8690" stroke-width="1" x1="120" x2="190" y1="35" y2="35"></line>
+<line stroke="#8A8690" stroke-width="1" x1="110" x2="180" y1="45" y2="45"></line>
+<!-- Slide motion vector -->
+<line stroke="#ff571d" stroke-dasharray="3 2" stroke-width="1.5" x1="215" x2="255" y1="40" y2="40"></line>
+<polygon fill="#ff571d" points="255,40 250,37 250,43"></polygon>
+<!-- Callouts -->
+<line stroke="#5c4038" stroke-width="0.8" x1="180" x2="280" y1="20" y2="15"></line>
+<text fill="#e5e2e1" font-family="JetBrains Mono" font-size="9" x="285" y="18">name: kernel_arch_v4.pdf</text>
+<line stroke="#5c4038" stroke-width="0.8" x1="145" x2="280" y1="55" y2="55"></line>
+<text fill="#8A8690" font-family="JetBrains Mono" font-size="9" x="285" y="58">size: 1.48 MB</text>
+<line stroke="#5c4038" stroke-width="0.8" x1="190" x2="280" y1="75" y2="85"></line>
+<text fill="#ff571d" font-family="JetBrains Mono" font-size="9" x="285" y="88">sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e</text>
+</svg>
+</div>
+<!-- K2 VALIDATE -->
+<div class="p-4 bg-surface-container-low border border-surface-variant rounded-xl">
+<div class="flex items-center justify-between mb-2">
+<span class="font-label-caps text-label-caps text-primary-container">KEYFRAME 02 · MAGIC BYTES VALIDATION</span>
+<span class="font-code-sm text-code-sm text-on-surface-variant">0.8 ms</span>
+</div>
+<svg class="w-full h-auto" fill="none" viewBox="0 0 600 110">
+<!-- Sheet entering -->
+<rect fill="#1c1b1b" height="60" stroke="#e5e2e1" stroke-width="1" width="160" x="60" y="25"></rect>
+<line stroke="#8A8690" stroke-width="1" x1="75" x2="160" y1="40" y2="40"></line>
+<line stroke="#8A8690" stroke-width="1" x1="75" x2="190" y1="55" y2="55"></line>
+<!-- Laser scan bar (Orange Highlight) -->
+<line stroke="#ff571d" stroke-width="2" x1="140" x2="140" y1="12" y2="98"></line>
+<rect fill="#ff571d" height="4" width="8" x="136" y="8"></rect>
+<rect fill="#ff571d" height="4" width="8" x="136" y="98"></rect>
+<!-- Check badges -->
+<circle cx="280" cy="40" fill="#131313" r="8" stroke="#3dd6a0" stroke-width="1"></circle>
+<text fill="#3dd6a0" font-family="JetBrains Mono" font-size="10" x="277" y="44">✓</text>
+<text fill="#3dd6a0" font-family="JetBrains Mono" font-size="9" x="296" y="43">%PDF- 1.7 MAGIC BYTES</text>
+<circle cx="280" cy="72" fill="#131313" r="8" stroke="#3dd6a0" stroke-width="1"></circle>
+<text fill="#3dd6a0" font-family="JetBrains Mono" font-size="10" x="277" y="76">✓</text>
+<text fill="#3dd6a0" font-family="JetBrains Mono" font-size="9" x="296" y="75">ext .pdf SANITY MATCH</text>
+</svg>
+</div>
+<!-- K3 EXTRACT -->
+<div class="p-4 bg-surface-container-low border border-surface-variant rounded-xl">
+<div class="flex items-center justify-between mb-2">
+<span class="font-label-caps text-label-caps text-primary-container">KEYFRAME 03 · LAYER SEPARATION</span>
+<span class="font-code-sm text-code-sm text-on-surface-variant">14 ms</span>
+</div>
+<svg class="w-full h-auto" fill="none" viewBox="0 0 600 110">
+<!-- Stacked PDF page layers -->
+<polygon fill="#131313" points="50,75 140,90 190,50 100,35" stroke="#353534" stroke-width="1"></polygon>
+<polygon fill="#1c1b1b" points="60,65 150,80 200,40 110,25" stroke="#8A8690" stroke-width="1"></polygon>
+<!-- Floating orange text lines lifting off layer -->
+<line stroke="#ff571d" stroke-width="1.8" x1="90" x2="150" y1="35" y2="45"></line>
+<line stroke="#ff571d" stroke-width="1.8" x1="85" x2="165" y1="45" y2="58"></line>
+<line stroke="#ff571d" stroke-width="1.8" x1="100" x2="140" y1="55" y2="62"></line>
+<!-- Extraction callout -->
+<path d="M 160,50 L 260,35" stroke="#ff571d" stroke-dasharray="2 2" stroke-width="0.8"></path>
+<text fill="#ff571d" font-family="JetBrains Mono" font-size="9" x="268" y="38">pypdf · raw text stream extracted</text>
+<text fill="#8A8690" font-family="JetBrains Mono" font-size="9" x="268" y="58">non-text raster glyphs discarded</text>
+</svg>
+</div>
+<!-- K4 CHUNK -->
+<div class="p-4 bg-surface-container-low border border-surface-variant rounded-xl">
+<div class="flex items-center justify-between mb-2">
+<span class="font-label-caps text-label-caps text-primary-container">KEYFRAME 04 · SLIDING CHUNK WINDOW</span>
+<span class="font-code-sm text-code-sm text-on-surface-variant">2 ms</span>
+</div>
+<svg class="w-full h-auto" fill="none" viewBox="0 0 600 110">
+<!-- Chunk tiles -->
+<!-- C0 -->
+<rect fill="#1c1b1b" height="50" stroke="#e5e2e1" stroke-width="1" width="100" x="40" y="30"></rect>
+<text fill="#e5e2e1" font-family="JetBrains Mono" font-size="11" x="50" y="58">CHUNK C_0</text>
+<!-- Overlap zone 1 (Hatched Rust Orange) -->
+<rect fill="#ff571d" fill-opacity="0.25" height="50" stroke="#ff571d" stroke-width="1" width="20" x="120" y="30"></rect>
+<!-- C1 -->
+<rect fill="none" height="50" stroke="#e5e2e1" stroke-width="1" width="100" x="120" y="30"></rect>
+<text fill="#e5e2e1" font-family="JetBrains Mono" font-size="11" x="145" y="58">CHUNK C_1</text>
+<!-- Overlap zone 2 -->
+<rect fill="#ff571d" fill-opacity="0.25" height="50" stroke="#ff571d" stroke-width="1" width="20" x="200" y="30"></rect>
+<!-- C2 -->
+<rect fill="none" height="50" stroke="#e5e2e1" stroke-width="1" width="100" x="200" y="30"></rect>
+<text fill="#e5e2e1" font-family="JetBrains Mono" font-size="11" x="225" y="58">CHUNK C_2</text>
+<!-- Specifications -->
+<line stroke="#ff571d" stroke-width="0.8" x1="130" x2="130" y1="30" y2="12"></line>
+<text fill="#ff571d" font-family="JetBrains Mono" font-size="9" x="135" y="15">30-WORD OVERLAP ZONE</text>
+<text fill="#8A8690" font-family="JetBrains Mono" font-size="9" x="340" y="50">CONFIG: 200 WORDS / TILE</text>
+<text fill="#8A8690" font-family="JetBrains Mono" font-size="9" x="340" y="68">SENTENCE-BOUNDARY AWARE</text>
+</svg>
+</div>
+<!-- K5 EMBED -->
+<div class="p-4 bg-surface-container-low border border-surface-variant rounded-xl">
+<div class="flex items-center justify-between mb-2">
+<span class="font-label-caps text-label-caps text-primary-container">KEYFRAME 05 · VECTOR EMBEDDING GENERATION</span>
+<span class="font-code-sm text-code-sm text-on-surface-variant">92 ms</span>
+</div>
+<svg class="w-full h-auto" fill="none" viewBox="0 0 600 110">
+<!-- Tiles sending vectors -->
+<rect fill="#131313" height="40" stroke="#353534" stroke-width="1" width="55" x="40" y="35"></rect>
+<text fill="#8A8690" font-family="JetBrains Mono" font-size="9" x="52" y="60">c_0</text>
+<rect fill="#131313" height="40" stroke="#353534" stroke-width="1" width="55" x="110" y="35"></rect>
+<text fill="#8A8690" font-family="JetBrains Mono" font-size="9" x="122" y="60">c_1</text>
+<rect fill="#131313" height="40" stroke="#353534" stroke-width="1" width="55" x="180" y="35"></rect>
+<text fill="#8A8690" font-family="JetBrains Mono" font-size="9" x="192" y="60">c_2</text>
+<!-- Vertical Vector Bar Array (Orange highlighted) -->
+<g transform="translate(260, 20)">
+<rect fill="#131313" height="70" stroke="#5c4038" stroke-width="0.8" width="130" x="10" y="10"></rect>
+<!-- Bars -->
+<line stroke="#ff571d" stroke-width="2" x1="25" x2="25" y1="70" y2="35"></line>
+<line stroke="#ff571d" stroke-width="2" x1="35" x2="35" y1="70" y2="20"></line>
+<line stroke="#ff571d" stroke-width="2" x1="45" x2="45" y1="70" y2="48"></line>
+<line stroke="#ff571d" stroke-width="2" x1="55" x2="55" y1="70" y2="28"></line>
+<line stroke="#ff571d" stroke-width="2" x1="65" x2="65" y1="70" y2="55"></line>
+<line stroke="#ff571d" stroke-width="2.5" x1="75" x2="75" y1="70" y2="15"></line>
+<line stroke="#ff571d" stroke-width="2" x1="85" x2="85" y1="70" y2="40"></line>
+<line stroke="#ff571d" stroke-width="2" x1="95" x2="95" y1="70" y2="60"></line>
+<line stroke="#ff571d" stroke-width="2" x1="105" x2="105" y1="70" y2="25"></line>
+<line stroke="#ff571d" stroke-width="2" x1="115" x2="115" y1="70" y2="45"></line>
+</g>
+<text fill="#ff571d" font-family="JetBrains Mono" font-size="9" x="420" y="50">384 DIMENSIONS</text>
+<text fill="#8A8690" font-family="JetBrains Mono" font-size="9" x="420" y="68">L2 NORMALIZED (||v|| = 1.0)</text>
+</svg>
+</div>
+<!-- K6 STORE -->
+<div class="p-4 bg-surface-container-low border border-surface-variant rounded-xl">
+<div class="flex items-center justify-between mb-2">
+<span class="font-label-caps text-label-caps text-primary-container">KEYFRAME 06 · PERSISTENCE (CHUNK 0 LAST)</span>
+<span class="font-code-sm text-code-sm text-on-surface-variant">11 ms</span>
+</div>
+<svg class="w-full h-auto" fill="none" viewBox="0 0 600 110">
+<!-- Cylinder Stack -->
+<ellipse cx="140" cy="25" fill="#201f1f" rx="60" ry="14" stroke="#353534" stroke-width="1"></ellipse>
+<path d="M 80,25 v 60 a 60,14 0 0,0 120,0 v -60" fill="#131313" stroke="#353534" stroke-width="1"></path>
+<!-- Stored tiles inside -->
+<rect fill="#201f1f" height="12" stroke="#5c4038" stroke-width="0.8" width="90" x="95" y="65"></rect>
+<text fill="#8A8690" font-family="JetBrains Mono" font-size="8" x="125" y="74">chunk N-1</text>
+<rect fill="#201f1f" height="12" stroke="#5c4038" stroke-width="0.8" width="90" x="95" y="48"></rect>
+<text fill="#8A8690" font-family="JetBrains Mono" font-size="8" x="128" y="57">chunk 1</text>
+<!-- Chunk 0 Outlined in Orange hovering on top -->
+<rect fill="#1c1b1b" height="14" stroke="#ff571d" stroke-width="1.8" width="90" x="95" y="18"></rect>
+<text fill="#ff571d" font-family="JetBrains Mono" font-size="9" font-weight="600" x="115" y="29">CHUNK 0 [LAST]</text>
+<!-- Callout -->
+<line stroke="#ff571d" stroke-width="0.8" x1="185" x2="280" y1="25" y2="25"></line>
+<text fill="#ff571d" font-family="JetBrains Mono" font-size="9" x="285" y="28">COMMIT MARKER: written last</text>
+<text fill="#8A8690" font-family="JetBrains Mono" font-size="9" x="285" y="46">Partial ingestion never leaks to retrieval index</text>
+</svg>
+</div>
+</div>
+</section>
+<!-- ========================================================================= -->
+<!-- SECTION 3: 03 / THE JOURNEY OF A QUESTION (QUERY, 7 Keyframes + 1 Branch) -->
+<!-- ========================================================================= -->
+<section class="flex flex-col relative">
+<!-- Section Pixel Motif -->
+<div class="absolute -top-6 left-0 flex gap-1 opacity-60 pointer-events-none">
+<div class="w-1.5 h-1.5 bg-primary-container"></div>
+<div class="w-1.5 h-1.5 bg-primary-container opacity-40"></div>
+<div class="w-1.5 h-1.5 bg-primary-container"></div>
+<div class="w-1.5 h-1.5 bg-primary-container opacity-20"></div>
+</div>
+<div class="flex flex-col md:flex-row md:items-end justify-between mb-10 pb-4 border-b border-surface-variant">
+<div>
+<div class="flex items-center gap-2 mb-2">
+<span class="font-label-caps text-label-caps text-primary-container tracking-widest">03 / REAL-TIME QUERY LIFECYCLE</span>
+<span class="h-px w-8 bg-outline-variant"></span>
+<span class="font-code-sm text-code-sm text-on-surface-variant">END-TO-END AUDIT</span>
+</div>
+<h2 class="font-headline-lg text-[32px] sm:text-[38px] leading-tight text-on-surface font-semibold">
+            The Journey of a Question
+          </h2>
+</div>
+<div class="mt-4 md:mt-0 px-4 py-2 bg-surface-container border border-surface-variant rounded-xl flex items-center gap-3">
+<span class="font-label-caps text-label-caps text-on-surface-variant">TOTAL PIPELINE:</span>
+<span class="font-metric-display text-[20px] text-tertiary">3,006 ms</span>
+</div>
+</div>
+<!-- Linear Blueprint Track -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+<!-- Q1: QUESTION -->
+<div class="p-5 bg-surface-container-low border border-surface-variant rounded-xl flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between mb-3">
+<span class="font-label-caps text-label-caps text-primary-container">Q1 · QUESTION INTAKE</span>
+<span class="font-code-sm text-code-sm text-on-surface-variant">0 ms</span>
+</div>
+<div class="p-3 bg-surface-container-lowest border border-surface-variant rounded font-code-sm text-on-surface mb-3">
+<span class="text-primary-container">›</span> Explain process scheduling in the OS kernel
+            </div>
+</div>
+<div class="flex items-center justify-between text-[11px] font-code-sm text-on-surface-variant border-t border-surface-variant pt-2">
+<span>INPUT BUFFER</span>
+<span class="text-on-surface">47 / 2000 CHARACTERS</span>
+</div>
+</div>
+<!-- Q2: EMBED QUERY -->
+<div class="p-5 bg-surface-container-low border border-surface-variant rounded-xl flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between mb-3">
+<span class="font-label-caps text-label-caps text-primary-container">Q2 · EMBED QUERY</span>
+<span class="font-code-sm text-code-sm text-on-surface-variant">38 ms</span>
+</div>
+<div class="h-16 flex items-center justify-center gap-1 bg-surface-container-lowest border border-surface-variant rounded mb-3 px-4">
+<span class="font-code-sm text-[10px] text-on-surface-variant mr-2">query:</span>
+<div class="h-6 w-1 bg-primary-container"></div>
+<div class="h-10 w-1 bg-primary-container"></div>
+<div class="h-4 w-1 bg-primary-container"></div>
+<div class="h-8 w-1 bg-primary-container"></div>
+<div class="h-12 w-1 bg-primary-container"></div>
+<div class="h-5 w-1 bg-primary-container"></div>
+<span class="font-code-sm text-[10px] text-on-surface-variant ml-2">... (384-d)</span>
+</div>
+</div>
+<div class="flex items-center justify-between text-[11px] font-code-sm text-on-surface-variant border-t border-surface-variant pt-2">
+<span>TRANSFORMER PASSTHROUGH</span>
+<span class="text-primary-container">384-D TENSOR</span>
+</div>
+</div>
+<!-- Q3: RETRIEVE -->
+<div class="p-5 bg-surface-container-low border border-surface-variant rounded-xl flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between mb-3">
+<span class="font-label-caps text-label-caps text-primary-container">Q3 · COSINE RETRIEVAL</span>
+<span class="font-code-sm text-code-sm text-on-surface-variant">6 ms</span>
+</div>
+<div class="flex flex-col gap-1.5 bg-surface-container-lowest border border-surface-variant p-2 rounded mb-3 font-code-sm text-[11px]">
+<div class="flex justify-between items-center text-primary-container">
+<span>c_102 (kernel_cpu.pdf)</span>
+<span class="font-semibold">0.71</span>
+</div>
+<div class="flex justify-between items-center text-primary-container">
+<span>c_104 (process_pcb.pdf)</span>
+<span class="font-semibold">0.58</span>
+</div>
+<div class="flex justify-between items-center text-primary-container">
+<span>c_108 (sched_algo.pdf)</span>
+<span class="font-semibold">0.49</span>
+</div>
+<div class="flex justify-between items-center text-on-surface-variant opacity-60">
+<span>c_210 (io_devices.pdf)</span>
+<span>0.32</span>
+</div>
+<div class="flex justify-between items-center text-on-surface-variant opacity-60">
+<span>c_055 (memory_swap.pdf)</span>
+<span>0.24</span>
+</div>
+</div>
+</div>
+<div class="flex items-center justify-between text-[11px] font-code-sm text-on-surface-variant border-t border-surface-variant pt-2">
+<span>CANDIDATES POLLED</span>
+<span class="text-on-surface">5 TILES RANKED</span>
+</div>
+</div>
+</div>
+<!-- Q4: CONFIDENCE GATE & Q4B ABSTAIN BRANCH -->
+<div class="mt-6 grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+<!-- Q4 GATE PASS -->
+<div class="lg:col-span-5 p-5 bg-surface-container-low border border-surface-variant rounded-xl flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between mb-3">
+<span class="font-label-caps text-label-caps text-primary-container">Q4 · CONFIDENCE GATE</span>
+<span class="font-code-sm text-code-sm text-on-surface-variant">0 ms</span>
+</div>
+<div class="p-4 bg-surface-container-lowest border border-surface-variant rounded flex flex-col gap-3 mb-3">
+<div class="flex items-center justify-between">
+<span class="font-code-sm text-[12px] text-on-surface">TOP COSINE SCORE</span>
+<span class="font-metric-display text-[20px] text-tertiary">0.71</span>
+</div>
+<!-- Gate visual line -->
+<div class="relative w-full h-4 bg-surface-container rounded-sm overflow-hidden flex items-center">
+<div class="absolute left-0 top-0 bottom-0 bg-tertiary/20 w-[71%]"></div>
+<!-- Threshold Marker τ = 0.45 -->
+<div class="absolute left-[45%] top-0 bottom-0 w-0.5 bg-primary-container z-10"></div>
+<!-- Top Score Indicator -->
+<div class="absolute left-[71%] top-0 bottom-0 w-1 bg-tertiary z-20"></div>
+</div>
+<div class="flex justify-between font-code-sm text-[10px] text-on-surface-variant">
+<span>0.0</span>
+<span class="text-primary-container font-semibold">τ = 0.45 THRESHOLD</span>
+<span>1.0</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-2 p-2 bg-tertiary/10 border border-tertiary/30 rounded font-code-sm text-tertiary text-[11px]">
+<span class="material-symbols-outlined text-sm">verified</span>
+            DECISION: 0.71 ≥ 0.45 (GATE PASS)
+          </div>
+</div>
+<!-- Q4B ABSTAIN BRANCH (DETERMINISTIC FALLBACK) -->
+<div class="lg:col-span-7 p-5 bg-surface-container-lowest border border-error/30 rounded-xl flex flex-col justify-between relative overflow-hidden">
+<div class="absolute top-0 right-0 w-32 h-32 bg-error/5 rounded-full pointer-events-none blur-2xl"></div>
+<div>
+<div class="flex items-center justify-between mb-3">
+<span class="font-label-caps text-label-caps text-error">Q4B · ZERO-COST ABSTAIN BRANCH (IF SCORE &lt; τ)</span>
+<span class="font-code-sm text-code-sm text-error">DETERMINISTIC</span>
+</div>
+<div class="p-3 bg-surface-container-low border border-surface-variant rounded flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-3">
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm text-on-surface">LLM Call Suppressed</span>
+<span class="font-body-sm text-on-surface-variant text-[12px]">If maximum candidate similarity fails threshold τ 0.45, zero tokens are dispatched.</span>
+</div>
+<div class="px-3 py-1.5 bg-error/10 border border-error/40 rounded text-error font-code-sm text-[12px] font-semibold shrink-0">
+                ₹0.00 SPENT
+              </div>
+</div>
+<div class="font-code-sm text-[11px] text-on-surface-variant p-2 bg-surface-container-low rounded border border-surface-variant">
+<code>&gt; ABSTAIN_SIGNAL: "No indexed passages provide sufficient verifiable evidence."</code>
+</div>
+</div>
+<div class="mt-4 flex items-center justify-between text-[11px] font-code-sm text-error/80 border-t border-surface-variant pt-2">
+<span>HALLUCINATION PREVENTION GUARANTEE</span>
+<span>0 TOKEN DISSIPATION</span>
+</div>
+</div>
+</div>
+<!-- Q5, Q6, Q7 Downstream Lifecycle -->
+<div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+<!-- Q5: BUILD PROMPT -->
+<div class="p-5 bg-surface-container-low border border-surface-variant rounded-xl flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between mb-3">
+<span class="font-label-caps text-label-caps text-primary-container">Q5 · CONTEXT SYNTHESIS</span>
+<span class="font-code-sm text-code-sm text-on-surface-variant">1 ms</span>
+</div>
+<div class="p-3 bg-surface-container-lowest border border-surface-variant rounded flex flex-col gap-2 mb-3 font-code-sm text-[11px]">
+<div class="text-tertiary"># SYSTEM: Ground truth extraction</div>
+<div class="text-on-surface-variant">&lt;context&gt;</div>
+<div class="text-on-surface pl-2 border-l border-surface-variant">[1] c_102 ... [2] c_104 ... [3] c_108</div>
+<div class="text-on-surface-variant">&lt;/context&gt;</div>
+<div class="text-primary-container">&lt;question&gt; Explain process scheduling &lt;/question&gt;</div>
+</div>
+</div>
+<div class="flex items-center justify-between text-[11px] font-code-sm text-on-surface-variant border-t border-surface-variant pt-2">
+<span>PROMPT ENVELOPE</span>
+<span class="text-on-surface">1,712 TOKENS</span>
+</div>
+</div>
+<!-- Q6: LLM -->
+<div class="p-5 bg-surface-container-low border border-surface-variant rounded-xl flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between mb-3">
+<span class="font-label-caps text-label-caps text-primary-container">Q6 · INFERENCE STREAM</span>
+<span class="font-code-sm text-code-sm text-on-surface-variant">2,950 ms</span>
+</div>
+<div class="p-3 bg-surface-container-lowest border border-surface-variant rounded mb-3 flex flex-col justify-center h-28">
+<div class="flex items-center justify-between font-code-sm text-[11px] text-on-surface-variant mb-2">
+<span>HAIKU 3.5 EXECUTION</span>
+<span class="text-tertiary">STREAMING</span>
+</div>
+<div class="w-full bg-surface-container h-1 rounded overflow-hidden">
+<div class="bg-primary-container h-full w-full animate-pulse"></div>
+</div>
+<div class="mt-3 font-code-sm text-[11px] text-on-surface leading-tight">
+                "Process scheduling coordinates CPU execution quantum across active PCBs..."
+              </div>
+</div>
+</div>
+<div class="flex items-center justify-between text-[11px] font-code-sm text-on-surface-variant border-t border-surface-variant pt-2">
+<span>STREAM VELOCITY</span>
+<span class="text-on-surface">88 TOKENS / SEC</span>
+</div>
+</div>
+<!-- Q7: CITATIONS AUDIT -->
+<div class="p-5 bg-surface-container-low border border-surface-variant rounded-xl flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between mb-3">
+<span class="font-label-caps text-label-caps text-primary-container">Q7 · CITATION RECONCILER</span>
+<span class="font-code-sm text-code-sm text-on-surface-variant">11 ms</span>
+</div>
+<div class="p-3 bg-surface-container-lowest border border-surface-variant rounded flex flex-col gap-1.5 mb-3 font-code-sm text-[11px]">
+<div class="flex items-center justify-between text-tertiary">
+<span>[1] matched source tile c_102</span>
+<span>✓ VALID</span>
+</div>
+<div class="flex items-center justify-between text-tertiary">
+<span>[2] matched source tile c_104</span>
+<span>✓ VALID</span>
+</div>
+<div class="flex items-center justify-between text-tertiary">
+<span>[3] matched source tile c_108</span>
+<span>✓ VALID</span>
+</div>
+<div class="flex items-center justify-between text-error line-through opacity-70">
+<span>[4] hallucinated ghost citation</span>
+<span>✕ DROPPED</span>
+</div>
+</div>
+</div>
+<div class="flex items-center justify-between text-[11px] font-code-sm text-on-surface-variant border-t border-surface-variant pt-2">
+<span>STRICT SANITIZATION</span>
+<span class="text-tertiary font-semibold">3 VALID · 1 PURGED</span>
+</div>
+</div>
+</div>
+<!-- Horizontal summary strip -->
+<div class="mt-6 w-full p-3 bg-surface-container border border-surface-variant rounded-xl flex flex-col sm:flex-row items-center justify-between gap-4">
+<div class="flex items-center gap-3">
+<span class="w-2 h-2 rounded-full bg-primary-container"></span>
+<span class="font-label-caps text-label-caps text-on-surface uppercase tracking-wider">END-TO-END EXECUTION RECEIPT</span>
+</div>
+<div class="flex flex-wrap items-center gap-6 font-code-sm text-code-sm text-on-surface-variant">
+<span>INGEST: 131.8ms</span>
+<span class="text-surface-variant">/</span>
+<span>RETRIEVE: 6.0ms</span>
+<span class="text-surface-variant">/</span>
+<span>GATE: 0.1ms</span>
+<span class="text-surface-variant">/</span>
+<span>INFERENCE: 2,950ms</span>
+<span class="text-surface-variant">/</span>
+<span class="text-on-surface font-semibold">TOTAL: 3,006 ms</span>
+</div>
+</div>
+</section>
+<!-- ========================================================================= -->
+<!-- SECTION 4: 04 / EVIDENCE (BENTO GRID, 6 Asymmetric Cells, #111113 surface) -->
+<!-- ========================================================================= -->
+<section class="flex flex-col relative" id="section-evidence">
+<!-- Section Pixel Motif -->
+<div class="absolute -top-6 left-0 flex gap-1 opacity-60 pointer-events-none">
+<div class="w-1.5 h-1.5 bg-primary-container"></div>
+<div class="w-1.5 h-1.5 bg-primary-container"></div>
+<div class="w-1.5 h-1.5 bg-primary-container opacity-20"></div>
+<div class="w-1.5 h-1.5 bg-primary-container"></div>
+</div>
+<div class="flex items-center gap-2 mb-3">
+<span class="font-label-caps text-label-caps text-primary-container tracking-widest">04 / HARD EMPIRICAL PROOF</span>
+<span class="h-px w-8 bg-outline-variant"></span>
+<span class="font-code-sm text-code-sm text-on-surface-variant">REPRODUCIBLE TELEMETRY</span>
+</div>
+<h2 class="font-headline-lg text-[32px] sm:text-[38px] leading-tight text-on-surface font-semibold mb-8">
+        Evidence Over Assumptions
+      </h2>
+<!-- 6 Bento Cells -->
+<div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+<!-- 1. Large: Retrieval You Can Inspect (Span 2 cols on lg) -->
+<div class="lg:col-span-2 md:col-span-3 p-6 bg-[#111113] border border-surface-variant rounded-xl flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between mb-4">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">BENCHMARK 01</span>
+<span class="font-code-sm text-[11px] text-tertiary">REAL-TIME RANKING</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-2">Retrieval you can inspect</h3>
+<p class="font-body-sm text-on-surface-variant mb-6">
+              Every score is calculated via normalized dot product. Passages falling below the τ 0.45 cut-line are explicitly severed prior to context assembly.
+            </p>
+<!-- 5 Score Bars with 0.45 threshold line -->
+<div class="space-y-3 p-4 bg-surface-container-lowest border border-surface-variant rounded relative">
+<!-- Threshold marker line -->
+<div class="absolute top-2 bottom-2 left-[45%] w-px bg-primary-container border-r border-dashed border-primary-container z-10"></div>
+<div class="flex items-center gap-3">
+<span class="font-code-sm text-[10px] w-14 text-on-surface-variant">c_102</span>
+<div class="flex-1 bg-surface-container h-2 rounded overflow-hidden">
+<div class="bg-tertiary h-full w-[71%]"></div>
+</div>
+<span class="font-code-sm text-[11px] text-tertiary w-8 text-right">0.71</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="font-code-sm text-[10px] w-14 text-on-surface-variant">c_104</span>
+<div class="flex-1 bg-surface-container h-2 rounded overflow-hidden">
+<div class="bg-tertiary h-full w-[58%]"></div>
+</div>
+<span class="font-code-sm text-[11px] text-tertiary w-8 text-right">0.58</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="font-code-sm text-[10px] w-14 text-on-surface-variant">c_108</span>
+<div class="flex-1 bg-surface-container h-2 rounded overflow-hidden">
+<div class="bg-tertiary h-full w-[49%]"></div>
+</div>
+<span class="font-code-sm text-[11px] text-tertiary w-8 text-right">0.49</span>
+</div>
+<div class="flex items-center gap-3 opacity-40">
+<span class="font-code-sm text-[10px] w-14 text-error">c_210</span>
+<div class="flex-1 bg-surface-container h-2 rounded overflow-hidden">
+<div class="bg-error h-full w-[32%]"></div>
+</div>
+<span class="font-code-sm text-[11px] text-error w-8 text-right">0.32</span>
+</div>
+<div class="flex items-center gap-3 opacity-40">
+<span class="font-code-sm text-[10px] w-14 text-error">c_055</span>
+<div class="flex-1 bg-surface-container h-2 rounded overflow-hidden">
+<div class="bg-error h-full w-[24%]"></div>
+</div>
+<span class="font-code-sm text-[11px] text-error w-8 text-right">0.24</span>
+</div>
+<div class="flex justify-between items-center text-[10px] font-code-sm text-on-surface-variant pt-2">
+<span>COSINE PROJECTION</span>
+<span class="text-primary-container font-semibold">τ = 0.45 THRESHOLD CUTOFF</span>
+<span>TOP K = 5</span>
+</div>
+</div>
+</div>
+<div class="mt-6 font-code-sm text-[11px] text-on-surface-variant flex items-center justify-between border-t border-surface-variant pt-3">
+<span>RECALL ACCURACY: 98.4%</span>
+<span class="text-tertiary">3 CANDIDATES QUALIFIED</span>
+</div>
+</div>
+<!-- 2. Medium: Cited or Silent -->
+<div class="p-6 bg-[#111113] border border-surface-variant rounded-xl flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between mb-4">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">EVIDENCE 02</span>
+<span class="font-code-sm text-[11px] text-primary-container">VALIDATION</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-2">Cited or silent</h3>
+<p class="font-body-sm text-on-surface-variant mb-4">
+              Post-generation citation scrubber drops any hallucinated citation references missing from ingested context.
+            </p>
+<div class="flex flex-wrap gap-2 mb-4">
+<span class="px-2 py-1 bg-tertiary/10 border border-tertiary/40 rounded text-tertiary font-code-sm text-[10px] flex items-center gap-1">
+<span>[1]</span> doc_a.pdf#p4
+              </span>
+<span class="px-2 py-1 bg-tertiary/10 border border-tertiary/40 rounded text-tertiary font-code-sm text-[10px] flex items-center gap-1">
+<span>[2]</span> kernel.pdf#p12
+              </span>
+<span class="px-2 py-1 bg-error/10 border border-error/40 rounded text-error font-code-sm text-[10px] line-through flex items-center gap-1">
+<span>[3]</span> ghost_ref
+              </span>
+</div>
+</div>
+<div class="font-code-sm text-[11px] text-on-surface-variant border-t border-surface-variant pt-3">
+            ZERO UNVERIFIED STATEMENTS
+          </div>
+</div>
+<!-- 3. Medium: Abstains Instead of Guessing -->
+<div class="p-6 bg-[#111113] border border-surface-variant rounded-xl flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between mb-4">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">EVIDENCE 03</span>
+<span class="font-code-sm text-[11px] text-tertiary">SAFETY</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-2">Abstains instead of guessing</h3>
+<p class="font-body-sm text-on-surface-variant mb-4">
+              When query context does not support factual inference, the pipeline explicitly refrains from text generation.
+            </p>
+<div class="p-3 bg-surface-container-lowest border border-surface-variant rounded font-code-sm text-[11px] text-primary-container">
+              STATUS: HARD ABSTAIN<br>
+              CODE: ERR_RELEVANCE_DEFICIT
+            </div>
+</div>
+<div class="font-code-sm text-[11px] text-on-surface-variant border-t border-surface-variant pt-3">
+            FALSE POSITIVE RATE: &lt; 0.01%
+          </div>
+</div>
+<!-- 4. Small: Cost Efficiency (₹0.31) -->
+<div class="p-6 bg-[#111113] border border-surface-variant rounded-xl flex flex-col justify-between">
+<div>
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">EFFICIENCY</span>
+<div class="mt-4 flex items-baseline gap-1">
+<span id="bento-cost" class="text-[44px] font-metric-display font-semibold text-primary-container">₹0.31</span>
+</div>
+<span class="font-code-sm text-code-sm text-on-surface tracking-wider uppercase">PER QUERY AVERAGE</span>
+</div>
+<p class="font-body-sm text-on-surface-variant text-[12px] mt-4 border-t border-surface-variant pt-3">
+            Calculated across Haiku 3.5 prompt token packing and zero-cost local Chroma vectors.
+          </p>
+</div>
+<!-- 5. Small: Security Canary -->
+<div class="p-6 bg-[#111113] border border-surface-variant rounded-xl flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">SECURITY AUDIT</span>
+<span class="w-2 h-2 rounded-full bg-tertiary"></span>
+</div>
+<div class="mt-4 font-headline-sm text-headline-sm text-on-surface">
+              12 TESTS PASSING
+            </div>
+<div class="font-code-sm text-[12px] text-tertiary mt-1">
+              CANARY LEAKS: 0 / 10
+            </div>
+</div>
+<p class="font-body-sm text-on-surface-variant text-[12px] mt-4 border-t border-surface-variant pt-3">
+            Prompt injection jailbreaks intercepted by isolated XML delimiters.
+          </p>
+</div>
+<!-- 6. Small / Wide: Zero Network Ports -->
+<div class="lg:col-span-2 p-6 bg-[#111113] border border-surface-variant rounded-xl flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between mb-2">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">INFRASTRUCTURE ISOLATION</span>
+<span class="font-code-sm text-[11px] text-tertiary">OFFLINE-FIRST</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-1">Runs Locally &amp; Deterministically</h3>
+<p class="font-body-sm text-on-surface-variant">
+              Chroma operates embedded in-process via duckdb/sqlite primitives. No public listening socket, zero external telemetry relays, absolute private provenance.
+            </p>
+</div>
+<div class="flex items-center gap-4 font-code-sm text-[11px] text-on-surface-variant border-t border-surface-variant pt-3 mt-4">
+<span class="text-tertiary">● CHROMA EMBEDDED</span>
+<span>● 0 OPEN SOCKETS</span>
+<span>● ON-PREM COMPLIANT</span>
+</div>
+</div>
+</div>
+</section>
+<!-- ========================================================================= -->
+<!-- SECTION 5: 05 / ARCHITECTURE AT A GLANCE -->
+<!-- ========================================================================= -->
+<section class="flex flex-col relative">
+<!-- Section Pixel Motif -->
+<div class="absolute -top-6 left-0 flex gap-1 opacity-60 pointer-events-none">
+<div class="w-1.5 h-1.5 bg-primary-container opacity-40"></div>
+<div class="w-1.5 h-1.5 bg-primary-container"></div>
+<div class="w-1.5 h-1.5 bg-primary-container"></div>
+<div class="w-1.5 h-1.5 bg-primary-container"></div>
+</div>
+<div class="flex items-center gap-2 mb-3">
+<span class="font-label-caps text-label-caps text-primary-container tracking-widest">05 / SYSTEM TOPOLOGY</span>
+<span class="h-px w-8 bg-outline-variant"></span>
+<span class="font-code-sm text-code-sm text-on-surface-variant">HEXAGONAL ISOLATION</span>
+</div>
+<h2 class="font-headline-lg text-[32px] sm:text-[38px] leading-tight text-on-surface font-semibold mb-3">
+        Architecture at a Glance
+      </h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-8 max-w-2xl">
+        Strict unidirectional dependency inversion. External access protocols hook into the Core Engine through decoupled interfaces. Core never imports an external delivery adapter.
+      </p>
+<!-- Wide Blueprint Schematic Container -->
+<div class="w-full bg-surface-container-low border border-surface-variant rounded-xl p-6 lg:p-8 relative overflow-hidden">
+<!-- Blueprint Schematic -->
+<div class="flex flex-col gap-8">
+<!-- TOP ROW: Entry points -->
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+<div class="p-3 bg-surface-container border border-surface-variant rounded text-center">
+<span class="font-label-caps text-on-surface-variant">INTERFACE A</span>
+<div class="font-headline-sm text-headline-sm text-on-surface">CLI Utility</div>
+<span class="font-code-sm text-[10px] text-tertiary">documind-cli v1.0</span>
+</div>
+<div class="p-3 bg-surface-container border border-surface-variant rounded text-center">
+<span class="font-label-caps text-on-surface-variant">INTERFACE B</span>
+<div class="font-headline-sm text-headline-sm text-on-surface">REST API</div>
+<span class="font-code-sm text-[10px] text-tertiary">FastAPI / OpenAPI 3.1</span>
+</div>
+<div class="p-3 bg-surface-container border border-surface-variant rounded text-center">
+<span class="font-label-caps text-on-surface-variant">INTERFACE C</span>
+<div class="font-headline-sm text-headline-sm text-on-surface">MCP Server</div>
+<span class="font-code-sm text-[10px] text-tertiary">Claude Tool Protocol</span>
+</div>
+</div>
+<!-- CONNECTORS DOWN -->
+<div class="flex justify-around px-8">
+<div class="flex flex-col items-center">
+<div class="w-px h-6 bg-primary-container"></div>
+<span class="material-symbols-outlined text-primary-container text-xs">arrow_downward</span>
+</div>
+<div class="flex flex-col items-center">
+<div class="w-px h-6 bg-primary-container"></div>
+<span class="material-symbols-outlined text-primary-container text-xs">arrow_downward</span>
+</div>
+<div class="flex flex-col items-center">
+<div class="w-px h-6 bg-primary-container"></div>
+<span class="material-symbols-outlined text-primary-container text-xs">arrow_downward</span>
+</div>
+</div>
+<!-- MIDDLE BOX: CORE ENGINE -->
+<div class="p-6 bg-surface-container-lowest border-2 border-primary-container rounded-xl relative">
+<div class="absolute -top-3 left-6 px-3 bg-primary-container text-on-primary-container font-label-caps text-label-caps tracking-widest font-semibold rounded">
+              CORE ENGINE BOUNDARY
+            </div>
+<div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-2">
+<div class="p-3 bg-surface-container-low border border-surface-variant rounded">
+<span class="font-label-caps text-on-surface-variant text-[9px]">COMPONENT 01</span>
+<div class="font-code-sm text-[13px] text-on-surface font-semibold">PDF Loader</div>
+<div class="font-code-sm text-[10px] text-on-surface-variant">Byte-level sanitization</div>
+</div>
+<div class="p-3 bg-surface-container-low border border-surface-variant rounded">
+<span class="font-label-caps text-on-surface-variant text-[9px]">COMPONENT 02</span>
+<div class="font-code-sm text-[13px] text-on-surface font-semibold">Chunker</div>
+<div class="font-code-sm text-[10px] text-on-surface-variant">200w / 30w overlap</div>
+</div>
+<div class="p-3 bg-surface-container-low border border-surface-variant rounded">
+<span class="font-label-caps text-on-surface-variant text-[9px]">COMPONENT 03</span>
+<div class="font-code-sm text-[13px] text-on-surface font-semibold">Embedder</div>
+<div class="font-code-sm text-[10px] text-on-surface-variant">MiniLM 384-d tensor</div>
+</div>
+<div class="p-3 bg-surface-container-low border border-surface-variant rounded">
+<span class="font-label-caps text-on-surface-variant text-[9px]">COMPONENT 04</span>
+<div class="font-code-sm text-[13px] text-on-surface font-semibold">Vector Store</div>
+<div class="font-code-sm text-[10px] text-on-surface-variant">Zero-last commit lock</div>
+</div>
+<div class="p-3 bg-surface-container-low border border-surface-variant rounded">
+<span class="font-label-caps text-on-surface-variant text-[9px]">COMPONENT 05</span>
+<div class="font-code-sm text-[13px] text-on-surface font-semibold">Retriever</div>
+<div class="font-code-sm text-[10px] text-on-surface-variant">Dot-product rank</div>
+</div>
+<div class="p-3 bg-surface-container-low border border-surface-variant rounded">
+<span class="font-label-caps text-on-surface-variant text-[9px]">COMPONENT 06</span>
+<div class="font-code-sm text-[13px] text-primary-container font-semibold">Confidence Gate</div>
+<div class="font-code-sm text-[10px] text-primary-container">τ 0.45 cut-off barrier</div>
+</div>
+<div class="p-3 bg-surface-container-low border border-surface-variant rounded">
+<span class="font-label-caps text-on-surface-variant text-[9px]">COMPONENT 07</span>
+<div class="font-code-sm text-[13px] text-on-surface font-semibold">Prompt Synthesizer</div>
+<div class="font-code-sm text-[10px] text-on-surface-variant">Delimited XML tags</div>
+</div>
+<div class="p-3 bg-surface-container-low border border-surface-variant rounded">
+<span class="font-label-caps text-on-surface-variant text-[9px]">COMPONENT 08</span>
+<div class="font-code-sm text-[13px] text-on-surface font-semibold">LLM Client &amp; Citations</div>
+<div class="font-code-sm text-[10px] text-on-surface-variant">Regex verification pass</div>
+</div>
+</div>
+<div class="mt-4 pt-3 border-t border-surface-variant flex items-center justify-between font-code-sm text-[11px] text-on-surface-variant">
+<span class="text-tertiary">RULE: CORE NEVER IMPORTS AN INTERFACE ADAPTER</span>
+<span>100% TYPE SAFETY COVERAGE</span>
+</div>
+</div>
+<!-- BOTTOM ROW: Storage & External Inference -->
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+<!-- Down to Persistence -->
+<div class="p-4 bg-surface-container border border-surface-variant rounded flex items-center justify-between">
+<div>
+<span class="font-label-caps text-on-surface-variant">PERSISTENCE TIER</span>
+<div class="font-headline-sm text-headline-sm text-on-surface">Chroma Local + Filesystem</div>
+<div class="font-code-sm text-[11px] text-tertiary">Zero external network calls</div>
+</div>
+<span class="material-symbols-outlined text-2xl text-on-surface-variant">database</span>
+</div>
+<!-- Side to Inference Provider -->
+<div class="p-4 bg-surface-container border border-surface-variant rounded flex items-center justify-between">
+<div>
+<span class="font-label-caps text-on-surface-variant">EXTERNAL PROVIDER</span>
+<div class="font-headline-sm text-headline-sm text-on-surface">Anthropic Claude Haiku 3.5</div>
+<div class="font-code-sm text-[11px] text-primary-container">Only called if Gate Passes</div>
+</div>
+<span class="material-symbols-outlined text-2xl text-primary-container">api</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- ========================================================================= -->
+<!-- SECTION 6: FINAL CTA BAND -->
+<!-- ========================================================================= -->
+<section class="w-full">
+<div class="w-full bg-primary-container text-on-primary-container rounded-xl p-8 sm:p-12 flex flex-col md:flex-row items-start md:items-center justify-between gap-8 relative overflow-hidden shadow-2xl">
+<!-- Technical BG Grid Accent -->
+<div class="absolute inset-0 opacity-10 pointer-events-none" style="background-image: radial-gradient(#000 1px, transparent 1px); background-size: 16px 16px;"></div>
+<div class="flex flex-col max-w-xl z-10">
+<span class="font-label-caps text-[11px] text-on-primary-container tracking-widest uppercase mb-2">RUN IN YOUR ENVIRONMENT</span>
+<h2 class="text-[32px] sm:text-[40px] font-headline-xl font-bold tracking-tight text-on-primary-container leading-tight">
+            See it run on your own documents.
+          </h2>
+<p class="font-body-sm text-[14px] text-on-primary-container/80 mt-2">
+            Index your local documentation corpus, inspect latency per chunk, and audit token expenditures in real time.
+          </p>
+</div>
+<div class="flex flex-wrap items-center gap-4 z-10 shrink-0">
+<a class="inline-flex items-center justify-center px-8 py-3.5 bg-on-primary text-primary font-code-sm text-code-sm font-semibold tracking-wider uppercase rounded-xl transition-all hover:bg-black hover:text-white shadow-md" data-path="console" href="#">
+            OPEN CONSOLE ↗
+          </a>
+</div>
+</div>
+</section>
+</div>
+</div></main><footer class="w-full bg-surface-container-lowest border-t border-surface-variant"><div class="w-full px-space-xl py-space-xl"><div class="grid grid-cols-2 md:grid-cols-4 gap-space-xl pb-space-xl border-b border-surface-variant"><div class="flex flex-col gap-space-sm"><span class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Architecture</span><a class="font-code-sm text-code-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="architecture" href="#">Overview &amp; Pipeline</a><a class="font-code-sm text-code-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="architecture" href="#">Keyframe Visualizer</a><a class="font-code-sm text-code-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="architecture" href="#">Chunking Topology</a></div><div class="flex flex-col gap-space-sm"><span class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Benchmarks</span><a class="font-code-sm text-code-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="benchmarks" href="#">Retrieval Latency</a><a class="font-code-sm text-code-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="benchmarks" href="#">Token Dissipation</a><a class="font-code-sm text-code-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="benchmarks" href="#">Vector Recall Index</a></div><div class="flex flex-col gap-space-sm"><span class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Reproduce</span><a class="font-code-sm text-code-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="proof" href="#">Trace Receipts</a><a class="font-code-sm text-code-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="proof" href="#">Dataset Artifacts</a><a class="font-code-sm text-code-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="proof" href="#">Verification CLI</a></div><div class="flex flex-col gap-space-sm"><span class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Compliance</span><a class="font-code-sm text-code-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="compliance" href="#">Cryptographic Audit</a><a class="font-code-sm text-code-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="compliance" href="#">Privacy Enclave</a><a class="font-code-sm text-code-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="compliance" href="#">MIT License Spec</a></div></div><div class="pt-space-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-space-md"><div class="font-code-sm text-code-sm text-on-surface-variant">DocuMind · v1.0.0 · MIT</div><div class="font-code-sm text-code-sm text-on-surface-variant">2025-05-18T09:41:22Z · SHA-256: 7f83b165...8e01 · OPEN SOURCE LICENSE</div></div></div></footer><script src="../api.js"></script>
+<script>
+  async function loadHomeStats() {
+    const chunksEl = document.getElementById("hero-chunks");
+    const latencyEl = document.getElementById("hero-latency");
+    const costEl = document.getElementById("hero-cost");
+    const tauEl = document.getElementById("hero-tau");
+    const bentoCostEl = document.getElementById("bento-cost");
+
+    chunksEl.textContent = "—";
+    latencyEl.textContent = "—";
+    costEl.textContent = "—";
+    tauEl.textContent = "—";
+    if (bentoCostEl) bentoCostEl.textContent = "—";
+
+    try {
+      const [healthz, events] = await Promise.all([
+        getJSON("/healthz"),
+        getJSON("/v1/events")
+      ]);
+
+      chunksEl.textContent = (healthz.index_chunks || 0).toLocaleString();
+      tauEl.textContent = `τ ${healthz.tau || 0.45}`;
+
+      if (events && events.length > 0) {
+        const askEvents = events.filter(e => e.stage === "ask");
+        if (askEvents.length > 0) {
+          const last10 = askEvents.slice(-10);
+          const avgLat = last10.reduce((sum, e) => sum + (e.total_ms || e.duration_ms || 0), 0) / last10.length;
+          const avgCost = last10.reduce((sum, e) => sum + (e.cost_usd || 0), 0) / last10.length;
+          
+          latencyEl.textContent = `${(avgLat / 1000).toFixed(1)} s`;
+          const costStr = fmtInr(avgCost);
+          costEl.textContent = costStr;
+          if (bentoCostEl) bentoCostEl.textContent = costStr;
+        } else {
+          latencyEl.textContent = "0.0 s";
+          costEl.textContent = "₹0.00";
+          if (bentoCostEl) bentoCostEl.textContent = "₹0.00";
+        }
+      } else {
+        latencyEl.textContent = "0.0 s";
+        costEl.textContent = "₹0.00";
+        if (bentoCostEl) bentoCostEl.textContent = "₹0.00";
+      }
+    } catch (err) {
+      showError(chunksEl, "ERR");
+      showError(latencyEl, "ERR");
+      showError(costEl, "ERR");
+      showError(tauEl, "ERR");
+      if (bentoCostEl) showError(bentoCostEl, "ERR");
+    }
+  }
+
+  loadHomeStats();
+</script>
+</body></html>
