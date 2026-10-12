@@ -1,81 +1,256 @@
-const API = "http://127.0.0.1:8000";
-const API_KEY = "documind-secret-key-32-chars-minimum-token";
+/**
+ * DocuMind Frontend API Client (Phase 1 Secure Integration)
+ * - Zero client-side API secrets.
+ * - Automatic session isolation token management via sessionStorage.
+ * - Centralized configuration, timeouts, and structured error handling.
+ */
 
-async function getJSON(path) {
-  const res = await fetch(`${API}${path}`, {
-    headers: { "X-API-Key": API_KEY },
-  });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return res.json();
-}
+(function (root, factory) {
+  if (typeof module === "object" && module.exports) {
+    module.exports = factory();
+  } else {
+    root.DocuMindAPI = factory();
+  }
+})(typeof self !== "undefined" ? self : this, function () {
+  "use strict";
 
-async function postJSON(path, body) {
-  const res = await fetch(`${API}${path}`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-API-Key": API_KEY,
-    },
-    body: JSON.stringify(body),
-  });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return res.json();
-}
+  const DEFAULT_TIMEOUT_MS = 35000;
 
-async function uploadFile(path, file) {
-  const formData = new FormData();
-  formData.append("file", file);
-  const res = await fetch(`${API}${path}`, {
-    method: "POST",
-    headers: { "X-API-Key": API_KEY },
-    body: formData,
-  });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return res.json();
-}
-
-async function deleteReq(path) {
-  const res = await fetch(`${API}${path}`, {
-    method: "DELETE",
-    headers: { "X-API-Key": API_KEY },
-  });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return true;
-}
-
-function fmtMs(n) {
-  return n != null ? `${n}ms` : "—";
-}
-
-function fmtInr(n) {
-  return n != null ? `₹${n.toFixed(4)}` : "—";
-}
-
-function setStatusDot(el, color, label) {
-  if (!el) return;
-  el.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-${color} inline-block"></span><span class="font-code-sm text-code-sm text-on-surface tracking-wider uppercase">${label}</span>`;
-}
-
-function showError(el, msg) {
-  setStatusDot(el, "error", msg);
-}
-
-document.addEventListener("DOMContentLoaded", () => {
-  const pathMap = {
-    "architecture": "/stitch_documind_glass_box_ui/code.html",
-    "console": "/stitch_documind_glass_box_ui (1)/code.html",
-    "proof": "/stitch_documind_glass_box_ui (2)/code.html",
-    "library": "/stitch_documind_glass_box_ui (3)/code.html",
-    "benchmarks": "/stitch_documind_glass_box_ui (2)/code.html",
-    "compliance": "/stitch_documind_glass_box_ui (2)/code.html",
-  };
-  document.querySelectorAll("[data-path]").forEach((el) => {
-    const target = pathMap[el.getAttribute("data-path")];
-    if (target) {
-      el.addEventListener("click", (e) => {
-        e.preventDefault();
-        window.location.href = target;
-      });
+  function getBaseUrl() {
+    if (typeof window !== "undefined" && window.DOCUMIND_API_URL) {
+      return window.DOCUMIND_API_URL.replace(/\/+$/, "");
     }
-  });
+    // If running in browser and protocol is http/https, default to origin or local API
+    if (typeof window !== "undefined" && window.location && window.location.origin) {
+      if (window.location.port === "5500") {
+        return "http://127.0.0.1:8000";
+      }
+      return window.location.origin;
+    }
+    return "http://127.0.0.1:8000";
+  }
+
+  function generateSessionToken() {
+    if (typeof crypto !== "undefined" && crypto.randomUUID) {
+      return crypto.randomUUID().replace(/-/g, "");
+    }
+    return "sess_" + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+  }
+
+  function getSessionId() {
+    if (typeof window === "undefined" || !window.sessionStorage) {
+      return "anon_session_default_1234567890";
+    }
+    let sid = window.sessionStorage.getItem("documind_session_id");
+    if (!sid || sid.length < 16) {
+      sid = generateSessionToken();
+      window.sessionStorage.setItem("documind_session_id", sid);
+    }
+    return sid;
+  }
+
+  async function request(endpoint, options = {}) {
+    const baseUrl = getBaseUrl();
+    const url = `${baseUrl}${endpoint}`;
+    const timeoutMs = options.timeoutMs || DEFAULT_TIMEOUT_MS;
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+    const headers = new Headers(options.headers || {});
+    headers.set("X-Session-ID", getSessionId());
+
+    const fetchOptions = {
+      method: options.method || "GET",
+      headers: headers,
+      signal: controller.signal,
+    };
+
+    if (options.body) {
+      fetchOptions.body = options.body;
+    }
+
+    try {
+      const res = await fetch(url, fetchOptions);
+      clearTimeout(timeoutId);
+
+      if (res.status === 204) {
+        return null;
+      }
+
+      const contentType = res.headers.get("content-type") || "";
+      let data = null;
+      if (contentType.includes("application/json")) {
+        data = await res.json();
+      } else {
+        const text = await res.text();
+        try {
+          data = JSON.parse(text);
+        } catch {
+          data = text;
+        }
+      }
+
+      if (!res.ok) {
+        const errObj = (data && data.error) || {};
+        const code = errObj.code || `http_${res.status}`;
+        const message = errObj.message || data.detail || (typeof data === "string" ? data : `Request failed with HTTP ${res.status}`);
+        const err = new Error(message);
+        err.code = code;
+        err.status = res.status;
+        err.requestId = errObj.request_id || res.headers.get("X-Request-ID");
+        throw err;
+      }
+
+      return data;
+    } catch (err) {
+      clearTimeout(timeoutId);
+      if (err.name === "AbortError") {
+        const timeoutErr = new Error(`Request timed out after ${timeoutMs}ms`);
+        timeoutErr.code = "timeout";
+        timeoutErr.status = 408;
+        throw timeoutErr;
+      }
+      throw err;
+    }
+  }
+
+  const API = {
+    getBaseUrl,
+    getSessionId,
+
+    resetSession() {
+      if (typeof window !== "undefined" && window.sessionStorage) {
+        window.sessionStorage.removeItem("documind_session_id");
+      }
+      return getSessionId();
+    },
+
+    async getHealth() {
+      return request("/healthz");
+    },
+
+    async getDocuments() {
+      return request("/api/demo/documents");
+    },
+
+    async uploadDocument(file, replace = false) {
+      const formData = new FormData();
+      formData.append("file", file);
+      const query = replace ? "?replace=true" : "";
+      return request(`/api/demo/documents${query}`, {
+        method: "POST",
+        body: formData,
+        timeoutMs: 60000,
+      });
+    },
+
+    async deleteDocument(source) {
+      return request(`/api/demo/documents/${encodeURIComponent(source)}`, {
+        method: "DELETE",
+      });
+    },
+
+    async getDocumentChunks(source) {
+      return request(`/api/demo/documents/${encodeURIComponent(source)}/chunks`);
+    },
+
+    async askQuestion(question, topK = 5) {
+      let q = question;
+      let k = topK;
+      if (typeof question === "object" && question !== null) {
+        q = question.question;
+        k = question.top_k || topK;
+      }
+      return request("/api/demo/ask", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question: q, top_k: k }),
+        timeoutMs: 45000,
+      });
+    },
+
+    async analyze(action, source = null) {
+      let body = {};
+      if (typeof action === "object" && action !== null) {
+        body = action;
+      } else {
+        body = { action };
+        if (source) body.source = source;
+      }
+      return request("/api/demo/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+        timeoutMs: 45000,
+      });
+    },
+
+    async getEvents() {
+      return request("/api/demo/events");
+    },
+
+    async getMeta() {
+      return request("/api/demo/meta");
+    },
+  };
+
+  // UI Formatters and helpers
+  API.fmtMs = function (n) {
+    return n != null ? `${Math.round(n)}ms` : "—";
+  };
+
+  API.fmtInr = function (n) {
+    return n != null ? `₹${n.toFixed(4)}` : "—";
+  };
+
+  API.setStatusDot = function (el, color, label) {
+    if (!el) return;
+    el.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-${color} inline-block"></span><span class="font-code-sm text-code-sm text-on-surface tracking-wider uppercase">${label}</span>`;
+  };
+
+  API.showError = function (el, msg) {
+    API.setStatusDot(el, "error", msg);
+  };
+
+  // Backwards compatibility globals
+  if (typeof window !== "undefined") {
+    window.getJSON = (path) => request(path);
+    window.postJSON = (path, body) => request(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    window.uploadFile = (path, file) => {
+      const formData = new FormData();
+      formData.append("file", file);
+      return request(path, { method: "POST", body: formData });
+    };
+    window.deleteReq = (path) => request(path, { method: "DELETE" });
+    window.fmtMs = API.fmtMs;
+    window.fmtInr = API.fmtInr;
+    window.setStatusDot = API.setStatusDot;
+    window.showError = API.showError;
+  }
+
+  // Cross-view Navigation handler
+  if (typeof document !== "undefined") {
+    document.addEventListener("DOMContentLoaded", () => {
+      const pathMap = {
+        architecture: "/stitch_documind_glass_box_ui/code.html",
+        console: "/stitch_documind_glass_box_ui (1)/code.html",
+        proof: "/stitch_documind_glass_box_ui (2)/code.html",
+        library: "/stitch_documind_glass_box_ui (3)/code.html",
+        benchmarks: "/stitch_documind_glass_box_ui (2)/code.html",
+        compliance: "/stitch_documind_glass_box_ui (2)/code.html",
+      };
+      document.querySelectorAll("[data-path]").forEach((el) => {
+        const target = pathMap[el.getAttribute("data-path")];
+        if (target) {
+          el.addEventListener("click", (e) => {
+            e.preventDefault();
+            window.location.href = target;
+          });
+        }
+      });
+    });
+  }
+
+  return API;
 });

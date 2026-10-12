@@ -180,17 +180,18 @@
 <div class="w-full bg-[#111113] border-b border-[#26262A] px-4 py-3">
 <div class="grid grid-cols-1 lg:grid-cols-12 gap-3 items-stretch">
 <!-- Drop Zone (Left/Center span 7) -->
-<div class="lg:col-span-7 flex items-center justify-between px-4 py-2.5 rounded-sm border border-dashed border-[#26262A] hover:border-[#F05A24]/60 bg-[#0A0A0B]/60 transition-colors group cursor-pointer">
+<div id="drop-zone" class="lg:col-span-7 flex items-center justify-between px-4 py-2.5 rounded-sm border border-dashed border-[#26262A] hover:border-[#F05A24]/60 bg-[#0A0A0B]/60 transition-colors group cursor-pointer relative">
+<input type="file" id="file-input" accept=".pdf,.txt,.md" style="display:none">
 <div class="flex items-center gap-3">
 <div class="w-8 h-8 rounded-sm bg-[#111113] border border-[#26262A] flex items-center justify-center text-[#F05A24]">
 <span class="material-symbols-outlined text-[18px]">upload_file</span>
 </div>
 <div>
 <div class="font-headline-sm text-[13px] leading-snug text-[#ECEAE6] flex items-center gap-2">
-<span class="">Drop a PDF, TXT or MD file</span>
+<span id="drop-zone-text">Drop a PDF, TXT or MD file</span>
 <span class="font-code-sm text-[11px] text-[#8A8690] px-1.5 py-0.2 rounded-sm bg-[#161619] border border-[#26262A]">MAX 50 MB</span>
 </div>
-<div class="font-code-sm text-[11px] text-[#8A8690] tracking-tight">Auto-tokenized with recursive boundary preservation</div>
+<div id="drop-zone-subtext" class="font-code-sm text-[11px] text-[#8A8690] tracking-tight">Auto-tokenized with recursive boundary preservation</div>
 </div>
 </div>
 <!-- Isometric Wireframe Schematic Line Art -->
@@ -216,34 +217,34 @@
 </div>
 </div>
 <!-- 5-Step Strip Pipeline (Span 5) -->
-<div class="lg:col-span-5 flex items-center justify-between px-3 py-2 bg-[#0A0A0B] border border-[#26262A] rounded-sm">
+<div id="pipeline-strip" class="lg:col-span-5 flex items-center justify-between px-3 py-2 bg-[#0A0A0B] border border-[#26262A] rounded-sm transition-colors">
 <!-- Step 1 -->
-<div class="flex items-center gap-1.5 text-[#3DD6A0]">
+<div id="step-validate" class="flex items-center gap-1.5 text-[#3DD6A0]">
 <span class="material-symbols-outlined text-[14px]">check_circle</span>
 <span class="font-code-sm text-[11px] font-medium tracking-tight">Validate</span>
 </div>
 <span class="font-code-sm text-[#26262A] text-[11px]">→</span>
 <!-- Step 2 -->
-<div class="flex items-center gap-1.5 text-[#3DD6A0]">
+<div id="step-extract" class="flex items-center gap-1.5 text-[#3DD6A0]">
 <span class="material-symbols-outlined text-[14px]">check_circle</span>
 <span class="font-code-sm text-[11px] font-medium tracking-tight">Extract</span>
 </div>
 <span class="font-code-sm text-[#26262A] text-[11px]">→</span>
 <!-- Step 3 -->
-<div class="flex items-center gap-1.5 text-[#3DD6A0]">
+<div id="step-chunk" class="flex items-center gap-1.5 text-[#3DD6A0]">
 <span class="material-symbols-outlined text-[14px]">check_circle</span>
 <span class="font-code-sm text-[11px] font-medium tracking-tight">Chunk</span>
 </div>
 <span class="font-code-sm text-[#26262A] text-[11px]">→</span>
 <!-- Step 4 -->
-<div class="flex items-center gap-1.5 text-[#3DD6A0]">
+<div id="step-embed" class="flex items-center gap-1.5 text-[#3DD6A0]">
 <span class="material-symbols-outlined text-[14px]">check_circle</span>
 <span class="font-code-sm text-[11px] font-medium tracking-tight">Embed</span>
 </div>
 <span class="font-code-sm text-[#26262A] text-[11px]">→</span>
-<!-- Step 5: Active -->
-<div class="flex items-center gap-1.5 text-[#F05A24] px-1.5 py-0.5 rounded-sm bg-[#F05A24]/10 border border-[#F05A24]/30">
-<span class="w-1.5 h-1.5 rounded-full bg-[#F05A24] animate-pulse"></span>
+<!-- Step 5 -->
+<div id="step-store" class="flex items-center gap-1.5 text-[#3DD6A0] px-1.5 py-0.5 rounded-sm">
+<span class="material-symbols-outlined text-[14px]">check_circle</span>
 <span class="font-code-sm text-[11px] font-semibold tracking-wider uppercase">Store</span>
 </div>
 </div>
@@ -257,104 +258,16 @@
 <div class="h-10 px-4 flex items-center justify-between border-b border-[#26262A] bg-[#0A0A0B]/40">
 <div class="flex items-center gap-2">
 <span class="font-code-sm text-[11px] uppercase tracking-wider text-[#8A8690] font-medium">Index / Documents</span>
-<span class="font-code-sm text-[10px] text-[#ECEAE6] px-1.5 py-0.2 rounded-sm bg-[#26262A]">6</span>
+<span id="doc-count-badge" class="font-code-sm text-[10px] text-[#ECEAE6] px-1.5 py-0.2 rounded-sm bg-[#26262A]">0</span>
 </div>
 <span class="material-symbols-outlined text-[16px] text-[#8A8690] cursor-pointer hover:text-[#ECEAE6]">filter_list</span>
 </div>
 <!-- Document Rows -->
-<div class="flex-1 overflow-y-auto divide-y divide-[#26262A]/60 font-code-sm">
-<!-- Row 1: Selected Document (os_unit3.pdf) -->
-<div class="bg-[#18181C] border-l-2 border-l-[#F05A24] p-3 cursor-pointer transition-colors relative">
-<div class="flex items-center justify-between gap-1 mb-1">
-<span class="text-[#ECEAE6] text-[13px] font-medium truncate">os_unit3.pdf</span>
-<div class="flex items-center gap-1">
-<span class="w-1.5 h-1.5 rounded-full bg-[#3DD6A0]"></span>
-<span class="text-[10px] text-[#3DD6A0] uppercase font-semibold">Ready</span>
-</div>
-</div>
-<div class="text-[#8A8690] text-[11px] flex items-center justify-between">
-<span class="">42 pages · 120 chunks</span>
-<span class="text-[#8A8690]/80">e3b0c4…89af</span>
-</div>
-<div class="mt-2 flex items-center justify-between text-[10px] text-[#8A8690]">
-<span class="text-[#F05A24]">ACTIVE INGESTION FOCUS</span>
-<span class="">2.4 MB</span>
-</div>
-</div>
-<!-- Row 2: kernel_arch.pdf -->
-<div class="p-3 hover:bg-[#151518] cursor-pointer transition-colors border-l-2 border-l-transparent">
-<div class="flex items-center justify-between gap-1 mb-1">
-<span class="text-[#ECEAE6] text-[13px] truncate">kernel_arch.pdf</span>
-<div class="flex items-center gap-1">
-<span class="w-1.5 h-1.5 rounded-full bg-[#3DD6A0]"></span>
-<span class="text-[10px] text-[#8A8690]">Indexed</span>
-</div>
-</div>
-<div class="text-[#8A8690] text-[11px] flex items-center justify-between">
-<span class="">68 pages · 214 chunks</span>
-<span class="">7c4a11…a012</span>
-</div>
-</div>
-<!-- Row 3: dev_handbook.pdf -->
-<div class="p-3 hover:bg-[#151518] cursor-pointer transition-colors border-l-2 border-l-transparent">
-<div class="flex items-center justify-between gap-1 mb-1">
-<span class="text-[#ECEAE6] text-[13px] truncate">dev_handbook.pdf</span>
-<div class="flex items-center gap-1">
-<span class="w-1.5 h-1.5 rounded-full bg-[#3DD6A0]"></span>
-<span class="text-[10px] text-[#8A8690]">Indexed</span>
-</div>
-</div>
-<div class="text-[#8A8690] text-[11px] flex items-center justify-between">
-<span class="">112 pages · 340 chunks</span>
-<span class="">9f2b87…33dc</span>
-</div>
-</div>
-<!-- Row 4: glossary_v2.pdf -->
-<div class="p-3 hover:bg-[#151518] cursor-pointer transition-colors border-l-2 border-l-transparent">
-<div class="flex items-center justify-between gap-1 mb-1">
-<span class="text-[#ECEAE6] text-[13px] truncate">glossary_v2.pdf</span>
-<div class="flex items-center gap-1">
-<span class="w-1.5 h-1.5 rounded-full bg-[#3DD6A0]"></span>
-<span class="text-[10px] text-[#8A8690]">Indexed</span>
-</div>
-</div>
-<div class="text-[#8A8690] text-[11px] flex items-center justify-between">
-<span class="">18 pages · 48 chunks</span>
-<span class="">11aa3c…7bb4</span>
-</div>
-</div>
-<!-- Row 5: rfc9110_http.pdf -->
-<div class="p-3 hover:bg-[#151518] cursor-pointer transition-colors border-l-2 border-l-transparent">
-<div class="flex items-center justify-between gap-1 mb-1">
-<span class="text-[#ECEAE6] text-[13px] truncate">rfc9110_http.pdf</span>
-<div class="flex items-center gap-1">
-<span class="w-1.5 h-1.5 rounded-full bg-[#3DD6A0]"></span>
-<span class="text-[10px] text-[#8A8690]">Indexed</span>
-</div>
-</div>
-<div class="text-[#8A8690] text-[11px] flex items-center justify-between">
-<span class="">194 pages · 610 chunks</span>
-<span class="">5b3310…ee29</span>
-</div>
-</div>
-<!-- Row 6: security_threats.md -->
-<div class="p-3 hover:bg-[#151518] cursor-pointer transition-colors border-l-2 border-l-transparent">
-<div class="flex items-center justify-between gap-1 mb-1">
-<span class="text-[#ECEAE6] text-[13px] truncate">security_threats.md</span>
-<div class="flex items-center gap-1">
-<span class="w-1.5 h-1.5 rounded-full bg-[#D98C91]"></span>
-<span class="text-[10px] text-[#D98C91]">Corrupt token</span>
-</div>
-</div>
-<div class="text-[#8A8690] text-[11px] flex items-center justify-between">
-<span class="">9 pages · 0 chunks</span>
-<span class="">fa89c0…0019</span>
-</div>
-</div>
+<div id="doc-list-container" class="flex-1 overflow-y-auto divide-y divide-[#26262A]/60 font-code-sm">
 </div>
 <!-- Left Column Footer Status -->
 <div class="p-3 border-t border-[#26262A] bg-[#0A0A0B] font-code-sm text-[11px] text-[#8A8690] flex items-center justify-between">
-<span class="">PARSED INGESTIONS: 5/6</span>
+<span class="">WORKSPACE: ISOLATED SESSION</span>
 <span class="text-[#3DD6A0]">ONLINE</span>
 </div>
 </section>
@@ -364,93 +277,34 @@
 <div class="h-10 px-4 flex items-center justify-between border-b border-[#26262A] bg-[#111113]">
 <div class="flex items-center gap-2 font-code-sm text-[11px]">
 <span class="text-[#8A8690]">SOURCE /</span>
-<span class="text-[#ECEAE6] font-medium">os_unit3.pdf</span>
+<span id="selected-doc-name" class="text-[#ECEAE6] font-medium">—</span>
 <span class="text-[#26262A]">|</span>
-<span class="text-[#F05A24]">FOCUS: CHUNK_0012</span>
+<span id="selected-chunk-focus" class="text-[#F05A24]">FOCUS: NONE</span>
 </div>
 <div class="flex items-center gap-2">
 <!-- Overlap configuration pill -->
 <div class="px-2 py-0.5 rounded-sm bg-[#161619] border border-[#26262A] font-code-sm text-[10px] text-[#8A8690]">
-              200w / 30w OVERLAP
-            </div>
+200w / 30w OVERLAP
+</div>
 <button class="w-6 h-6 rounded-sm bg-[#1A1A1D] border border-[#26262A] flex items-center justify-center text-[#ECEAE6] hover:border-[#F05A24]">
 <span class="material-symbols-outlined text-[14px]">tune</span>
 </button>
 </div>
 </div>
 <!-- Chunk Stream Viewport -->
-<div class="flex-1 overflow-y-auto p-4 space-y-4">
-<!-- Chunk c11 (Previous) -->
-<div class="relative pl-10 pr-3 py-3 border border-[#26262A] rounded-sm bg-[#111113]/70">
-<span class="absolute left-2.5 top-3.5 font-code-sm text-[11px] text-[#8A8690]">c11</span>
-<div class="font-headline-sm text-[11px] text-[#8A8690] uppercase tracking-wider mb-1 font-semibold">Virtual Address Space &amp; Paging Setup</div>
-<p class="font-body-sm text-[13px] leading-relaxed text-[#8A8690]">
-              The core memory management unit allocates fixed contiguous frames within physical hardware. When user threads require expansion through the memory controller, modern microkernels schedule distinct address translation structures via multilevel page directories.
-            </p>
-</div>
-<!-- Overlap Joint Visualizer Line -->
-<div class="flex items-center justify-center">
-<div class="h-3 w-[1px] bg-[#26262A]"></div>
-</div>
-<!-- Active Focus Chunk c12 -->
-<div class="relative pl-10 pr-3 py-3 border border-[#F05A24]/40 bg-[#111113] rounded-sm shadow-sm">
-<span class="absolute left-2.5 top-3.5 font-code-sm text-[11px] text-[#F05A24] font-semibold">c12</span>
-<div class="flex items-center justify-between mb-2">
-<span class="font-code-sm text-[11px] text-[#F05A24] uppercase tracking-wider font-semibold">Segment: Page Fault Exceptions &amp; TLB Invalidation</span>
-<span class="font-code-sm text-[10px] text-[#3DD6A0] bg-[#3DD6A0]/10 px-1.5 py-0.5 rounded-sm border border-[#3DD6A0]/20">Active In-Memory</span>
-</div>
-<!-- Standard body text -->
-<p class="font-body-sm text-[13px] leading-relaxed text-[#ECEAE6] mb-3">
-              Translation Lookaside Buffers (TLB) preserve high-frequency page mappings to suppress hierarchical tree traversal latency during hardware dereference. Whenever an asynchronous context swap occurs between unprivileged ring-3 containers, the supervisor bit requires a synchronous hardware flush of all non-global TLB entries. Fault handlers must safely trap segment permission violations without corrupting the active interrupt frame.
-            </p>
-<!-- 30-Word Overlap Callout Region with Diagonal Hatch -->
-<div class="relative mt-2 p-2.5 rounded-sm border border-[#F05A24] bg-[#141212] overflow-hidden">
-<!-- Inline Diagonal Hatch Overlay Pattern -->
-<div class="absolute inset-0 pointer-events-none opacity-20" style="background-image: repeating-linear-gradient(45deg, #F05A24 0, #F05A24 1px, transparent 0, transparent 8px);"></div>
-<div class="relative z-10">
-<div class="flex items-center justify-between mb-1">
-<div class="flex items-center gap-1.5">
-<span class="w-1.5 h-1.5 rounded-full bg-[#F05A24]"></span>
-<span class="font-code-sm text-[11px] font-semibold text-[#F05A24]">OVERLAP WINDOW (CHUNK c12 ⇄ c13)</span>
-</div>
-<span class="font-code-sm text-[10px] text-[#ECEAE6] bg-[#0A0A0B] px-1.5 py-0.2 border border-[#26262A] rounded-sm">200 words per chunk · 30 words overlap</span>
-</div>
-<p class="font-body-sm text-[13px] leading-relaxed text-[#ECEAE6] font-medium">
-                  "Upon invalidation, the architectural handler re-evaluates dirty bit status before committing cache flush operations. Kernel threads subsequently query root node references to synthesize replacement candidates prior to resuming user instruction execution flows."
-                </p>
-</div>
-</div>
-</div>
-<!-- Overlap Joint Visualizer Line -->
-<div class="flex items-center justify-center">
-<div class="h-3 w-[1px] bg-[#26262A]"></div>
-</div>
-<!-- Chunk c13 (Next Chunk) -->
-<div class="relative pl-10 pr-3 py-3 border border-[#26262A] rounded-sm bg-[#111113]/70">
-<span class="absolute left-2.5 top-3.5 font-code-sm text-[11px] text-[#8A8690]">c13</span>
-<!-- Repeating Overlap excerpt top of next chunk -->
-<div class="mb-2 p-2 rounded-sm border border-dashed border-[#F05A24]/40 bg-[#141212]/50">
-<span class="font-code-sm text-[10px] text-[#8A8690] block mb-0.5 uppercase tracking-wide">Preceding Window Inherited (30 words)</span>
-<p class="font-body-sm text-[12px] leading-snug text-[#8A8690] italic">
-                Upon invalidation, the architectural handler re-evaluates dirty bit status before committing cache flush operations...
-              </p>
-</div>
-<p class="font-body-sm text-[13px] leading-relaxed text-[#8A8690]">
-              Page replacement policies utilize pseudo-LRU queues across high-memory domains. When pressure escalates, kernel thread daemons demote inactive shared memory pages to swap partitions, preserving low-latency execution paths for interactive scheduler assignments.
-            </p>
-</div>
+<div id="chunk-stream-viewport" class="flex-1 overflow-y-auto p-4 space-y-4">
 </div>
 <!-- Centre Footer Stats -->
 <div class="h-10 px-4 border-t border-[#26262A] bg-[#111113] flex items-center justify-between font-code-sm text-[11px]">
 <div class="flex items-center gap-3 text-[#8A8690]">
-<span class="">TOTAL STREAM TOKENS: 31,920</span>
+<span id="chunk-stream-tokens">TOTAL STREAM TOKENS: 0</span>
 <span class="text-[#26262A]">|</span>
 <span class="">STRIDE RATIO: 0.85</span>
 </div>
 <span class="text-[#3DD6A0] flex items-center gap-1">
 <span class="w-1.5 h-1.5 rounded-full bg-[#3DD6A0]"></span>
-            SLIDING RECURSIVE WINDOW
-          </span>
+SLIDING RECURSIVE WINDOW
+</span>
 </div>
 </section>
 <!-- RIGHT COLUMN: Chunk Detail & Vector Telemetry (3 of 12) -->
@@ -465,23 +319,23 @@
 <div class="border border-[#26262A] rounded-sm bg-[#0A0A0B] divide-y divide-[#26262A]">
 <div class="p-2.5 flex items-center justify-between text-[12px]">
 <span class="text-[#8A8690]">ID</span>
-<span class="text-[#ECEAE6] font-semibold truncate max-w-[170px]" title="os_unit3.pdf_chunk_0012">os_unit3.pdf_chunk_0012</span>
+<span id="inspector-chunk-id" class="text-[#ECEAE6] font-semibold truncate max-w-[170px]" title="—">—</span>
 </div>
 <div class="p-2.5 flex items-center justify-between text-[12px]">
 <span class="text-[#8A8690]">Words</span>
-<span class="text-[#ECEAE6]">200</span>
+<span id="inspector-chunk-words" class="text-[#ECEAE6]">—</span>
 </div>
 <div class="p-2.5 flex items-center justify-between text-[12px]">
 <span class="text-[#8A8690]">Tokens</span>
-<span class="text-[#ECEAE6]">≈266</span>
+<span id="inspector-chunk-tokens" class="text-[#ECEAE6]">—</span>
 </div>
 <div class="p-2.5 flex items-center justify-between text-[12px]">
 <span class="text-[#8A8690]">Overlap</span>
-<span class="text-[#F05A24] font-medium">30</span>
+<span id="inspector-chunk-overlap" class="text-[#F05A24] font-medium">30</span>
 </div>
 <div class="p-2.5 flex items-center justify-between text-[12px]">
 <span class="text-[#8A8690]">Source</span>
-<span class="text-[#ECEAE6] truncate max-w-[170px]">os_unit3.pdf</span>
+<span id="inspector-chunk-source" class="text-[#ECEAE6] truncate max-w-[170px]">—</span>
 </div>
 </div>
 <!-- EMBEDDING 384-d Section with 32 Bars -->
@@ -532,45 +386,45 @@
 <span class="">dim[352..383]</span>
 </div>
 <div class="text-[11px] text-[#8A8690] leading-tight break-all border-t border-[#26262A] pt-2">
-<span class="text-[#8A8690]/60">SAMPLE:</span> [-0.0421, +0.0883, -0.0152, +0.1044, +0.0091, ...]
-            </div>
+<span class="text-[#8A8690]/60">MODEL:</span> BAAI/bge-small-en-v1.5 (cosine space)
+</div>
 </div>
 <!-- Stored in Chroma Verification Status Card -->
 <div class="border border-[#3DD6A0]/30 rounded-sm bg-[#3DD6A0]/5 p-3 flex items-start gap-2.5">
 <span class="material-symbols-outlined text-[#3DD6A0] text-[20px] mt-0.5">verified</span>
 <div>
 <div class="text-[12px] font-semibold text-[#3DD6A0] tracking-wide">
-                STORED IN CHROMA ✓
-              </div>
+STORED IN CHROMA ✓
+</div>
 <div class="text-[11px] text-[#ECEAE6]/80 mt-0.5">
-                Collection: <span class="text-[#ECEAE6] font-medium">production_v1</span>
+Multi-Tenant Isolation: <span class="text-[#3DD6A0] font-medium">ACTIVE</span>
 </div>
 <div class="text-[10px] text-[#8A8690] mt-0.5">
-                UUID: b93a8e91-7f82-45a2-97cf-89110aa390f1
-              </div>
+Physical Directory Partitioned
+</div>
 </div>
 </div>
 <!-- Fast Action Buttons -->
 <div class="space-y-2 pt-2">
-<button class="w-full py-2 px-3 rounded-full bg-[#F05A24] hover:bg-[#F05A24]/90 text-[#0A0A0B] font-code-sm text-[12px] font-semibold transition-colors flex items-center justify-center gap-1.5 shadow-sm">
-<span class="material-symbols-outlined text-[16px]">play_arrow</span>
-<span class="">RE-EMBED CHUNK</span>
+<button id="btn-open-console" class="w-full py-2 px-3 rounded-full bg-[#F05A24] hover:bg-[#F05A24]/90 text-[#0A0A0B] font-code-sm text-[12px] font-semibold transition-colors flex items-center justify-center gap-1.5 shadow-sm" data-path="console">
+<span class="material-symbols-outlined text-[16px]">chat</span>
+<span class="">OPEN CHAT IN CONSOLE ↗</span>
 </button>
-<button class="w-full py-2 px-3 rounded-full bg-[#18181C] hover:bg-[#202025] border border-[#26262A] text-[#ECEAE6] font-code-sm text-[12px] transition-colors flex items-center justify-center gap-1.5">
+<button id="btn-raw-json" class="w-full py-2 px-3 rounded-full bg-[#18181C] hover:bg-[#202025] border border-[#26262A] text-[#ECEAE6] font-code-sm text-[12px] transition-colors flex items-center justify-center gap-1.5">
 <span class="material-symbols-outlined text-[16px] text-[#8A8690]">terminal</span>
-<span class="">VIEW RAW JSON RECORD</span>
+<span class="">VIEW RAW CHUNK JSON</span>
 </button>
 </div>
 <!-- Danger Action Link -->
 <div class="pt-4 border-t border-[#26262A] text-center">
-<button class="text-[#D98C91] hover:text-[#D98C91]/80 text-[12px] font-code-sm underline underline-offset-4 decoration-[#D98C91]/40 transition-colors">
-              Delete this document
-            </button>
+<button id="btn-delete-doc" class="text-[#D98C91] hover:text-[#D98C91]/80 text-[12px] font-code-sm underline underline-offset-4 decoration-[#D98C91]/40 transition-colors">
+Delete this document
+</button>
 </div>
 </div>
 <!-- Right Column Footer -->
 <div class="p-3 border-t border-[#26262A] bg-[#0A0A0B] font-code-sm text-[11px] text-[#8A8690] flex items-center justify-between">
-<span class="">LATENCY: 14.2ms</span>
+<span class="">INDEX: HNSW</span>
 <span class="text-[#ECEAE6]">COSINE DISTANCE</span>
 </div>
 </section>
@@ -578,4 +432,326 @@
 </div>
 </div></main><footer class="w-full bg-surface-container-lowest border-t border-surface-variant"><div class="w-full px-space-xl py-space-xl"><div class="grid grid-cols-2 md:grid-cols-4 gap-space-xl pb-space-xl border-b border-surface-variant"><div class="flex flex-col gap-space-sm"><span class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Architecture</span><a class="font-code-sm text-code-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="architecture" href="#">Overview &amp; Pipeline</a><a class="font-code-sm text-code-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="architecture" href="#">Keyframe Visualizer</a><a class="font-code-sm text-code-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="architecture" href="#">Chunking Topology</a></div><div class="flex flex-col gap-space-sm"><span class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Benchmarks</span><a class="font-code-sm text-code-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="benchmarks" href="#">Retrieval Latency</a><a class="font-code-sm text-code-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="benchmarks" href="#">Token Dissipation</a><a class="font-code-sm text-code-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="benchmarks" href="#">Vector Recall Index</a></div><div class="flex flex-col gap-space-sm"><span class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Reproduce</span><a class="font-code-sm text-code-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="proof" href="#">Trace Receipts</a><a class="font-code-sm text-code-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="proof" href="#">Dataset Artifacts</a><a class="font-code-sm text-code-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="proof" href="#">Verification CLI</a></div><div class="flex flex-col gap-space-sm"><span class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Compliance</span><a class="font-code-sm text-code-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="compliance" href="#">Cryptographic Audit</a><a class="font-code-sm text-code-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="compliance" href="#">Privacy Enclave</a><a class="font-code-sm text-code-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="compliance" href="#">MIT License Spec</a></div></div><div class="pt-space-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-space-md"><div class="font-code-sm text-code-sm text-on-surface-variant">DocuMind · v1.0.0 · MIT</div><div class="font-code-sm text-code-sm text-on-surface-variant">2025-05-18T09:41:22Z · SHA-256: 7f83b165...8e01 · OPEN SOURCE LICENSE</div></div></div></footer>
 <script src="../api.js"></script>
+<script>
+  (function () {
+    let currentDocuments = [];
+    let activeDoc = null;
+    let activeChunks = [];
+    let activeChunk = null;
+
+    const fileInput = document.getElementById("file-input");
+    const dropZone = document.getElementById("drop-zone");
+    const dropZoneText = document.getElementById("drop-zone-text");
+    const dropZoneSubtext = document.getElementById("drop-zone-subtext");
+    const docCountBadge = document.getElementById("doc-count-badge");
+    const docListContainer = document.getElementById("doc-list-container");
+    const selectedDocName = document.getElementById("selected-doc-name");
+    const selectedChunkFocus = document.getElementById("selected-chunk-focus");
+    const chunkStreamViewport = document.getElementById("chunk-stream-viewport");
+    const chunkStreamTokens = document.getElementById("chunk-stream-tokens");
+    const inspectorId = document.getElementById("inspector-chunk-id");
+    const inspectorWords = document.getElementById("inspector-chunk-words");
+    const inspectorTokens = document.getElementById("inspector-chunk-tokens");
+    const inspectorSource = document.getElementById("inspector-chunk-source");
+    const btnDeleteDoc = document.getElementById("btn-delete-doc");
+    const btnRawJson = document.getElementById("btn-raw-json");
+
+    const steps = {
+      validate: document.getElementById("step-validate"),
+      extract: document.getElementById("step-extract"),
+      chunk: document.getElementById("step-chunk"),
+      embed: document.getElementById("step-embed"),
+      store: document.getElementById("step-store"),
+    };
+
+    function setStepState(stepKey, state) {
+      const el = steps[stepKey];
+      if (!el) return;
+      if (state === "active") {
+        el.className = "flex items-center gap-1.5 text-[#F05A24] px-1.5 py-0.5 rounded-sm bg-[#F05A24]/10 border border-[#F05A24]/30";
+        el.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-[#F05A24] animate-pulse"></span><span class="font-code-sm text-[11px] font-semibold tracking-wider uppercase">' + stepKey.toUpperCase() + '</span>';
+      } else if (state === "done") {
+        el.className = "flex items-center gap-1.5 text-[#3DD6A0]";
+        el.innerHTML = '<span class="material-symbols-outlined text-[14px]">check_circle</span><span class="font-code-sm text-[11px] font-medium tracking-tight">' + stepKey.charAt(0).toUpperCase() + stepKey.slice(1) + '</span>';
+      } else if (state === "error") {
+        el.className = "flex items-center gap-1.5 text-[#D98C91]";
+        el.innerHTML = '<span class="material-symbols-outlined text-[14px]">error</span><span class="font-code-sm text-[11px] font-medium tracking-tight">' + stepKey.charAt(0).toUpperCase() + stepKey.slice(1) + '</span>';
+      } else {
+        el.className = "flex items-center gap-1.5 text-[#8A8690]";
+        el.innerHTML = '<span class="material-symbols-outlined text-[14px]">radio_button_unchecked</span><span class="font-code-sm text-[11px] font-medium tracking-tight">' + stepKey.charAt(0).toUpperCase() + stepKey.slice(1) + '</span>';
+      }
+    }
+
+    function resetSteps() {
+      Object.keys(steps).forEach((k) => setStepState(k, "idle"));
+    }
+
+    function allStepsDone() {
+      Object.keys(steps).forEach((k) => setStepState(k, "done"));
+    }
+
+    async function loadDocuments() {
+      try {
+        const res = await DocuMindAPI.getDocuments();
+        currentDocuments = Array.isArray(res) ? res : (res.documents || []);
+        docCountBadge.textContent = currentDocuments.length;
+        renderDocumentList();
+        if (currentDocuments.length > 0) {
+          if (!activeDoc || !currentDocuments.some((d) => d.source === activeDoc.source)) {
+            selectDocument(currentDocuments[0]);
+          }
+        } else {
+          activeDoc = null;
+          activeChunks = [];
+          activeChunk = null;
+          renderEmptyWorkspace();
+        }
+      } catch (err) {
+        console.error("Failed to load documents:", err);
+        docListContainer.innerHTML = '<div class="p-4 text-[#D98C91] text-xs">Error connecting to session workspace.</div>';
+      }
+    }
+
+    function renderEmptyWorkspace() {
+      selectedDocName.textContent = "NO DOCUMENT LOADED";
+      selectedChunkFocus.textContent = "FOCUS: NONE";
+      chunkStreamViewport.innerHTML = '<div class="h-64 flex flex-col items-center justify-center text-center p-6 border border-dashed border-[#26262A] rounded-sm text-[#8A8690]"><span class="material-symbols-outlined text-4xl mb-2 text-[#F05A24]">description</span><div class="font-semibold text-sm text-[#ECEAE6]">Workspace is Empty</div><p class="text-xs max-w-sm mt-1">Upload a PDF, TXT or MD document above to begin chunking, embedding, and grounded questioning.</p></div>';
+      chunkStreamTokens.textContent = "TOTAL STREAM TOKENS: 0";
+      inspectorId.textContent = "—";
+      inspectorWords.textContent = "—";
+      inspectorTokens.textContent = "—";
+      inspectorSource.textContent = "—";
+    }
+
+    function renderDocumentList() {
+      if (currentDocuments.length === 0) {
+        docListContainer.innerHTML = '<div class="p-4 text-[#8A8690] text-xs text-center">No documents in this session.<br><span class="text-[#F05A24]">Drop a file above to index.</span></div>';
+        return;
+      }
+
+      docListContainer.innerHTML = "";
+      currentDocuments.forEach((doc) => {
+        const isSelected = activeDoc && activeDoc.source === doc.source;
+        const row = document.createElement("div");
+        row.className = isSelected
+          ? "bg-[#18181C] border-l-2 border-l-[#F05A24] p-3 cursor-pointer transition-colors relative"
+          : "p-3 hover:bg-[#151518] cursor-pointer transition-colors border-l-2 border-l-transparent";
+
+        const shaShort = doc.sha256 ? `${doc.sha256.substring(0, 6)}…${doc.sha256.substring(doc.sha256.length - 4)}` : "—";
+        row.innerHTML = `
+          <div class="flex items-center justify-between gap-1 mb-1">
+            <span class="text-[#ECEAE6] text-[13px] font-medium truncate">${escapeHtml(doc.source)}</span>
+            <div class="flex items-center gap-1">
+              <span class="w-1.5 h-1.5 rounded-full bg-[#3DD6A0]"></span>
+              <span class="text-[10px] text-[#3DD6A0] uppercase font-semibold">Indexed</span>
+            </div>
+          </div>
+          <div class="text-[#8A8690] text-[11px] flex items-center justify-between">
+            <span>${doc.chunks || 0} chunks</span>
+            <span>${shaShort}</span>
+          </div>
+          ${isSelected ? '<div class="mt-2 text-[10px] text-[#F05A24] font-semibold tracking-wider uppercase">ACTIVE FOCUS</div>' : ""}
+        `;
+
+        row.addEventListener("click", () => selectDocument(doc));
+        docListContainer.appendChild(row);
+      });
+    }
+
+    async function selectDocument(doc) {
+      activeDoc = doc;
+      renderDocumentList();
+      selectedDocName.textContent = doc.source;
+      chunkStreamViewport.innerHTML = '<div class="p-8 text-center text-[#8A8690] text-xs"><span class="animate-pulse">Loading chunks from ChromaDB…</span></div>';
+
+      try {
+        const chunks = await DocuMindAPI.getDocumentChunks(doc.source);
+        activeChunks = Array.isArray(chunks) ? chunks : [];
+        renderChunks();
+        if (activeChunks.length > 0) {
+          selectChunk(activeChunks[0]);
+        }
+      } catch (err) {
+        console.error("Failed to load chunks:", err);
+        chunkStreamViewport.innerHTML = '<div class="p-4 text-[#D98C91] text-xs">Failed to load chunks for this document.</div>';
+      }
+    }
+
+    function renderChunks() {
+      if (activeChunks.length === 0) {
+        chunkStreamViewport.innerHTML = '<div class="p-4 text-[#8A8690] text-xs">No chunks found.</div>';
+        chunkStreamTokens.textContent = "TOTAL STREAM TOKENS: 0";
+        return;
+      }
+
+      let totalWords = 0;
+      chunkStreamViewport.innerHTML = "";
+      activeChunks.forEach((c, idx) => {
+        const wordCount = (c.text.trim().match(/\S+/g) || []).length;
+        totalWords += wordCount;
+        const isFocus = activeChunk && activeChunk.id === c.id;
+
+        const chunkEl = document.createElement("div");
+        chunkEl.className = isFocus
+          ? "relative pl-10 pr-3 py-3 border border-[#F05A24]/60 bg-[#111113] rounded-sm shadow-sm cursor-pointer"
+          : "relative pl-10 pr-3 py-3 border border-[#26262A] rounded-sm bg-[#111113]/70 hover:border-[#8A8690]/40 transition-colors cursor-pointer";
+
+        chunkEl.innerHTML = `
+          <span class="absolute left-2.5 top-3.5 font-code-sm text-[11px] ${isFocus ? "text-[#F05A24] font-semibold" : "text-[#8A8690]"}">c${c.chunk_index}</span>
+          <div class="flex items-center justify-between mb-1.5">
+            <span class="font-code-sm text-[11px] uppercase tracking-wider ${isFocus ? "text-[#F05A24] font-semibold" : "text-[#8A8690]"}">CHUNK #${c.chunk_index} · ${wordCount} words</span>
+            <span class="font-code-sm text-[10px] text-[#3DD6A0] bg-[#3DD6A0]/10 px-1.5 py-0.5 rounded-sm border border-[#3DD6A0]/20">HNSW Indexed</span>
+          </div>
+          <p class="font-body-sm text-[13px] leading-relaxed text-[#ECEAE6]">${escapeHtml(c.text)}</p>
+        `;
+
+        chunkEl.addEventListener("click", () => selectChunk(c));
+        chunkStreamViewport.appendChild(chunkEl);
+
+        // Divider
+        if (idx < activeChunks.length - 1) {
+          const div = document.createElement("div");
+          div.className = "flex items-center justify-center py-1";
+          div.innerHTML = '<div class="h-2 w-[1px] bg-[#26262A]"></div>';
+          chunkStreamViewport.appendChild(div);
+        }
+      });
+
+      chunkStreamTokens.textContent = `TOTAL STREAM TOKENS: ~${Math.round(totalWords * 1.33)} (${activeChunks.length} chunks)`;
+    }
+
+    function selectChunk(chunk) {
+      activeChunk = chunk;
+      selectedChunkFocus.textContent = `FOCUS: CHUNK_${String(chunk.chunk_index).padStart(4, "0")}`;
+      const wordCount = (chunk.text.trim().match(/\S+/g) || []).length;
+      inspectorId.textContent = chunk.id;
+      inspectorId.title = chunk.id;
+      inspectorWords.textContent = String(wordCount);
+      inspectorTokens.textContent = `≈${Math.round(wordCount * 1.33)}`;
+      inspectorSource.textContent = activeDoc ? activeDoc.source : "—";
+    }
+
+    // File Drop & Selection
+    if (dropZone && fileInput) {
+      dropZone.addEventListener("click", () => fileInput.click());
+      fileInput.addEventListener("change", (e) => {
+        if (e.target.files && e.target.files[0]) {
+          handleFileUpload(e.target.files[0]);
+        }
+      });
+
+      dropZone.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        dropZone.classList.add("border-[#F05A24]", "bg-[#F05A24]/10");
+      });
+
+      ["dragleave", "drop"].forEach((ev) => {
+        dropZone.addEventListener(ev, () => {
+          dropZone.classList.remove("border-[#F05A24]", "bg-[#F05A24]/10");
+        });
+      });
+
+      dropZone.addEventListener("drop", (e) => {
+        e.preventDefault();
+        if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]) {
+          handleFileUpload(e.dataTransfer.files[0]);
+        }
+      });
+    }
+
+    async function handleFileUpload(file, replace = false) {
+      const allowed = [".pdf", ".txt", ".md"];
+      const ext = "." + file.name.split(".").pop().toLowerCase();
+      if (!allowed.includes(ext)) {
+        alert("Unsupported file type. DocuMind supports PDF, TXT, and Markdown files.");
+        return;
+      }
+
+      if (file.size > 50 * 1024 * 1024) {
+        alert("File exceeds maximum allowed limit (50 MB).");
+        return;
+      }
+
+      resetSteps();
+      dropZoneText.textContent = `Ingesting ${file.name}…`;
+      dropZoneSubtext.textContent = "Pipeline executing: validation -> extraction -> chunking -> embedding -> indexing";
+
+      setStepState("validate", "active");
+      await delay(250);
+      setStepState("validate", "done");
+      setStepState("extract", "active");
+
+      try {
+        setStepState("chunk", "active");
+        setStepState("embed", "active");
+        setStepState("store", "active");
+
+        const result = await DocuMindAPI.uploadDocument(file, replace);
+        allStepsDone();
+        dropZoneText.textContent = `Successfully indexed ${file.name}`;
+        dropZoneSubtext.textContent = `${result.chunks || 0} chunks created in ${DocuMindAPI.fmtMs(result.seconds * 1000)}`;
+
+        await loadDocuments();
+        if (fileInput) fileInput.value = "";
+      } catch (err) {
+        console.error("Upload failed:", err);
+        if (err.status === 409) {
+          const replaceConfirm = confirm(`Document "${file.name}" already exists in your workspace. Replace it with this version?`);
+          if (replaceConfirm) {
+            handleFileUpload(file, true);
+            return;
+          }
+        }
+        setStepState("store", "error");
+        dropZoneText.textContent = `Upload failed: ${err.message}`;
+        dropZoneSubtext.textContent = "Please verify document contents and try again.";
+      }
+    }
+
+    // Delete Document
+    if (btnDeleteDoc) {
+      btnDeleteDoc.addEventListener("click", async () => {
+        if (!activeDoc) {
+          alert("No document currently selected.");
+          return;
+        }
+        const ok = confirm(`Are you sure you want to delete "${activeDoc.source}" from this session workspace?`);
+        if (!ok) return;
+
+        try {
+          await DocuMindAPI.deleteDocument(activeDoc.source);
+          activeDoc = null;
+          await loadDocuments();
+        } catch (err) {
+          alert(`Failed to delete document: ${err.message}`);
+        }
+      });
+    }
+
+    // View Raw JSON
+    if (btnRawJson) {
+      btnRawJson.addEventListener("click", () => {
+        if (!activeChunk) {
+          alert("Please select a chunk first.");
+          return;
+        }
+        alert(JSON.stringify(activeChunk, null, 2));
+      });
+    }
+
+    function escapeHtml(str) {
+      if (!str) return "";
+      return str.replace(/[&<>"']/g, function (m) {
+        return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[m];
+      });
+    }
+
+    function delay(ms) {
+      return new Promise((r) => setTimeout(r, ms));
+    }
+
+    // Initial load
+    loadDocuments();
+  })();
+</script>
 </body></html>

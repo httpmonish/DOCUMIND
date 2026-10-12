@@ -215,27 +215,33 @@
 <span class="font-code-lg text-code-lg text-primary-container font-semibold select-none">›</span>
 <input class="flex-1 bg-transparent border-0 outline-none font-body-lg text-body-lg text-on-surface placeholder-on-surface-variant" id="query-input" placeholder="Enter retrieval prompt or technical inquiry..." type="text" value="Explain process scheduling in the OS kernel">
 <div class="flex items-center gap-space-md shrink-0">
-<span class="font-code-sm text-code-sm text-on-surface-variant">47 / 2000</span>
-<button class="h-9 px-space-lg rounded-xl bg-primary-container hover:bg-inverse-primary text-on-primary-container font-code-sm text-code-sm tracking-wider uppercase font-semibold flex items-center gap-space-xs transition-colors shadow-sm">
-<span class="">RUN QUERY</span>
+<span id="query-char-count" class="font-code-sm text-code-sm text-on-surface-variant">42 / 2000</span>
+<button id="btn-run-query" class="h-9 px-space-lg rounded-xl bg-primary-container hover:bg-inverse-primary text-on-primary-container font-code-sm text-code-sm tracking-wider uppercase font-semibold flex items-center gap-space-xs transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
+<span id="btn-run-text">RUN QUERY</span>
 <span class="text-[10px]">▸</span>
 </button>
 </div>
 </div>
 <!-- Inline Shortcut Links -->
 <div class="flex items-center justify-between px-space-xs font-body-sm text-body-sm">
-<div class="flex items-center gap-space-xl">
-<button class="text-on-surface-variant hover:text-primary transition-colors flex items-center gap-1">
+<div class="flex items-center gap-space-md sm:gap-space-xl flex-wrap">
+<button id="btn-add-doc" class="text-on-surface-variant hover:text-primary transition-colors flex items-center gap-1" data-path="library">
 <span class="material-symbols-outlined text-[15px]">add_circle</span> Add document
-            </button>
-<button class="text-on-surface-variant hover:text-primary transition-colors flex items-center gap-1">
-<span class="material-symbols-outlined text-[15px]">swords</span> Challenge mode
-            </button>
-<button class="text-primary-container hover:underline transition-colors flex items-center gap-1">
-              Try the abstention demo →
-            </button>
+</button>
+<button id="btn-action-summarize" class="text-on-surface-variant hover:text-primary transition-colors flex items-center gap-1">
+<span class="material-symbols-outlined text-[15px]">summarize</span> Summarize
+</button>
+<button id="btn-action-keypoints" class="text-on-surface-variant hover:text-primary transition-colors flex items-center gap-1">
+<span class="material-symbols-outlined text-[15px]">checklist</span> Key Points
+</button>
+<button id="btn-action-explain" class="text-on-surface-variant hover:text-primary transition-colors flex items-center gap-1">
+<span class="material-symbols-outlined text-[15px]">lightbulb</span> Explain
+</button>
+<button id="btn-action-abstain" class="text-primary-container hover:underline transition-colors flex items-center gap-1">
+Try abstention demo →
+</button>
 </div>
-<span class="font-code-sm text-code-sm text-on-surface-variant">Engine: RAG-Vectorized-v3</span>
+<span class="font-code-sm text-code-sm text-on-surface-variant">Engine: DocuMind v0.4</span>
 </div>
 </div>
 <!-- Pipeline Telemetry Ribbon (Seven Nodes + Diamond Gate + Abstain Branch) -->
@@ -376,43 +382,25 @@
 <div class="flex flex-col gap-space-md">
 <div class="flex items-center justify-between pb-space-xs">
 <div class="flex items-center gap-space-xs">
-<span class="material-symbols-outlined text-[16px] text-tertiary">check_circle</span>
-<span class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">SYNTHESIZED ANSWER</span>
+<span id="answer-header-icon" class="material-symbols-outlined text-[16px] text-tertiary">check_circle</span>
+<span id="answer-header-title" class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">SYNTHESIZED ANSWER</span>
 </div>
-<span class="px-space-xs py-0.5 rounded-DEFAULT bg-surface-container-high text-tertiary font-code-sm text-code-sm">
-                3 CITATIONS VERIFIED
-              </span>
+<span id="answer-badge" class="px-space-xs py-0.5 rounded-DEFAULT bg-surface-container-high text-tertiary font-code-sm text-code-sm">
+READY
+</span>
 </div>
-<div class="font-body-lg text-body-lg text-on-surface leading-relaxed flex flex-col gap-space-sm">
-<p class="">
-                In an operating system kernel, process scheduling manages the allocation of CPU execution units among ready processes. The core component is the 
-                <span class="text-on-surface font-medium">dispatcher</span>, which executes context switches between runnable states based on algorithmic preemption policies.
-              </p>
-<p class="">
-                Preemptive algorithms, such as the Completely Fair Scheduler (CFS), maintain a red-black tree indexed by virtual runtime (vruntime)
-                <button class="inline-flex items-center text-primary-container font-code-sm text-code-sm hover:underline ml-1">
-                  [os_unit3.pdf · c12]
-                </button>
-                to ensure deterministic resource parity.
-              </p>
-<p class="">
-                When higher priority tasks transition from I/O wait state
-                <button class="inline-flex items-center text-primary-container font-code-sm text-code-sm hover:underline ml-1">
-                  [kernel_arch.md · c88]
-                </button>,
-                inter-processor interrupts (IPI) force involuntary context saves
-                <button class="inline-flex items-center text-primary-container font-code-sm text-code-sm hover:underline ml-1">
-                  [sys_sched_v2.txt · c04]
-                </button>.
-              </p>
+<div id="answer-body" class="font-body-lg text-body-lg text-on-surface leading-relaxed flex flex-col gap-space-sm">
+<p class="text-on-surface-variant text-sm">
+Enter a question in the query box above or use one of the quick actions (Summarize, Key Points, Explain) to analyze your indexed documents.
+</p>
 </div>
 </div>
 <div class="pt-space-md mt-space-md flex items-center justify-between font-code-sm text-code-sm text-on-surface-variant">
-<span class="flex items-center gap-1">
+<span id="answer-provenance" class="flex items-center gap-1">
 <span class="material-symbols-outlined text-[14px] text-tertiary">verified_user</span>
-              Provenance: Level 1 Rigorous
-            </span>
-<span class="hover:text-on-surface cursor-pointer">Export Markdown ↗</span>
+Provenance: Level 1 Rigorous
+</span>
+<button id="btn-export-markdown" class="hover:text-on-surface cursor-pointer bg-transparent border-0 text-on-surface-variant p-0 font-code-sm">Export Markdown ↗</button>
 </div>
 </div>
 <!-- INSPECTOR · RETRIEVE Container -->
@@ -429,60 +417,12 @@
 <div class="flex flex-col gap-space-sm pt-space-xs">
 <div class="flex items-center justify-between font-label-caps text-label-caps text-on-surface-variant">
 <span class="">CANDIDATE CHUNKS</span>
-<span class="text-primary-container font-semibold">THRESHOLD τ 0.45</span>
+<span class="text-primary-container font-semibold">THRESHOLD τ 0.35</span>
 </div>
 <!-- Relative visual scale container -->
-<div class="relative flex flex-col gap-space-xs py-space-xs">
-<!-- Threshold indicator vertical marker line -->
-<div class="absolute top-0 bottom-0 left-[45%] w-0.5 bg-primary-container z-10 pointer-events-none opacity-80">
-<div class="bg-primary-container text-on-primary-container text-[8px] font-code-sm px-1 rounded-DEFAULT absolute -top-3.5 -left-3">
-                    τ 0.45
-                  </div>
-</div>
-<!-- Chunk #1 -->
-<div class="flex items-center gap-space-sm p-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high transition-colors">
-<span class="font-code-sm text-code-sm text-on-surface font-semibold w-6">#1</span>
-<div class="flex-1 bg-surface-container-lowest h-3.5 rounded-DEFAULT overflow-hidden">
-<div class="bg-tertiary h-full rounded-DEFAULT" style="width: 71%;"></div>
-</div>
-<span class="font-code-sm text-code-sm text-tertiary font-bold w-12 text-right">0.71</span>
-<span class="px-space-xs py-0.2 bg-tertiary-container text-on-tertiary-container font-label-caps text-[9px] rounded-DEFAULT">PASS</span>
-</div>
-<!-- Chunk #2 -->
-<div class="flex items-center gap-space-sm p-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high transition-colors">
-<span class="font-code-sm text-code-sm text-on-surface font-semibold w-6">#2</span>
-<div class="flex-1 bg-surface-container-lowest h-3.5 rounded-DEFAULT overflow-hidden">
-<div class="bg-tertiary h-full rounded-DEFAULT" style="width: 58%;"></div>
-</div>
-<span class="font-code-sm text-code-sm text-tertiary font-bold w-12 text-right">0.58</span>
-<span class="px-space-xs py-0.2 bg-tertiary-container text-on-tertiary-container font-label-caps text-[9px] rounded-DEFAULT">PASS</span>
-</div>
-<!-- Chunk #3 -->
-<div class="flex items-center gap-space-sm p-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high transition-colors">
-<span class="font-code-sm text-code-sm text-on-surface font-semibold w-6">#3</span>
-<div class="flex-1 bg-surface-container-lowest h-3.5 rounded-DEFAULT overflow-hidden">
-<div class="bg-tertiary h-full rounded-DEFAULT" style="width: 49%;"></div>
-</div>
-<span class="font-code-sm text-code-sm text-tertiary font-bold w-12 text-right">0.49</span>
-<span class="px-space-xs py-0.2 bg-tertiary-container text-on-tertiary-container font-label-caps text-[9px] rounded-DEFAULT">PASS</span>
-</div>
-<!-- Chunk #4 -->
-<div class="flex items-center gap-space-sm p-1.5 rounded-lg bg-surface-container/60 hover:bg-surface-container-high transition-colors">
-<span class="font-code-sm text-code-sm text-on-surface-variant font-semibold w-6">#4</span>
-<div class="flex-1 bg-surface-container-lowest h-3.5 rounded-DEFAULT overflow-hidden">
-<div class="bg-error h-full rounded-DEFAULT" style="width: 38%;"></div>
-</div>
-<span class="font-code-sm text-code-sm text-error font-bold w-12 text-right">0.38</span>
-<span class="px-space-xs py-0.2 bg-error-container text-on-error-container font-label-caps text-[9px] rounded-DEFAULT">PRUNED</span>
-</div>
-<!-- Chunk #5 -->
-<div class="flex items-center gap-space-sm p-1.5 rounded-lg bg-surface-container/60 hover:bg-surface-container-high transition-colors">
-<span class="font-code-sm text-code-sm text-on-surface-variant font-semibold w-6">#5</span>
-<div class="flex-1 bg-surface-container-lowest h-3.5 rounded-DEFAULT overflow-hidden">
-<div class="bg-error h-full rounded-DEFAULT" style="width: 22%;"></div>
-</div>
-<span class="font-code-sm text-code-sm text-error font-bold w-12 text-right">0.22</span>
-<span class="px-space-xs py-0.2 bg-error-container text-on-error-container font-label-caps text-[9px] rounded-DEFAULT">PRUNED</span>
+<div id="candidate-chunks-container" class="relative flex flex-col gap-space-xs py-space-xs">
+<div class="p-4 text-center text-xs text-on-surface-variant">
+Execute a query above to inspect retrieved candidate chunks, cosine distances, and threshold filtering.
 </div>
 </div>
 </div>
@@ -491,7 +431,7 @@
 <div class="flex flex-col gap-0.5">
 <span class="font-label-caps text-label-caps text-on-surface-variant">VECTOR HYPERSPACE</span>
 <span class="font-code-sm text-code-sm text-on-surface">k-NN Nearest Neighbor Hit</span>
-<span class="font-code-sm text-code-sm text-primary-container">Cosine distance: 0.290</span>
+<span class="font-code-sm text-code-sm text-primary-container">ChromaDB Embedding Space</span>
 </div>
 <!-- 160px isometric wireframe line illustration -->
 <div class="w-[160px] h-[78px] flex items-center justify-center">
@@ -521,8 +461,8 @@
 </div>
 </div>
 <div class="font-code-sm text-code-sm text-on-surface-variant flex items-center justify-between pt-space-xs">
-<span class="">HNSW: efSearch = 64 · M = 16</span>
-<span class="text-tertiary">3 chunks above τ</span>
+<span class="">HNSW: cosine space · top_k = 5</span>
+<span id="retrieval-summary-badge" class="text-on-surface-variant">Waiting for query…</span>
 </div>
 </div>
 </div>
@@ -693,4 +633,317 @@
   }
 </script></main><footer class="w-full bg-surface-container-lowest border-t border-surface-variant"><div class="w-full px-space-xl py-space-xl"><div class="grid grid-cols-2 md:grid-cols-4 gap-space-xl pb-space-xl border-b border-surface-variant"><div class="flex flex-col gap-space-sm"><span class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Architecture</span><a class="font-code-sm text-code-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="architecture" href="#">Overview &amp; Pipeline</a><a class="font-code-sm text-code-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="architecture" href="#">Keyframe Visualizer</a><a class="font-code-sm text-code-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="architecture" href="#">Chunking Topology</a></div><div class="flex flex-col gap-space-sm"><span class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Benchmarks</span><a class="font-code-sm text-code-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="benchmarks" href="#">Retrieval Latency</a><a class="font-code-sm text-code-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="benchmarks" href="#">Token Dissipation</a><a class="font-code-sm text-code-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="benchmarks" href="#">Vector Recall Index</a></div><div class="flex flex-col gap-space-sm"><span class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Reproduce</span><a class="font-code-sm text-code-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="proof" href="#">Trace Receipts</a><a class="font-code-sm text-code-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="proof" href="#">Dataset Artifacts</a><a class="font-code-sm text-code-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="proof" href="#">Verification CLI</a></div><div class="flex flex-col gap-space-sm"><span class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Compliance</span><a class="font-code-sm text-code-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="compliance" href="#">Cryptographic Audit</a><a class="font-code-sm text-code-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="compliance" href="#">Privacy Enclave</a><a class="font-code-sm text-code-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="compliance" href="#">MIT License Spec</a></div></div><div class="pt-space-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-space-md"><div class="font-code-sm text-code-sm text-on-surface-variant">DocuMind · v1.0.0 · MIT</div><div class="font-code-sm text-code-sm text-on-surface-variant">2025-05-18T09:41:22Z · SHA-256: 7f83b165...8e01 · OPEN SOURCE LICENSE</div></div></div></footer>
 <script src="../api.js"></script>
+<script>
+  (function() {
+    const queryInput = document.getElementById("query-input");
+    const queryCharCount = document.getElementById("query-char-count");
+    const btnRunQuery = document.getElementById("btn-run-query");
+    const btnRunText = document.getElementById("btn-run-text");
+    const answerHeaderIcon = document.getElementById("answer-header-icon");
+    const answerHeaderTitle = document.getElementById("answer-header-title");
+    const answerBadge = document.getElementById("answer-badge");
+    const answerBody = document.getElementById("answer-body");
+    const answerProvenance = document.getElementById("answer-provenance");
+    const btnExportMarkdown = document.getElementById("btn-export-markdown");
+    const candidateChunksContainer = document.getElementById("candidate-chunks-container");
+    const retrievalSummaryBadge = document.getElementById("retrieval-summary-badge");
+    const eventsLogContainer = document.getElementById("events-log-container");
+
+    const btnActionSummarize = document.getElementById("btn-action-summarize");
+    const btnActionKeypoints = document.getElementById("btn-action-keypoints");
+    const btnActionExplain = document.getElementById("btn-action-explain");
+    const btnActionAbstain = document.getElementById("btn-action-abstain");
+
+    let lastAnswerResult = null;
+
+    if (queryInput && queryCharCount) {
+      function updateCharCount() {
+        queryCharCount.textContent = `${queryInput.value.length} / 2000`;
+      }
+      queryInput.addEventListener("input", updateCharCount);
+      updateCharCount();
+
+      queryInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" && !e.shiftKey) {
+          e.preventDefault();
+          executeAsk();
+        }
+      });
+    }
+
+    if (btnRunQuery) {
+      btnRunQuery.addEventListener("click", () => executeAsk());
+    }
+
+    if (btnActionSummarize) {
+      btnActionSummarize.addEventListener("click", () => executeAnalyze("summarize"));
+    }
+    if (btnActionKeypoints) {
+      btnActionKeypoints.addEventListener("click", () => executeAnalyze("key_points"));
+    }
+    if (btnActionExplain) {
+      btnActionExplain.addEventListener("click", () => executeAnalyze("explain"));
+    }
+    if (btnActionAbstain) {
+      btnActionAbstain.addEventListener("click", () => {
+        queryInput.value = "What is the secret recipe for Martian cryogenic fuel?";
+        if (queryCharCount) queryCharCount.textContent = `${queryInput.value.length} / 2000`;
+        executeAsk();
+      });
+    }
+
+    async function executeAsk() {
+      const q = queryInput.value.trim();
+      if (!q) {
+        alert("Please enter a question or inquiry.");
+        return;
+      }
+
+      setLoading(true, "RUNNING…");
+      const startTime = performance.now();
+
+      try {
+        const res = await DocuMindAPI.askQuestion(q, 5);
+        const elapsed = performance.now() - startTime;
+        lastAnswerResult = res;
+        renderAnswer(res, elapsed);
+        logEvent("query_answer", elapsed, res.request_id || "req_" + Math.random().toString(36).substr(2, 6));
+      } catch (err) {
+        handleError(err);
+      } finally {
+        setLoading(false, "RUN QUERY");
+      }
+    }
+
+    async function executeAnalyze(action) {
+      setLoading(true, "ANALYZING…");
+      const startTime = performance.now();
+
+      try {
+        const res = await DocuMindAPI.analyze(action);
+        const elapsed = performance.now() - startTime;
+        lastAnswerResult = res;
+        renderAnswer(res, elapsed);
+        logEvent(`analyze_${action}`, elapsed, res.request_id || "req_" + Math.random().toString(36).substr(2, 6));
+      } catch (err) {
+        handleError(err);
+      } finally {
+        setLoading(false, "RUN QUERY");
+      }
+    }
+
+    function setLoading(isLoading, text) {
+      if (btnRunQuery) btnRunQuery.disabled = isLoading;
+      if (btnRunText) btnRunText.textContent = text;
+      if (queryInput) queryInput.disabled = isLoading;
+    }
+
+    function renderAnswer(res, clientLatencyMs) {
+      const isAbstain = res.outcome === "abstain" || res.abstained === true;
+      const citations = res.citations || [];
+      const retrieved = res.retrieved || [];
+      const latencyMs = res.latency_ms || Math.round(clientLatencyMs);
+
+      if (isAbstain) {
+        answerHeaderIcon.className = "material-symbols-outlined text-[16px] text-[#ff571d]";
+        answerHeaderIcon.textContent = "shield";
+        answerHeaderTitle.textContent = "TRANSPARENT ABSTENTION";
+        answerBadge.className = "px-space-xs py-0.5 rounded-DEFAULT bg-[#ff571d]/20 text-[#ffb59f] font-code-sm text-code-sm";
+        answerBadge.textContent = "CONFIDENCE GATE TRIGGERED (τ < 0.35)";
+
+        answerBody.innerHTML = `
+          <div class="p-4 rounded-lg bg-surface-container border border-[#ff571d]/30 text-on-surface flex flex-col gap-2">
+            <div class="text-[#ffb59f] font-semibold text-sm flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-[16px]">info</span>
+              No Hallucination Policy Enforced
+            </div>
+            <p class="text-sm leading-relaxed">${escapeHtml(res.text || "No grounded evidence in your indexed document was found above the relevance threshold (τ = 0.35). The DocuMind core abstained from answering to prevent hallucination.")}</p>
+            <div class="font-code-sm text-xs text-on-surface-variant pt-2 border-t border-surface-variant">
+              Abstain reason: <span class="text-primary-container font-mono">${escapeHtml(res.abstain_reason || "low_confidence")}</span> · Retrieval latency: ${DocuMindAPI.fmtMs(latencyMs)}
+            </div>
+          </div>
+        `;
+
+        answerProvenance.innerHTML = `
+          <span class="material-symbols-outlined text-[14px] text-primary-container">verified_user</span>
+          <span>Integrity Guard: Hallucination Prevented</span>
+        `;
+      } else {
+        answerHeaderIcon.className = "material-symbols-outlined text-[16px] text-tertiary";
+        answerHeaderIcon.textContent = "check_circle";
+        answerHeaderTitle.textContent = "SYNTHESIZED ANSWER";
+        answerBadge.className = "px-space-xs py-0.5 rounded-DEFAULT bg-surface-container-high text-tertiary font-code-sm text-code-sm";
+        answerBadge.textContent = `${citations.length} CITATION${citations.length === 1 ? "" : "S"} VERIFIED`;
+
+        let formattedText = escapeHtml(res.text || "");
+        citations.forEach((c) => {
+          const marker = c.marker || `[c${c.chunk_index}]`;
+          const cleanMarker = escapeHtml(marker);
+          const snippetShort = escapeHtml((c.snippet || "").substring(0, 150));
+          const btnHtml = `<button class="inline-flex items-center text-primary-container font-code-sm text-code-sm hover:underline ml-1 font-semibold citation-pill" title="${snippetShort}">[${escapeHtml(c.source)} · c${c.chunk_index}]</button>`;
+          formattedText = formattedText.replaceAll(cleanMarker, btnHtml);
+        });
+
+        const paras = formattedText.split("\n\n").filter(Boolean);
+        answerBody.innerHTML = paras.map(p => `<p class="leading-relaxed">${p}</p>`).join("");
+
+        answerBody.querySelectorAll(".citation-pill").forEach((pill, idx) => {
+          pill.addEventListener("click", () => {
+            if (citations[idx]) {
+              const cit = citations[idx];
+              alert(`Citation Source: ${cit.source}\nChunk #${cit.chunk_index}\nRelevance Score: ${cit.score}\n\nEvidence:\n"${cit.snippet}"`);
+            }
+          });
+        });
+
+        answerProvenance.innerHTML = `
+          <span class="material-symbols-outlined text-[14px] text-tertiary">verified_user</span>
+          <span>Provenance: Level 1 Rigorous · ${DocuMindAPI.fmtMs(latencyMs)}</span>
+        `;
+      }
+
+      renderCandidateChunks(retrieved, isAbstain);
+    }
+
+    function renderCandidateChunks(chunks, isAbstain) {
+      if (!candidateChunksContainer) return;
+
+      if (!chunks || chunks.length === 0) {
+        candidateChunksContainer.innerHTML = '<div class="p-3 text-xs text-on-surface-variant text-center">No candidate chunks retrieved.</div>';
+        if (retrievalSummaryBadge) retrievalSummaryBadge.textContent = "0 candidates";
+        return;
+      }
+
+      let aboveCount = 0;
+      let html = `
+        <div class="absolute top-0 bottom-0 left-[35%] w-0.5 bg-primary-container z-10 pointer-events-none opacity-80">
+          <div class="bg-primary-container text-on-primary-container text-[8px] font-code-sm px-1 rounded-DEFAULT absolute -top-3.5 -left-3">
+            τ 0.35
+          </div>
+        </div>
+      `;
+
+      chunks.forEach((c, i) => {
+        const score = c.score != null ? c.score : 0;
+        const pass = score >= 0.35;
+        if (pass) aboveCount++;
+        const pct = Math.min(100, Math.max(5, Math.round(score * 100)));
+        const barColor = pass ? "bg-tertiary" : "bg-error";
+        const textColor = pass ? "text-tertiary" : "text-error";
+        const badgeColor = pass ? "bg-tertiary-container text-on-tertiary-container" : "bg-error-container text-on-error-container";
+        const badgeText = pass ? "PASS" : "PRUNED";
+
+        html += `
+          <div class="flex items-center gap-space-sm p-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high transition-colors cursor-pointer candidate-row" title="${escapeHtml(c.snippet || c.text || '')}">
+            <span class="font-code-sm text-code-sm text-on-surface font-semibold w-6">#${i + 1}</span>
+            <div class="flex-1 bg-surface-container-lowest h-3.5 rounded-DEFAULT overflow-hidden">
+              <div class="${barColor} h-full rounded-DEFAULT" style="width: ${pct}%;"></div>
+            </div>
+            <span class="font-code-sm text-code-sm ${textColor} font-bold w-12 text-right">${score.toFixed(2)}</span>
+            <span class="px-space-xs py-0.2 ${badgeColor} font-label-caps text-[9px] rounded-DEFAULT">${badgeText}</span>
+          </div>
+        `;
+      });
+
+      candidateChunksContainer.innerHTML = html;
+      if (retrievalSummaryBadge) {
+        retrievalSummaryBadge.textContent = `${aboveCount} of ${chunks.length} chunks above τ`;
+        retrievalSummaryBadge.className = aboveCount > 0 ? "text-tertiary" : "text-primary-container";
+      }
+
+      candidateChunksContainer.querySelectorAll(".candidate-row").forEach((row, i) => {
+        row.addEventListener("click", () => {
+          const c = chunks[i];
+          alert(`Chunk #${i + 1} (${c.source || "doc"} - id: ${c.id || "c" + c.chunk_index})\nRelevance Score: ${c.score}\n\n${c.text || c.snippet || ""}`);
+        });
+      });
+    }
+
+    function handleError(err) {
+      console.error("Query failed:", err);
+      if (err.status === 409 || err.message === "index_empty") {
+        answerHeaderIcon.className = "material-symbols-outlined text-[16px] text-primary-container";
+        answerHeaderIcon.textContent = "folder_open";
+        answerHeaderTitle.textContent = "EMPTY WORKSPACE";
+        answerBadge.className = "px-space-xs py-0.5 rounded-DEFAULT bg-surface-container-high text-primary-container font-code-sm text-code-sm";
+        answerBadge.textContent = "UPLOAD REQUIRED";
+
+        answerBody.innerHTML = `
+          <div class="p-4 rounded-lg bg-surface-container border border-surface-variant text-on-surface flex flex-col gap-2">
+            <div class="text-[#ffb59f] font-semibold text-sm">Your Session Has No Documents Yet</div>
+            <p class="text-sm">Please navigate to the Library view and upload a document to begin indexing and grounded question answering.</p>
+            <button class="w-fit mt-2 px-space-md py-1 bg-primary-container text-on-primary-container rounded-lg font-code-sm text-xs font-semibold" onclick="window.location.href='/stitch_documind_glass_box_ui (3)/code.html'">
+              Open Library to Upload →
+            </button>
+          </div>
+        `;
+      } else {
+        answerHeaderIcon.className = "material-symbols-outlined text-[16px] text-error";
+        answerHeaderIcon.textContent = "error";
+        answerHeaderTitle.textContent = "REQUEST FAILED";
+        answerBadge.className = "px-space-xs py-0.5 rounded-DEFAULT bg-error-container text-on-error-container font-code-sm text-code-sm";
+        answerBadge.textContent = `HTTP ${err.status || 500}`;
+
+        answerBody.innerHTML = `
+          <div class="p-4 rounded-lg bg-surface-container border border-error/30 text-error flex flex-col gap-1">
+            <div class="font-semibold text-sm">${escapeHtml(err.message)}</div>
+            <div class="text-xs text-on-surface-variant font-mono">Error code: ${escapeHtml(err.code || "unknown")}</div>
+          </div>
+        `;
+      }
+    }
+
+    function logEvent(action, durationMs, reqId) {
+      if (!eventsLogContainer) return;
+      const now = new Date().toTimeString().split(" ")[0] + "." + String(Date.now() % 1000).padStart(3, "0");
+      const el = document.createElement("div");
+      el.className = "p-2 rounded-lg bg-surface-container-low hover:bg-surface-container-high transition-colors flex flex-col gap-1 animate-pulse";
+      el.innerHTML = `
+        <div class="flex items-center justify-between font-code-sm text-code-sm">
+          <span class="text-on-surface-variant">${now}</span>
+          <span class="text-tertiary font-semibold">${Math.round(durationMs)} ms</span>
+        </div>
+        <div class="flex items-center justify-between font-code-sm text-code-sm">
+          <span class="text-on-surface font-medium truncate">${action}</span>
+          <span class="text-secondary font-mono text-[10px]">${reqId.substring(0, 8)}</span>
+        </div>
+      `;
+      eventsLogContainer.prepend(el);
+      setTimeout(() => el.classList.remove("animate-pulse"), 1000);
+    }
+
+    if (btnExportMarkdown) {
+      btnExportMarkdown.addEventListener("click", () => {
+        if (!lastAnswerResult) {
+          alert("No answer has been generated yet.");
+          return;
+        }
+        const text = `# DocuMind Grounded Analysis\n\n## Inquiry\n${queryInput.value}\n\n## Answer\n${lastAnswerResult.text}\n\n## Outcome\n${lastAnswerResult.outcome}\n\n## Citations\n` +
+          (lastAnswerResult.citations || []).map(c => `- **[${c.source} · chunk ${c.chunk_index}]** (score: ${c.score}):\n  > ${c.snippet}`).join("\n");
+        const blob = new Blob([text], { type: "text/markdown" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = `documind_answer_${Date.now()}.md`;
+        a.click();
+      });
+    }
+
+    // Initial check of documents
+    DocuMindAPI.getDocuments().then(docs => {
+      const arr = Array.isArray(docs) ? docs : (docs.documents || []);
+      const stripBtn = document.getElementById("toggle-index-strip");
+      if (stripBtn) {
+        const countSpan = stripBtn.querySelector("span:nth-child(4)");
+        if (countSpan) countSpan.textContent = `${arr.length} document${arr.length === 1 ? "" : "s"}`;
+      }
+    }).catch(console.error);
+
+    function escapeHtml(str) {
+      if (!str) return "";
+      return str.replace(/[&<>"']/g, function (m) {
+        return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[m];
+      });
+    }
+  })();
+</script>
 </body></html>

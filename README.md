@@ -171,7 +171,56 @@ HTTP Status: 204
 
 ---
 
+## Public Demo & Glass Box UI
+
+DocuMind features a full-stack document intelligence interface ("Glass Box UI") designed for live demonstration without exposing server credentials.
+
+### 1. Multi-Tenant Session Isolation Architecture
+
+To allow multiple anonymous public demo visitors to upload documents simultaneously without data leaks:
+- **Zero Client Credentials:** Private keys (`DOCUMIND_API_KEY`, `ANTHROPIC_API_KEY`) never enter frontend bundles, HTML, or network payloads.
+- **Session Scoping (`X-Session-ID`):** Each visitor session is assigned an opaque high-entropy token stored strictly in browser `sessionStorage`.
+- **Physical Partitioning:** Each session receives an isolated storage directory (`~/.documind/sessions/{session_id}/chroma`) and embedded ChromaDB collection. Embedder neural weights in RAM are shared safely across sessions.
+- **TTL Lifecycle:** Idle sessions expire and are purged automatically (`DOCUMIND_SESSION_TTL_S`, default: 24h).
+
+### 2. Running Locally
+
+Start the backend and frontend dev servers:
+
+```console
+# Terminal 1: Start DocuMind Backend
+source .venv/bin/activate
+documind serve --host 127.0.0.1 --port 8000
+
+# Terminal 2: Serve the Frontend
+python3 -m http.server 5500 --directory Documind-frontend
+```
+
+Open your browser to:
+- **Architecture Overview:** `http://127.0.0.1:5500/stitch_documind_glass_box_ui/code.html`
+- **Document Intelligence Console:** `http://127.0.0.1:5500/stitch_documind_glass_box_ui%20(1)/code.html`
+- **Proof & Telemetry:** `http://127.0.0.1:5500/stitch_documind_glass_box_ui%20(2)/code.html`
+- **Document Library & Ingestion:** `http://127.0.0.1:5500/stitch_documind_glass_box_ui%20(3)/code.html`
+
+### 3. Public Demo Gateway Endpoints (`/api/demo/*`)
+
+All `/api/demo` routes require an `X-Session-ID` header and are rate-limited:
+
+| Endpoint | Method | Description |
+|---|:---:|---|
+| `/api/demo/documents` | `GET` | List documents indexed in current visitor session |
+| `/api/demo/documents` | `POST` | Upload and chunk PDF, TXT, or MD into session workspace |
+| `/api/demo/documents/{source}` | `DELETE` | Delete a document from current visitor workspace |
+| `/api/demo/documents/{source}/chunks` | `GET` | Inspect chunk partition text and index order |
+| `/api/demo/ask` | `POST` | Ask a question; returns grounded answer or abstention |
+| `/api/demo/analyze` | `POST` | Bounded agent tasks (`summarize`, `key_points`, `explain`) |
+| `/api/demo/events` | `GET` | Live event stream for session diagnostics |
+| `/api/demo/meta` | `GET` | Active model, tau threshold, and limits |
+
+---
+
 ## Privacy & Streams
 
 - **Strict Stream Separation:** Primary machine-readable data (answer text, search lists, or JSON) is emitted exclusively to `stdout`. All logs, stats footers, warnings, and error messages go to `stderr`. Piping `documind ask ... --json | jq .` will never fail due to runtime logs.
 - **Privacy Model:** When running `ask` with an LLM, only the user question and the top-$k$ matching chunks are transmitted to the Anthropic API. Running `documind ask --no-llm` or `documind search` runs 100% locally on your machine with zero external network transmission.
+- **Demo Isolation:** Public demo sessions are segregated at the storage and vector engine level; one visitor cannot query, view, or delete another visitor's documents.

@@ -51,6 +51,7 @@ from documind.core.ingest import safe_upload_name
 from documind.core.pipeline import DocuMind
 from documind.core.serialize import answer_to_dict
 from documind.interfaces.ratelimit import TokenBucketLimiter
+from documind.interfaces.session import SessionManager, get_session_id_from_request
 
 logger = logging.getLogger(__name__)
 
@@ -78,6 +79,39 @@ class AskRequest(BaseModel):
         if not (1 <= v <= 10):
             raise ValueError("top_k must be an integer between 1 and 10")
         return v
+
+
+class AnalyzeRequest(BaseModel):
+    action: str
+    source: str | None = None
+
+    model_config = ConfigDict(extra="forbid")
+
+    @field_validator("action")
+    @classmethod
+    def validate_action(cls, v: str) -> str:
+        clean = v.strip().lower()
+        if clean not in {"summarize", "key_points", "explain"}:
+            raise ValueError("action must be one of: summarize, key_points, explain")
+        return clean
+
+
+def require_session(request: Request) -> str:
+    """Extract and validate X-Session-ID header from request."""
+    return get_session_id_from_request(request)
+
+
+def check_demo_rate_limit(request: Request, session_id: str = Depends(require_session)) -> None:
+    """Enforce per-session token bucket rate limit using hashed identity."""
+    limiter: TokenBucketLimiter = request.app.state.limiter
+    identity = hashlib.sha256(f"demo:{session_id}".encode()).hexdigest()
+    allowed, retry_after = limiter.consume(identity)
+    if not allowed:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=f"Too many requests. Retry in {retry_after} s.",
+            headers={"Retry-After": str(retry_after)},
+        )
 
 
 def _get_request_id(request: Request) -> str:
@@ -309,6 +343,16 @@ def create_app(
 
                 app_instance.state.engine = build_default(app_settings)
 
+        # Attach or construct session manager for isolated public demo sessions
+        if getattr(app_instance.state, "session_manager", None) is None:
+            active_engine: DocuMind = app_instance.state.engine
+            app_instance.state.session_manager = SessionManager(
+                base_dir=app_settings.home / "sessions",
+                shared_embedder=active_engine.embedder,
+                shared_llm=active_engine.llm,
+                settings=app_settings,
+            )
+
         yield
 
     # Documentation disabled in production
@@ -324,12 +368,31 @@ def create_app(
 
     app.state.settings = app_settings
     app.state.engine = dm
+    if dm is not None:
+        app.state.session_manager = SessionManager(
+            base_dir=app_settings.home / "sessions",
+            shared_embedder=dm.embedder,
+            shared_llm=dm.llm,
+            settings=app_settings,
+        )
     app.state.limiter = limiter or TokenBucketLimiter(rate_per_min=app_settings.rate_limit_per_min)
     app.state.write_lock = threading.Lock()
 
+    allowed_origins = [
+        "http://localhost:5500",
+        "http://127.0.0.1:5500",
+        "http://localhost:8000",
+        "http://127.0.0.1:8000",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    ]
+    env_origins = os.getenv("DOCUMIND_ALLOWED_ORIGINS")
+    if env_origins:
+        allowed_origins.extend([o.strip() for o in env_origins.split(",") if o.strip()])
+
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["http://localhost:5500", "http://127.0.0.1:5500"],
+        allow_origins=allowed_origins,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
@@ -447,16 +510,15 @@ def create_app(
         }
         return JSONResponse(status_code=status.HTTP_200_OK, content=data, headers=headers)
 
-    @v1_router.post("/documents")
-    def upload_document(
-        request: Request,
-        file: UploadFile = File(...),  # noqa: B008
-        replace: bool = Query(default=False),  # noqa: B008
+    def _process_upload(
+        file: UploadFile,
+        replace: bool,
+        engine: DocuMind,
+        uploads_dir: Path,
+        settings: Settings,
+        req_id: str,
+        write_lock: threading.Lock,
     ) -> JSONResponse:
-        engine: DocuMind = request.app.state.engine
-        settings: Settings = request.app.state.settings
-        req_id = _get_request_id(request)
-
         # 1. Sanitize filename
         filename = file.filename or "upload.txt"
         try:
@@ -475,8 +537,7 @@ def create_app(
                 detail=f"Unsupported file extension '{ext}'. Only .pdf, .txt, .md are supported.",
             )
 
-        # 3. Stream and hash into temp file inside uploads/
-        uploads_dir = settings.home / "uploads"
+        # 3. Stream and hash into temp file inside uploads_dir
         uploads_dir.mkdir(parents=True, exist_ok=True)
         temp_path = uploads_dir / f"tmp_{uuid.uuid4().hex}{ext}"
 
@@ -566,7 +627,6 @@ def create_app(
                 )
 
         # 5. Text extraction & Indexing with write lock
-        write_lock: threading.Lock = request.app.state.write_lock
         with write_lock:
             if ext == ".pdf":
                 try:
@@ -613,6 +673,27 @@ def create_app(
                 "X-Content-Type-Options": "nosniff",
                 "Cache-Control": "no-store",
             },
+        )
+
+    @v1_router.post("/documents")
+    def upload_document(
+        request: Request,
+        file: UploadFile = File(...),  # noqa: B008
+        replace: bool = Query(default=False),  # noqa: B008
+    ) -> JSONResponse:
+        engine: DocuMind = request.app.state.engine
+        settings: Settings = request.app.state.settings
+        req_id = _get_request_id(request)
+        uploads_dir = settings.home / "uploads"
+        write_lock: threading.Lock = request.app.state.write_lock
+        return _process_upload(
+            file=file,
+            replace=replace,
+            engine=engine,
+            uploads_dir=uploads_dir,
+            settings=settings,
+            req_id=req_id,
+            write_lock=write_lock,
         )
 
     @v1_router.delete("/documents/{source:path}")
@@ -703,6 +784,257 @@ def create_app(
         )
 
     app.include_router(v1_router)
+
+    # Public Demo Router with Multi-User Session Isolation
+    demo_router = APIRouter(
+        prefix="/api/demo",
+        dependencies=[Depends(check_demo_rate_limit)],
+    )
+
+    @demo_router.get("/documents")
+    def demo_list_documents(
+        request: Request, session_id: str = Depends(require_session)
+    ) -> list[dict[str, Any]]:
+        mgr: SessionManager = request.app.state.session_manager
+        session_engine, _ = mgr.get_engine(session_id)
+        docs = session_engine.documents()
+        return [
+            {
+                "source": doc,
+                "chunks": session_engine.chunk_count(doc),
+                "sha256": session_engine.doc_sha(doc) or "",
+            }
+            for doc in docs
+        ]
+
+    @demo_router.post("/documents")
+    def demo_upload_document(
+        request: Request,
+        file: UploadFile = File(...),  # noqa: B008
+        replace: bool = Query(default=False),  # noqa: B008
+        session_id: str = Depends(require_session),
+    ) -> JSONResponse:
+        mgr: SessionManager = request.app.state.session_manager
+        session_engine, write_lock = mgr.get_engine(session_id)
+        uploads_dir = mgr.get_uploads_dir(session_id)
+        req_id = _get_request_id(request)
+        return _process_upload(
+            file=file,
+            replace=replace,
+            engine=session_engine,
+            uploads_dir=uploads_dir,
+            settings=session_engine.settings,
+            req_id=req_id,
+            write_lock=write_lock,
+        )
+
+    @demo_router.get("/documents/{source:path}/chunks")
+    def demo_list_chunks(
+        source: str,
+        request: Request,
+        session_id: str = Depends(require_session),
+    ) -> JSONResponse:
+        mgr: SessionManager = request.app.state.session_manager
+        session_engine, _ = mgr.get_engine(session_id)
+        if source not in session_engine.documents():
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Document not found in session.",
+            )
+        chunks = session_engine.store.chunks_for(source)
+        data = [
+            {
+                "id": c.id,
+                "text": c.text,
+                "chunk_index": c.chunk_index,
+                "score": None,
+            }
+            for c in chunks
+        ]
+        return JSONResponse(status_code=status.HTTP_200_OK, content=data)
+
+    @demo_router.delete("/documents/{source:path}")
+    def demo_delete_document(
+        source: str,
+        request: Request,
+        session_id: str = Depends(require_session),
+    ) -> Response:
+        mgr: SessionManager = request.app.state.session_manager
+        session_engine, write_lock = mgr.get_engine(session_id)
+        req_id = _get_request_id(request)
+
+        if ".." in source or source.startswith("/") or "\\" in source or "\x00" in source:
+            raise HTTPException(status_code=422, detail="Invalid source path")
+
+        if source not in session_engine.documents():
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Document not found in session.",
+            )
+
+        with write_lock:
+            session_engine.delete(source)
+            uploads_dir = mgr.get_uploads_dir(session_id)
+            for f in uploads_dir.glob(f"*_{source}"):
+                with contextlib.suppress(OSError):
+                    f.unlink(missing_ok=True)
+
+        return Response(
+            status_code=status.HTTP_204_NO_CONTENT,
+            headers={
+                "X-Request-ID": req_id,
+                "X-Content-Type-Options": "nosniff",
+                "Cache-Control": "no-store",
+            },
+        )
+
+    @demo_router.post("/ask")
+    def demo_ask(
+        body: AskRequest,
+        request: Request,
+        session_id: str = Depends(require_session),
+    ) -> JSONResponse:
+        mgr: SessionManager = request.app.state.session_manager
+        session_engine, _ = mgr.get_engine(session_id)
+        req_id = _get_request_id(request)
+
+        # Empty index: return 409 conflict with index_empty
+        if session_engine.store.count() == 0:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="index_empty",
+            )
+
+        ans = session_engine.answer(
+            body.question,
+            top_k=body.top_k,
+            interface="api",
+            req_id=req_id,
+        )
+
+        if ans.abstain_reason == "llm_unavailable":
+            fallback_citations = [
+                {
+                    "marker": c.marker,
+                    "source": c.source,
+                    "chunk_index": int(c.chunk_index),
+                    "snippet": c.snippet[:200],
+                    "score": round(float(c.score), 4),
+                }
+                for c in ans.citations
+            ]
+            fallback_payload = {
+                "outcome": ans.outcome,
+                "abstain_reason": ans.abstain_reason,
+                "citations": fallback_citations,
+                "model": ans.model,
+                "usage": {
+                    "input_tokens": int(ans.usage.input_tokens),
+                    "output_tokens": int(ans.usage.output_tokens),
+                },
+                "latency_ms": int(ans.latency_ms),
+            }
+            return error_response(
+                status.HTTP_502_BAD_GATEWAY,
+                code="llm_unavailable",
+                message="Language model service is unavailable.",
+                request_id=req_id,
+                extra={"fallback": fallback_payload},
+            )
+
+        # Glass Box UI demo always includes retrieved candidate chunks for inspection
+        include_retrieved = True
+        data = answer_to_dict(ans, include_retrieved=include_retrieved)
+        return JSONResponse(
+            status_code=status.HTTP_200_OK,
+            content=data,
+            headers={
+                "X-Request-ID": req_id,
+                "X-Content-Type-Options": "nosniff",
+                "Cache-Control": "no-store",
+            },
+        )
+
+    @demo_router.post("/analyze")
+    def demo_analyze(
+        body: AnalyzeRequest,
+        request: Request,
+        session_id: str = Depends(require_session),
+    ) -> JSONResponse:
+        mgr: SessionManager = request.app.state.session_manager
+        session_engine, _ = mgr.get_engine(session_id)
+        req_id = _get_request_id(request)
+
+        if session_engine.store.count() == 0:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="index_empty",
+            )
+
+        action = body.action
+        if action == "summarize":
+            prompt = (
+                "Provide a comprehensive, factual summary of the key findings, topics, "
+                "and contents of the document."
+            )
+        elif action == "key_points":
+            prompt = (
+                "Extract and list the key important points, definitions, "
+                "and conclusions from the document."
+            )
+        else:
+            prompt = (
+                "Explain the core concepts, architecture, and technical "
+                "methodology described in the document."
+            )
+
+        if body.source:
+            prompt += f" Focus on source: {body.source}"
+
+        ans = session_engine.answer(
+            prompt,
+            top_k=5,
+            interface="api",
+            req_id=req_id,
+        )
+        data = answer_to_dict(ans, include_retrieved=True)
+        return JSONResponse(
+            status_code=status.HTTP_200_OK,
+            content=data,
+            headers={
+                "X-Request-ID": req_id,
+                "X-Content-Type-Options": "nosniff",
+                "Cache-Control": "no-store",
+            },
+        )
+
+    @demo_router.get("/events")
+    def demo_get_events(
+        request: Request, session_id: str = Depends(require_session)
+    ) -> JSONResponse:
+        mgr: SessionManager = request.app.state.session_manager
+        session_engine, _ = mgr.get_engine(session_id)
+        return JSONResponse(status_code=status.HTTP_200_OK, content=session_engine.get_events())
+
+    @demo_router.get("/meta")
+    def demo_get_meta(
+        request: Request, session_id: str = Depends(require_session)
+    ) -> JSONResponse:
+        mgr: SessionManager = request.app.state.session_manager
+        session_engine, _ = mgr.get_engine(session_id)
+        return JSONResponse(
+            status_code=status.HTTP_200_OK,
+            content={
+                "session_id": session_id,
+                "embed_model": session_engine.settings.embed_model,
+                "tau": session_engine.settings.min_score,
+                "documents_count": len(session_engine.documents()),
+                "chunks_count": session_engine.store.count(),
+                "status": "active",
+            },
+        )
+
+    app.include_router(demo_router)
 
     return app
 
