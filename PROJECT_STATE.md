@@ -1,7 +1,7 @@
 # DocuMind — Project State
 
 ## 1. Current Phase
-**Phase B Completed; Moving to Phase C: Multi-Turn Conversation & SSE Streaming** (Gated).
+**Phase C Completed; Final Phase D: Verification, Tagging & Release Delivery** (Gated).
 
 ## 2. Key Architecture & Decisions (One Line Each)
 - **Model Choice:** Configurable via `DOCUMIND_MODEL` (default `claude-haiku-4-5-20251001`), never hardcoded in source.
@@ -13,10 +13,12 @@
 - **Spend Protection:** Dual-layer spend control: global daily budget ($2.00/day) and per-session/IP allocations failing closed to `retrieval_only`.
 - **Frontend Serving:** Single-origin static mounting via FastAPI at `/app` (`documind serve`) avoiding CORS latency and cross-origin leaks.
 - **API Boundary Separation:** Admin routes (`/v1/*`) protected by 32+ char `X-API-Key`; public demo routes (`/api/demo/*`) protected by session hashes and rate limits.
+- **Multi-Turn Chat Architecture:** SQLite `conversations` & `messages` tables, query condensation (`condense_query`), neighbor expansion (`expand_neighbors`), and AsyncAnthropic SSE streaming (`POST /api/demo/chat/stream`).
 
 ## 3. Measured Results & Benchmark Facts
-- **Full Test Suite:** 250 passed, 16 deselected (`slow` or `live`) in 6.10s.
-- **Static Analysis:** `ruff check .` passed with 0 errors; `mypy documind` passed across 33 source files.
+- **Full Test Suite:** 254 passed, 16 deselected (`slow` or `live`) in 6.24s.
+- **Static Analysis:** `ruff check .` passed with 0 errors; `mypy documind` passed across 35 source files with 0 issues.
+- **Multi-Turn & Streaming (Phase C):** 4/4 dedicated integration tests pass (`tests/test_multiturn.py`), validating SQLite threads, query rewriting, chunk expansion, and SSE events (`meta`, `retrieval`, `token`, `citations`, `done`).
 - **Security Hardening (Phase B):** 12/12 dedicated security tests pass (`tests/test_demo_security.py`).
 - **Server Sessions:** Client-chosen session tokens rejected with 401 `SESSION_INVALID`; expired tokens rejected with 401 `SESSION_EXPIRED`.
 - **Rate Limiting:** Multi-action token bucket enforces 10 asks/min, 5 uploads/hr, 5 sessions/hr with IPv6 `/64` normalization.
@@ -33,4 +35,4 @@
 2. **Monthly Provider Spend Limit:** Target monthly limit configured in Anthropic Console workspace.
 
 ## 5. Next Action
-Execute Phase C: Multi-turn chat persistence in SQLite, query rewriting/condensation pipeline, neighbor chunk expansion, document summaries/outlines, AsyncAnthropic SSE streaming (`text/event-stream`), and Glass Box token delta rendering.
+Execute Phase D: Final documentation alignment (`API_CONTRACT.md`, `README.md`), full test suite gate verification, and release tagging (`phase-6`).

@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import logging
 import os
+from collections.abc import AsyncIterator
 
 import anthropic
 
@@ -36,8 +37,9 @@ class AnthropicLLM:
                 "Missing Anthropic API key. Set ANTHROPIC_API_KEY in .env or pass api_key."
             )
 
+        self._api_key = resolved_key.strip()
         self._client = anthropic.Anthropic(
-            api_key=resolved_key.strip(),
+            api_key=self._api_key,
             timeout=timeout_s,
             max_retries=max_retries,
         )
@@ -88,3 +90,36 @@ class AnthropicLLM:
             output_tokens=response.usage.output_tokens,
         )
         return full_text, usage
+
+    async def complete_stream(
+        self,
+        system: str,
+        user: str,
+        *,
+        max_tokens: int,
+    ) -> AsyncIterator[str]:
+        """Stream token deltas using AsyncAnthropic client."""
+        client = anthropic.AsyncAnthropic(
+            api_key=self._api_key,
+            timeout=self.timeout_s,
+            max_retries=self.max_retries,
+        )
+        try:
+            async with client.messages.stream(
+                model=self.model,
+                max_tokens=max_tokens,
+                system=system,
+                messages=[{"role": "user", "content": user}],
+            ) as stream:
+                async for text in stream.text_stream:
+                    yield text
+        except (anthropic.AuthenticationError, anthropic.PermissionDeniedError) as err:
+            raise LLMAuthError(f"Anthropic authentication failed: {err}") from err
+        except (
+            anthropic.APITimeoutError,
+            anthropic.APIConnectionError,
+            anthropic.RateLimitError,
+        ) as err:
+            raise LLMUnavailable(f"Anthropic streaming unavailable: {err}") from err
+        except Exception as err:
+            raise LLMUnavailable(f"Anthropic streaming failed: {err}") from err

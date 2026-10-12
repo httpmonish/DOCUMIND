@@ -699,17 +699,73 @@ Execute a query above to inspect retrieved candidate chunks, cosine distances, a
         return;
       }
 
-      setLoading(true, "RUNNING…");
+      setLoading(true, "STREAMING…");
       const startTime = performance.now();
 
+      // Setup streaming visual container
+      answerHeaderIcon.className = "material-symbols-outlined text-[16px] text-tertiary animate-spin";
+      answerHeaderIcon.textContent = "progress_activity";
+      answerHeaderTitle.textContent = "SYNTHESIZING ANSWER";
+      answerBadge.className = "px-space-xs py-0.5 rounded-DEFAULT bg-surface-container-high text-tertiary font-code-sm text-code-sm";
+      answerBadge.textContent = "STREAMING TOKENS…";
+      answerBody.innerHTML = '<p class="leading-relaxed text-on-surface opacity-80"><span class="token-content"></span><span class="inline-block w-1.5 h-3.5 bg-primary ml-0.5 animate-pulse"></span></p>';
+      const tokenSpan = answerBody.querySelector(".token-content");
+
+      let accumulatedText = "";
+      let streamedCitations = [];
+      let streamedRetrieved = [];
+      let streamMeta = null;
+      let streamDone = null;
+
       try {
-        const res = await DocuMindAPI.askQuestion(q, 5);
+        await DocuMindAPI.chatStream(
+          q,
+          window.currentConversationId || null,
+          (ev, data) => {
+            if (ev === "meta") {
+              streamMeta = data;
+              if (data && data.conversation_id) {
+                window.currentConversationId = data.conversation_id;
+              }
+            } else if (ev === "retrieval") {
+              streamedRetrieved = data && data.retrieved ? data.retrieved : [];
+              renderCandidateChunks(streamedRetrieved, false);
+            } else if (ev === "token") {
+              if (data && data.delta) {
+                accumulatedText += data.delta;
+                if (tokenSpan) tokenSpan.textContent = accumulatedText;
+              }
+            } else if (ev === "citations") {
+              streamedCitations = data && data.citations ? data.citations : [];
+            } else if (ev === "done") {
+              streamDone = data;
+            }
+          }
+        );
+
         const elapsed = performance.now() - startTime;
+        const res = {
+          text: accumulatedText,
+          citations: streamedCitations,
+          retrieved: streamedRetrieved,
+          outcome: streamDone ? streamDone.outcome : "answered",
+          latency_ms: streamDone && streamDone.latency_ms ? streamDone.latency_ms : Math.round(elapsed),
+          abstain_reason: streamDone && streamDone.reason ? streamDone.reason : null,
+        };
         lastAnswerResult = res;
         renderAnswer(res, elapsed);
-        logEvent("query_answer", elapsed, res.request_id || "req_" + Math.random().toString(36).substr(2, 6));
+        logEvent("chat_stream", elapsed, (streamMeta && streamMeta.request_id) || "req_" + Math.random().toString(36).substr(2, 6));
       } catch (err) {
-        handleError(err);
+        console.warn("Streaming chat failed, falling back to askQuestion:", err);
+        try {
+          const fallbackRes = await DocuMindAPI.askQuestion(q, 5);
+          const elapsed = performance.now() - startTime;
+          lastAnswerResult = fallbackRes;
+          renderAnswer(fallbackRes, elapsed);
+          logEvent("query_answer", elapsed, fallbackRes.request_id || "req_" + Math.random().toString(36).substr(2, 6));
+        } catch (fbErr) {
+          handleError(fbErr);
+        }
       } finally {
         setLoading(false, "RUN QUERY");
       }

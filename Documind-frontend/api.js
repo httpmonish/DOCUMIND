@@ -254,6 +254,120 @@
       return request("/api/demo/meta");
     },
 
+    async listConversations() {
+      return request("/api/demo/conversations");
+    },
+
+    async getConversationMessages(conversationId) {
+      return request(`/api/demo/conversations/${encodeURIComponent(conversationId)}/messages`);
+    },
+
+    async deleteConversation(conversationId) {
+      return request(`/api/demo/conversations/${encodeURIComponent(conversationId)}`, {
+        method: "DELETE",
+      });
+    },
+
+    async chat(question, conversationId = null, topK = 5) {
+      return request("/api/demo/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          question,
+          conversation_id: conversationId,
+          top_k: topK,
+        }),
+        timeoutMs: 45000,
+      });
+    },
+
+    async chatStream(question, conversationId = null, onEvent = null, options = {}) {
+      const baseUrl = getBaseUrl();
+      const url = `${baseUrl}/api/demo/chat/stream`;
+      const timeoutMs = options.timeoutMs || 60000;
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+      const headers = new Headers(options.headers || {});
+      headers.set("Content-Type", "application/json");
+      if (!headers.has("X-Session-ID")) {
+        headers.set("X-Session-ID", getSessionId());
+      }
+
+      try {
+        const res = await fetch(url, {
+          method: "POST",
+          headers: headers,
+          body: JSON.stringify({
+            question: question,
+            conversation_id: conversationId || null,
+            top_k: options.topK || 5,
+          }),
+          signal: controller.signal,
+        });
+
+        if (!res.ok) {
+          clearTimeout(timeoutId);
+          if (res.status === 401 && !options._retried) {
+            const newSid = await initSession(true);
+            const retryHeaders = new Headers(options.headers || {});
+            retryHeaders.set("X-Session-ID", newSid);
+            return this.chatStream(question, conversationId, onEvent, {
+              ...options,
+              headers: retryHeaders,
+              _retried: true,
+            });
+          }
+          const errData = await res.json().catch(() => ({}));
+          const err = new Error(errData.detail || `Stream failed with HTTP ${res.status}`);
+          err.status = res.status;
+          throw err;
+        }
+
+        if (!res.body) {
+          clearTimeout(timeoutId);
+          throw new Error("ReadableStream not supported by browser");
+        }
+
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder("utf-8");
+        let buffer = "";
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const parts = buffer.split("\n\n");
+          buffer = parts.pop() || "";
+
+          for (const part of parts) {
+            if (!part.trim()) continue;
+            const lines = part.trim().split("\n");
+            let eventName = null;
+            let eventData = null;
+            for (const line of lines) {
+              if (line.startsWith("event: ")) {
+                eventName = line.substring(7).trim();
+              } else if (line.startsWith("data: ")) {
+                try {
+                  eventData = JSON.parse(line.substring(6).trim());
+                } catch {
+                  eventData = line.substring(6).trim();
+                }
+              }
+            }
+            if (eventName && onEvent) {
+              onEvent(eventName, eventData);
+            }
+          }
+        }
+        clearTimeout(timeoutId);
+      } catch (err) {
+        clearTimeout(timeoutId);
+        throw err;
+      }
+    },
+
     async initSession(forceNew = false) {
       return initSession(forceNew);
     },

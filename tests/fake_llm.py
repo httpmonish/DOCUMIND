@@ -21,3 +21,13 @@ class FakeLLM:
         if isinstance(self.reply, Exception):
             raise self.reply
         return self.reply, Usage(input_tokens=1700, output_tokens=300)
+
+    async def complete_stream(
+        self, system: str, user: str, *, max_tokens: int
+    ):
+        self.calls.append({"system": system, "user": user, "max_tokens": max_tokens})
+        if isinstance(self.reply, Exception):
+            raise self.reply
+        words = self.reply.split(" ")
+        for i, word in enumerate(words):
+            yield word + (" " if i < len(words) - 1 else "")

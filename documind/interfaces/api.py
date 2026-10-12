@@ -14,6 +14,7 @@ import re
 import subprocess
 import sys
 import threading
+import time
 import uuid
 from collections.abc import AsyncGenerator, Mapping
 from contextlib import asynccontextmanager
@@ -37,7 +38,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, field_validator
 from starlette.exceptions import HTTPException as StarletteHTTPException
+from starlette.responses import StreamingResponse
 
+from documind.core.chat import ChatManager
+from documind.core.citations import parse_citations
+from documind.core.condense import condense_query
 from documind.core.config import Settings, load_settings
 from documind.core.errors import (
     DocumentTooLarge,
@@ -49,6 +54,8 @@ from documind.core.errors import (
 )
 from documind.core.ingest import safe_upload_name
 from documind.core.pipeline import DocuMind
+from documind.core.prompt import build_prompt
+from documind.core.retrieval import expand_neighbors
 from documind.core.serialize import answer_to_dict
 from documind.interfaces.ratelimit import MultiActionRateLimiter, TokenBucketLimiter
 from documind.interfaces.security import (
@@ -72,6 +79,30 @@ REQUEST_ID_REGEX = re.compile(r"^[A-Za-z0-9-]{8,64}$")
 
 class AskRequest(BaseModel):
     question: str
+    top_k: int = 5
+    debug: bool = False
+
+    model_config = ConfigDict(extra="forbid")
+
+    @field_validator("question")
+    @classmethod
+    def validate_question(cls, v: str) -> str:
+        stripped = v.strip()
+        if not (1 <= len(stripped) <= 2000):
+            raise ValueError("question length must be between 1 and 2000 characters")
+        return stripped
+
+    @field_validator("top_k")
+    @classmethod
+    def validate_top_k(cls, v: int) -> int:
+        if not (1 <= v <= 10):
+            raise ValueError("top_k must be an integer between 1 and 10")
+        return v
+
+
+class ChatRequest(BaseModel):
+    question: str
+    conversation_id: str | None = None
     top_k: int = 5
     debug: bool = False
 
@@ -412,6 +443,7 @@ def create_app(
         global_daily_cap_usd=getattr(app_settings, "global_daily_cap_usd", 2.00),
         ip_daily_cap_usd=getattr(app_settings, "ip_daily_cap_usd", 0.25),
     )
+    app.state.chat_manager = ChatManager(db_path=app_settings.home / "chat.db")
     app.state.write_lock = threading.Lock()
 
     allowed_origins = [
@@ -1153,6 +1185,322 @@ def create_app(
                 "X-Request-ID": req_id,
                 "X-Content-Type-Options": "nosniff",
                 "Cache-Control": "no-store",
+            },
+        )
+
+    @demo_router.get("/conversations")
+    def demo_list_conversations(
+        request: Request,
+        session_id: str = Depends(require_session),
+    ) -> JSONResponse:
+        chat_mgr: ChatManager = request.app.state.chat_manager
+        convs = chat_mgr.list_conversations(session_id)
+        return JSONResponse(status_code=status.HTTP_200_OK, content=convs)
+
+    @demo_router.get("/conversations/{conversation_id}/messages")
+    def demo_get_conversation_messages(
+        conversation_id: str,
+        request: Request,
+        session_id: str = Depends(require_session),
+    ) -> JSONResponse:
+        chat_mgr: ChatManager = request.app.state.chat_manager
+        msgs = chat_mgr.get_messages(conversation_id)
+        return JSONResponse(status_code=status.HTTP_200_OK, content=msgs)
+
+    @demo_router.post("/chat")
+    def demo_chat(
+        body: ChatRequest,
+        request: Request,
+        session_id: str = Depends(require_session),
+    ) -> JSONResponse:
+        mgr: SessionManager = request.app.state.session_manager
+        session_engine, _ = mgr.get_engine(session_id)
+        req_id = _get_request_id(request)
+        chat_mgr: ChatManager = request.app.state.chat_manager
+
+        if session_engine.store.count() == 0:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="index_empty",
+            )
+
+        conv_id = body.conversation_id or chat_mgr.create_conversation(
+            session_id, title=body.question[:40]
+        )
+        history = chat_mgr.get_context_turns(conv_id, max_turns=6)
+
+        # Condense follow-up query
+        condensed_q = condense_query(body.question, history, llm=session_engine.llm)
+
+        ip = client_ip(request)
+        ip_h = hash_ip(ip)
+        spend_ledger: SpendLedger = request.app.state.spend_ledger
+        est_cost = estimate_generation_cost(2000, session_engine.settings.max_tokens)
+        can_spend, reason = spend_ledger.can_spend(ip_h, est_cost)
+
+        if not can_spend:
+            effective_k = body.top_k or session_engine.settings.top_k
+            q_vec = session_engine.embedder.embed_query(condensed_q)
+            retrieved = session_engine.store.query(q_vec, effective_k)
+            candidates = [
+                {
+                    "id": c.chunk.id,
+                    "source": c.chunk.source,
+                    "chunk_index": c.chunk.chunk_index,
+                    "score": round(float(c.score), 4),
+                    "text": c.chunk.text,
+                    "passed_gate": c.score >= session_engine.settings.min_score,
+                }
+                for c in retrieved
+            ]
+            return JSONResponse(
+                status_code=status.HTTP_200_OK,
+                content={
+                    "answer": (
+                        "Public demo daily spend cap reached ($2.00 global / $0.25 per IP). "
+                        "Showing retrieved candidate passages below without generative synthesis."
+                    ),
+                    "outcome": "retrieval_only",
+                    "reason": reason,
+                    "conversation_id": conv_id,
+                    "condensed_query": condensed_q,
+                    "citations": [],
+                    "retrieved": candidates,
+                    "usage": {"input_tokens": 0, "output_tokens": 0, "cost_usd": 0.0},
+                    "latency_ms": 1,
+                    "model": session_engine.settings.model,
+                },
+            )
+
+        spend_ledger.reserve(ip_h, session_id, est_cost)
+        try:
+            ans = session_engine.answer(
+                condensed_q,
+                top_k=body.top_k,
+                interface="chat",
+                req_id=req_id,
+                expand_chunk_neighbors=True,
+            )
+            actual_cost = calculate_cost_usd(ans.usage.input_tokens, ans.usage.output_tokens)
+            spend_ledger.settle(ip_h, session_id, est_cost, actual_cost)
+        except Exception:
+            spend_ledger.release(ip_h, session_id, est_cost)
+            raise
+
+        ans_dict = answer_to_dict(ans, include_retrieved=True)
+        ans_dict["conversation_id"] = conv_id
+        ans_dict["condensed_query"] = condensed_q
+        ans_dict["usage"]["cost_usd"] = calculate_cost_usd(
+            ans.usage.input_tokens, ans.usage.output_tokens
+        )
+
+        # Record turns in SQLite
+        chat_mgr.add_message(conv_id, "user", body.question)
+        msg_id = chat_mgr.add_message(
+            conv_id,
+            "assistant",
+            ans.text,
+            citations=[
+                {
+                    "marker": c.marker,
+                    "source": c.source,
+                    "chunk_index": c.chunk_index,
+                    "snippet": c.snippet,
+                    "score": round(float(c.score), 4),
+                }
+                for c in ans.citations
+            ],
+            retrieved=ans_dict.get("retrieved"),
+            usage=ans_dict.get("usage"),
+        )
+        ans_dict["message_id"] = msg_id
+
+        return JSONResponse(status_code=status.HTTP_200_OK, content=ans_dict)
+
+    @demo_router.post("/chat/stream")
+    async def demo_chat_stream(
+        body: ChatRequest,
+        request: Request,
+        session_id: str = Depends(require_session),
+    ) -> StreamingResponse:
+        mgr: SessionManager = request.app.state.session_manager
+        session_engine, _ = mgr.get_engine(session_id)
+        chat_mgr: ChatManager = request.app.state.chat_manager
+        req_id = _get_request_id(request)
+
+        async def event_generator() -> AsyncGenerator[str, None]:
+            import json as json_lib
+
+            if session_engine.store.count() == 0:
+                err_data = json_lib.dumps({
+                    "code": "index_empty",
+                    "message": "No documents uploaded yet in this demo session.",
+                })
+                yield f"event: error\ndata: {err_data}\n\n"
+                return
+
+            conv_id = body.conversation_id or chat_mgr.create_conversation(
+                session_id, title=body.question[:40]
+            )
+            history = chat_mgr.get_context_turns(conv_id, max_turns=6)
+            condensed_q = condense_query(body.question, history, llm=session_engine.llm)
+
+            # 1. Event: meta
+            meta_data = json_lib.dumps({
+                "conversation_id": conv_id,
+                "query": body.question,
+                "condensed_query": condensed_q,
+                "tau": session_engine.settings.min_score,
+                "request_id": req_id,
+            })
+            yield f"event: meta\ndata: {meta_data}\n\n"
+
+            # Dense retrieval
+            effective_k = body.top_k or session_engine.settings.top_k
+            q_vec = session_engine.embedder.embed_query(condensed_q)
+            retrieved = session_engine.store.query(q_vec, effective_k)
+            all_chunks = expand_neighbors(retrieved, session_engine.store, max_top_to_expand=2)
+
+            candidates = [
+                {
+                    "id": c.chunk.id,
+                    "source": c.chunk.source,
+                    "chunk_index": c.chunk.chunk_index,
+                    "score": round(float(c.score), 4),
+                    "text": c.chunk.text,
+                    "passed_gate": c.score >= session_engine.settings.min_score,
+                }
+                for c in all_chunks
+            ]
+
+            # 2. Event: retrieval (send candidates immediately for Glass Box candidate inspector)
+            ret_data = json_lib.dumps({"retrieved": candidates})
+            yield f"event: retrieval\ndata: {ret_data}\n\n"
+
+            # Confidence gate check
+            if not retrieved or retrieved[0].score < session_engine.settings.min_score:
+                decline_msg = (
+                    "I couldn't find any sufficiently relevant passages in your documents."
+                )
+                yield f"event: token\ndata: {json_lib.dumps({'delta': decline_msg})}\n\n"
+                done_data = json_lib.dumps({
+                    "outcome": "abstained",
+                    "reason": "low_score",
+                    "latency_ms": 1,
+                })
+                yield f"event: done\ndata: {done_data}\n\n"
+                chat_mgr.add_message(conv_id, "user", body.question)
+                chat_mgr.add_message(conv_id, "assistant", decline_msg)
+                return
+
+            ip = client_ip(request)
+            ip_h = hash_ip(ip)
+            spend_ledger: SpendLedger = request.app.state.spend_ledger
+            est_cost = estimate_generation_cost(2000, session_engine.settings.max_tokens)
+            can_spend, reason = spend_ledger.can_spend(ip_h, est_cost)
+
+            if not can_spend:
+                cap_msg = (
+                    "Public demo daily spend cap reached ($2.00 global / $0.25 per IP). "
+                    "Showing retrieved candidate passages only."
+                )
+                yield f"event: token\ndata: {json_lib.dumps({'delta': cap_msg})}\n\n"
+                done_data = json_lib.dumps({
+                    "outcome": "retrieval_only",
+                    "reason": reason,
+                    "latency_ms": 1,
+                })
+                yield f"event: done\ndata: {done_data}\n\n"
+                return
+
+            spend_ledger.reserve(ip_h, session_id, est_cost)
+            built = build_prompt(condensed_q, all_chunks)
+            collected_tokens: list[str] = []
+            t0 = time.perf_counter()
+
+            try:
+                llm = session_engine.llm
+                if llm and hasattr(llm, "complete_stream"):
+                    async for token_chunk in llm.complete_stream(
+                        built.system, built.user, max_tokens=session_engine.settings.max_tokens
+                    ):
+                        if await request.is_disconnected():
+                            break
+                        collected_tokens.append(token_chunk)
+                        yield f"event: token\ndata: {json_lib.dumps({'delta': token_chunk})}\n\n"
+                elif llm:
+                    # Synchronous fallback: complete and stream word by word
+                    text, _ = llm.complete(
+                        built.system, built.user, max_tokens=session_engine.settings.max_tokens
+                    )
+                    words = text.split(" ")
+                    for i, w in enumerate(words):
+                        chunk = w + (" " if i < len(words) - 1 else "")
+                        collected_tokens.append(chunk)
+                        yield f"event: token\ndata: {json_lib.dumps({'delta': chunk})}\n\n"
+                else:
+                    fallback_text = "No language model configured."
+                    collected_tokens.append(fallback_text)
+                    yield f"event: token\ndata: {json_lib.dumps({'delta': fallback_text})}\n\n"
+
+                full_answer = "".join(collected_tokens)
+                latency = int((time.perf_counter() - t0) * 1000)
+
+                # 4. Event: citations
+                parsed = parse_citations(full_answer, built.markers)
+                citations = parsed.citations
+                cit_dicts = [
+                    {
+                        "marker": c.marker,
+                        "source": c.source,
+                        "chunk_index": c.chunk_index,
+                        "snippet": c.snippet[:200],
+                        "score": round(float(c.score), 4),
+                    }
+                    for c in citations
+                ]
+                yield f"event: citations\ndata: {json_lib.dumps({'citations': cit_dicts})}\n\n"
+
+                # Estimate or measure usage
+                in_tok = len(built.system.split()) + len(built.user.split())
+                out_tok = len(full_answer.split())
+                cost_usd = calculate_cost_usd(in_tok, out_tok)
+                spend_ledger.settle(ip_h, session_id, est_cost, cost_usd)
+
+                # 5. Event: done
+                usage_info: dict[str, Any] = {
+                    "input_tokens": in_tok,
+                    "output_tokens": out_tok,
+                    "cost_usd": cost_usd,
+                }
+                done_payload = {
+                    "outcome": "answered",
+                    "latency_ms": latency,
+                    "usage": usage_info,
+                }
+                yield f"event: done\ndata: {json_lib.dumps(done_payload)}\n\n"
+
+                # Persist in SQLite
+                chat_mgr.add_message(conv_id, "user", body.question)
+                chat_mgr.add_message(
+                    conv_id,
+                    "assistant",
+                    full_answer,
+                    citations=cit_dicts,
+                    retrieved=candidates,
+                    usage=usage_info,
+                )
+            except Exception as err:
+                spend_ledger.release(ip_h, session_id, est_cost)
+                yield f"event: error\ndata: {json_lib.dumps({'message': str(err)})}\n\n"
+
+        return StreamingResponse(
+            event_generator(),
+            media_type="text/event-stream",
+            headers={
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+                "X-Content-Type-Options": "nosniff",
             },
         )
 

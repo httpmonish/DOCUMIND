@@ -20,6 +20,7 @@ from documind.core.ingest import IndexReport, index_path
 from documind.core.logging_utils import QueryLogger
 from documind.core.pricing import cost_usd
 from documind.core.prompt import DECLINE_SENTINEL, PROMPT_VERSION, build_prompt
+from documind.core.retrieval import expand_neighbors
 from documind.core.types import (
     LLM,
     Answer,
@@ -164,6 +165,7 @@ class DocuMind:
         top_k: int | None = None,
         interface: str = "core",
         req_id: str | None = None,
+        expand_chunk_neighbors: bool = False,
     ) -> Answer:
         """Answer a user question strictly grounded in indexed documents.
 
@@ -295,7 +297,10 @@ class DocuMind:
             return ans
 
         # Build prompt
-        built = build_prompt(question, retrieved)
+        prompt_chunks: Sequence[RetrievedChunk] = retrieved
+        if expand_chunk_neighbors:
+            prompt_chunks = expand_neighbors(retrieved, self.store, max_top_to_expand=2)
+        built = build_prompt(question, prompt_chunks)
 
         # Stage 4: LLM call with error catching (llm_unavailable)
         t_llm0 = time.perf_counter()
