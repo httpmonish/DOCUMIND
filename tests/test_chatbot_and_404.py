@@ -143,3 +143,80 @@ def test_conversation_deletion_and_isolation(chat_app):
 
     # 6. Verify conversation is removed
     assert chat_mgr.get_conversation(conv_id) is None
+
+
+def test_document_listing_returns_chunks_and_chunk_count(chat_app):
+    client = TestClient(chat_app)
+    resp_sess = client.post("/api/demo/session")
+    sid = resp_sess.json()["session_id"]
+    headers = {"X-Session-ID": sid}
+
+    # Upload sample text document
+    file_content = b"Kernel process scheduling manages threads and priority queues."
+    files = {"file": ("kernel_sched.txt", file_content, "text/plain")}
+    up_resp = client.post("/api/demo/documents", headers=headers, files=files)
+    assert up_resp.status_code == 201
+    up_data = up_resp.json()
+    assert "chunks" in up_data
+    assert "chunk_count" in up_data
+    assert up_data["chunks"] > 0
+    assert up_data["chunk_count"] == up_data["chunks"]
+
+    # List documents
+    list_resp = client.get("/api/demo/documents", headers=headers)
+    assert list_resp.status_code == 200
+    docs = list_resp.json()
+    assert len(docs) == 1
+    assert "chunks" in docs[0]
+    assert "chunk_count" in docs[0]
+    assert docs[0]["chunks"] == up_data["chunks"]
+    assert docs[0]["chunk_count"] == docs[0]["chunks"]
+
+
+def test_unconfigured_llm_emits_guidance_and_unconfigured_outcome(tmp_path: Path):
+    settings = Settings(
+        home=tmp_path,
+        api_key="a" * 32,
+        min_score=0.35,
+        llm_provider="none",
+    )
+    dm = DocuMind(
+        settings=settings,
+        store=NumpyStore(),
+        embedder=FastEmbedder(),
+        llm=None,  # No LLM configured
+    )
+    app = create_app(dm=dm, settings=settings)
+    app.state.session_manager = SessionManager(
+        base_dir=tmp_path / "sessions",
+        shared_embedder=FastEmbedder(),
+        shared_llm=None,
+        settings=settings,
+        ttl_seconds=3600,
+    )
+    app.state.chat_manager = ChatManager(db_path=tmp_path / "chat.db")
+
+    client = TestClient(app)
+    resp_sess = client.post("/api/demo/session")
+    sid = resp_sess.json()["session_id"]
+    headers = {"X-Session-ID": sid}
+
+    # Upload document
+    files = {"file": ("doc.txt", b"Photosynthesis transforms light into energy.", "text/plain")}
+    client.post("/api/demo/documents", headers=headers, files=files)
+
+    # Ask question
+    chat_resp = client.post(
+        "/api/demo/chat/stream",
+        headers=headers,
+        json={"question": "What is photosynthesis?"},
+    )
+    assert chat_resp.status_code == 200
+    lines = chat_resp.text.split("\n")
+    events = [line for line in lines if line.startswith("event: ")]
+    assert "event: token" in events
+    assert "event: citations" in events
+    assert "event: done" in events
+    assert "No language model configured" in chat_resp.text
+    assert '"outcome": "unconfigured_model"' in chat_resp.text
+

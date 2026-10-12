@@ -101,7 +101,7 @@ def test_openai_compat_stream_success():
 
 def test_settings_provider_validation(tmp_path):
     # Valid providers
-    for p in ("none", "ollama", "openai_compat", "anthropic"):
+    for p in ("none", "ollama", "openai_compat", "anthropic", "gemini", "openrouter"):
         s = Settings(home=tmp_path, llm_provider=p)
         assert s.llm_provider == p
 
@@ -127,3 +127,30 @@ def test_factory_build_default_ollama(tmp_path):
     assert engine.llm is not None
     assert isinstance(engine.llm, OpenAICompatLLM)
     assert engine.llm.model == "llama3"
+
+
+def test_factory_build_default_gemini(tmp_path):
+    s = Settings(
+        home=tmp_path,
+        llm_provider="gemini",
+        model="gemini-3.8-flash",
+        openai_base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
+        openai_api_key="AQ.mock_key",
+    )
+    engine = build_default(s)
+    assert engine.llm is not None
+    assert engine.llm.model == "gemini-3.8-flash"
+
+
+def test_factory_build_default_openrouter(tmp_path):
+    s = Settings(
+        home=tmp_path,
+        llm_provider="openrouter",
+        model="meta-llama/llama-3.1-8b-instruct",
+        openai_base_url="https://openrouter.ai/api/v1",
+        openai_api_key="sk-or-v1-mock",
+    )
+    engine = build_default(s)
+    assert engine.llm is not None
+    assert engine.llm.model == "meta-llama/llama-3.1-8b-instruct"
+
