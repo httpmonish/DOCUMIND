@@ -1649,6 +1649,14 @@ def create_app(
         )
         spend_info = spend_ledger.get_summary(ip_h)
 
+        has_llm = session_engine.llm is not None
+        provider = session_engine.settings.llm_provider
+        if not has_llm or provider == "none":
+            llm_mode = "Retrieval-only"
+        else:
+            model_name = getattr(session_engine.llm, "model", session_engine.settings.model)
+            llm_mode = f"LLM: {model_name}"
+
         return JSONResponse(
             status_code=status.HTTP_200_OK,
             content={
@@ -1659,6 +1667,9 @@ def create_app(
                 "documents_count": len(session_engine.documents()),
                 "chunks_count": session_engine.store.count(),
                 "status": "active",
+                "llm_provider": provider,
+                "llm_mode": llm_mode,
+                "llm_model": getattr(session_engine.llm, "model", None) if has_llm else None,
                 "spend": spend_info,
                 "limits": {
                     "max_docs": 5,

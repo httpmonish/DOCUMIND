@@ -70,9 +70,13 @@ git clone https://github.com/httpmonish/DOCUMIND.git && cd DOCUMIND
 python3 -m venv .venv && source .venv/bin/activate
 pip install -e ".[embed]"
 
-# 3. Configure Anthropic API key (optional; run --no-llm for local retrieval only)
+# 3. Configure LLM Provider (Optional; defaults to 0-key retrieval-only mode)
 cp .env.example .env
-echo "ANTHROPIC_API_KEY=your_key_here" >> .env
+# Choose provider in .env:
+# DOCUMIND_LLM_PROVIDER=none          # Zero-key retrieval-only mode (Default)
+# DOCUMIND_LLM_PROVIDER=ollama        # Local free inference (e.g. Llama 3 via http://localhost:11434/v1)
+# DOCUMIND_LLM_PROVIDER=openai_compat # Groq, Gemini, vLLM, or OpenAI-compatible endpoint
+# DOCUMIND_LLM_PROVIDER=anthropic     # Claude Haiku (set ANTHROPIC_API_KEY)
 ```
 
 ---

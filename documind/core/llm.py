@@ -4,16 +4,136 @@ Anthropic LLM wrapper with timeout handling, strict payload constraints, and err
 
 from __future__ import annotations
 
+import contextlib
+import json
 import logging
 import os
 from collections.abc import AsyncIterator
 
 import anthropic
+import httpx
 
 from documind.core.errors import LLMAuthError, LLMUnavailable
 from documind.core.types import Usage
 
 logger = logging.getLogger(__name__)
+
+
+class OpenAICompatLLM:
+    """OpenAI-compatible LLM client for Ollama, Groq, Gemini, vLLM, and OpenAI."""
+
+    def __init__(
+        self,
+        model: str,
+        base_url: str = "http://localhost:11434/v1",
+        api_key: str = "",
+        timeout_s: float = 30.0,
+        max_retries: int = 1,
+    ) -> None:
+        self.model = model
+        self.model_id = model
+        self.base_url = (base_url or "http://localhost:11434/v1").rstrip("/")
+        self.api_key = api_key.strip() if api_key else ""
+        self.timeout_s = timeout_s
+        self.max_retries = max_retries
+
+    def _headers(self) -> dict[str, str]:
+        headers = {"Content-Type": "application/json"}
+        if self.api_key:
+            headers["Authorization"] = f"Bearer {self.api_key}"
+        return headers
+
+    def complete(self, system: str, user: str, *, max_tokens: int) -> tuple[str, Usage]:
+        url = f"{self.base_url}/chat/completions"
+        payload = {
+            "model": self.model,
+            "messages": [
+                {"role": "system", "content": system},
+                {"role": "user", "content": user},
+            ],
+            "max_tokens": max_tokens,
+            "temperature": 0.0,
+            "stream": False,
+        }
+        try:
+            with httpx.Client(timeout=self.timeout_s) as client:
+                resp = client.post(url, json=payload, headers=self._headers())
+        except (httpx.TimeoutException, httpx.ConnectError, httpx.NetworkError) as err:
+            raise LLMUnavailable(
+                f"Connection to LLM provider at {self.base_url} failed: {err}"
+            ) from err
+        except Exception as err:
+            raise LLMUnavailable(f"LLM request error: {err}") from err
+
+        if resp.status_code in (401, 403):
+            raise LLMAuthError(f"LLM authentication failed ({resp.status_code}): {resp.text}")
+        if resp.status_code >= 500:
+            raise LLMUnavailable(f"LLM server error ({resp.status_code}): {resp.text}")
+        if resp.status_code != 200:
+            raise LLMUnavailable(f"LLM request returned status {resp.status_code}: {resp.text}")
+
+        try:
+            data = resp.json()
+            choice = data["choices"][0]
+            text = choice.get("message", {}).get("content", "")
+            usage_data = data.get("usage", {})
+            usage = Usage(
+                input_tokens=usage_data.get("prompt_tokens", 0),
+                output_tokens=usage_data.get("completion_tokens", 0),
+            )
+            return text, usage
+        except Exception as err:
+            raise LLMUnavailable(f"Failed to parse LLM response: {err}") from err
+
+    async def complete_stream(
+        self,
+        system: str,
+        user: str,
+        *,
+        max_tokens: int,
+    ) -> AsyncIterator[str]:
+        url = f"{self.base_url}/chat/completions"
+        payload = {
+            "model": self.model,
+            "messages": [
+                {"role": "system", "content": system},
+                {"role": "user", "content": user},
+            ],
+            "max_tokens": max_tokens,
+            "temperature": 0.0,
+            "stream": True,
+        }
+        try:
+            async with (
+                httpx.AsyncClient(timeout=self.timeout_s) as client,
+                client.stream("POST", url, json=payload, headers=self._headers()) as resp,
+            ):
+                if resp.status_code in (401, 403):
+                    raise LLMAuthError(f"LLM authentication failed ({resp.status_code})")
+                if resp.status_code >= 500:
+                    raise LLMUnavailable(f"LLM server error ({resp.status_code})")
+                if resp.status_code != 200:
+                    raise LLMUnavailable(f"LLM request returned status {resp.status_code}")
+
+                async for line in resp.aiter_lines():
+                    line = line.strip()
+                    if not line or not line.startswith("data: "):
+                        continue
+                    data_str = line[6:].strip()
+                    if data_str == "[DONE]":
+                        break
+                    with contextlib.suppress(Exception):
+                        chunk_json = json.loads(data_str)
+                        delta = chunk_json["choices"][0].get("delta", {})
+                        content = delta.get("content", "")
+                        if content:
+                            yield content
+        except (LLMAuthError, LLMUnavailable):
+            raise
+        except (httpx.TimeoutException, httpx.ConnectError, httpx.NetworkError) as err:
+            raise LLMUnavailable(f"LLM streaming connection failed: {err}") from err
+        except Exception as err:
+            raise LLMUnavailable(f"LLM streaming failed: {err}") from err
 
 
 class AnthropicLLM:

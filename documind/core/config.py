@@ -33,8 +33,17 @@ class Settings:
     rate_limit_per_min: int = 20
     max_upload_mb: int = 50
     allow_debug: bool = False
+    llm_provider: str = "none"
+    openai_base_url: str = ""
+    openai_api_key: str = ""
 
     def __post_init__(self) -> None:
+        valid_providers = {"none", "ollama", "openai_compat", "anthropic"}
+        if self.llm_provider.lower() not in valid_providers:
+            raise ValueError(
+                f"DOCUMIND_LLM_PROVIDER must be one of {sorted(valid_providers)}, "
+                f"got '{self.llm_provider}'"
+            )
         if not self.model or not self.model.strip():
             raise ValueError("model must not be empty")
         if not (0.0 <= self.min_score <= 1.0):
@@ -167,6 +176,17 @@ def load_settings() -> Settings:
     )
     allow_debug = _parse_bool("DOCUMIND_ALLOW_DEBUG", os.getenv("DOCUMIND_ALLOW_DEBUG"), False)
 
+    raw_provider = os.getenv("DOCUMIND_LLM_PROVIDER")
+    if raw_provider is not None and raw_provider.strip():
+        llm_provider = raw_provider.strip().lower()
+    elif os.getenv("ANTHROPIC_API_KEY"):
+        llm_provider = "anthropic"
+    else:
+        llm_provider = "none"
+
+    openai_base_url = os.getenv("DOCUMIND_OPENAI_BASE_URL", "").strip()
+    openai_api_key = os.getenv("DOCUMIND_OPENAI_API_KEY", os.getenv("OPENAI_API_KEY", "")).strip()
+
     return Settings(
         home=home,
         embed_model=embed_model,
@@ -186,4 +206,7 @@ def load_settings() -> Settings:
         rate_limit_per_min=rate_limit_per_min,
         max_upload_mb=max_upload_mb,
         allow_debug=allow_debug,
+        llm_provider=llm_provider,
+        openai_base_url=openai_base_url,
+        openai_api_key=openai_api_key,
     )
