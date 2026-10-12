@@ -41,6 +41,9 @@ class OpenAICompatLLM:
         headers = {"Content-Type": "application/json"}
         if self.api_key:
             headers["Authorization"] = f"Bearer {self.api_key}"
+        if "openrouter.ai" in self.base_url:
+            headers["HTTP-Referer"] = "https://github.com/DocuMind"
+            headers["X-Title"] = "DocuMind"
         return headers
 
     def complete(self, system: str, user: str, *, max_tokens: int) -> tuple[str, Usage]:
@@ -243,3 +246,50 @@ class AnthropicLLM:
             raise LLMUnavailable(f"Anthropic streaming unavailable: {err}") from err
         except Exception as err:
             raise LLMUnavailable(f"Anthropic streaming failed: {err}") from err
+
+
+class FallbackLLM:
+    """Wraps a primary LLM and a fallback LLM.
+
+    If the primary LLM raises LLMUnavailable, seamlessly fails over to the backup LLM.
+    """
+
+    def __init__(
+        self, primary: OpenAICompatLLM | AnthropicLLM, fallback: OpenAICompatLLM | AnthropicLLM
+    ) -> None:
+        self.primary = primary
+        self.fallback = fallback
+        self.model = getattr(primary, "model", "")
+        self.model_id = getattr(primary, "model_id", "")
+
+    def complete(self, system: str, user: str, *, max_tokens: int) -> tuple[str, Usage]:
+        try:
+            return self.primary.complete(system, user, max_tokens=max_tokens)
+        except LLMUnavailable as err:
+            logger.warning(
+                "Primary LLM (%s) unavailable: %s. Failing over to backup LLM (%s)...",
+                getattr(self.primary, "model", "primary"),
+                err,
+                getattr(self.fallback, "model", "fallback"),
+            )
+            return self.fallback.complete(system, user, max_tokens=max_tokens)
+
+    async def complete_stream(
+        self,
+        system: str,
+        user: str,
+        *,
+        max_tokens: int,
+    ) -> AsyncIterator[str]:
+        try:
+            async for chunk in self.primary.complete_stream(system, user, max_tokens=max_tokens):
+                yield chunk
+        except LLMUnavailable as err:
+            logger.warning(
+                "Primary LLM stream (%s) unavailable: %s. Failing over to backup LLM (%s)...",
+                getattr(self.primary, "model", "primary"),
+                err,
+                getattr(self.fallback, "model", "fallback"),
+            )
+            async for chunk in self.fallback.complete_stream(system, user, max_tokens=max_tokens):
+                yield chunk

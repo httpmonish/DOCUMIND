@@ -10,7 +10,7 @@ import os
 from documind.core.config import Settings
 from documind.core.embedder import SentenceTransformerEmbedder
 from documind.core.errors import LLMAuthError
-from documind.core.llm import AnthropicLLM, OpenAICompatLLM
+from documind.core.llm import AnthropicLLM, FallbackLLM, OpenAICompatLLM
 from documind.core.pipeline import DocuMind
 from documind.core.vector_store import ChromaStore
 
@@ -29,7 +29,7 @@ def build_default(settings: Settings) -> DocuMind:
         dim=embedder.dim,
     )
 
-    llm: AnthropicLLM | OpenAICompatLLM | None = None
+    llm: AnthropicLLM | OpenAICompatLLM | FallbackLLM | None = None
     provider = settings.llm_provider.lower()
 
     if provider == "none":
@@ -51,13 +51,31 @@ def build_default(settings: Settings) -> DocuMind:
                 llm = None
         else:
             logger.warning("ANTHROPIC_API_KEY not configured. Running in retrieval-only mode.")
-    elif provider in ("ollama", "openai_compat"):
+    elif provider in ("ollama", "openai_compat", "gemini", "openrouter"):
         base_url = settings.openai_base_url or (
-            "http://localhost:11434/v1" if provider == "ollama" else "https://api.openai.com/v1"
+            "https://openrouter.ai/api/v1"
+            if provider == "openrouter"
+            else (
+                "https://generativelanguage.googleapis.com/v1beta/openai/"
+                if provider == "gemini"
+                else (
+                    "http://localhost:11434/v1"
+                    if provider == "ollama"
+                    else "https://api.openai.com/v1"
+                )
+            )
         )
         api_key = (
             settings.openai_api_key
-            or os.getenv("OPENAI_API_KEY")
+            or (
+                (settings.openrouter_api_key or os.getenv("OPENROUTER_API_KEY"))
+                if provider == "openrouter"
+                else (
+                    os.getenv("GEMINI_API_KEY")
+                    if provider == "gemini"
+                    else os.getenv("OPENAI_API_KEY")
+                )
+            )
             or ("ollama" if provider == "ollama" else "")
         )
         try:
@@ -74,6 +92,30 @@ def build_default(settings: Settings) -> DocuMind:
                 base_url,
                 settings.model,
             )
+
+            # Configure failover if secondary key is present
+            openrouter_key = os.getenv("OPENROUTER_API_KEY") or settings.openrouter_api_key
+            gemini_key = os.getenv("GEMINI_API_KEY")
+            if provider == "gemini" and openrouter_key:
+                backup_llm = OpenAICompatLLM(
+                    model=os.getenv("DOCUMIND_FALLBACK_MODEL", "meta-llama/llama-3.1-8b-instruct"),
+                    base_url="https://openrouter.ai/api/v1",
+                    api_key=openrouter_key,
+                    timeout_s=settings.llm_timeout_s,
+                    max_retries=settings.llm_retries,
+                )
+                llm = FallbackLLM(llm, backup_llm)
+                logger.info("Configured OpenRouter as failover fallback for Gemini.")
+            elif provider == "openrouter" and gemini_key:
+                backup_llm = OpenAICompatLLM(
+                    model=os.getenv("DOCUMIND_FALLBACK_MODEL", "gemini-3.5-flash"),
+                    base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
+                    api_key=gemini_key,
+                    timeout_s=settings.llm_timeout_s,
+                    max_retries=settings.llm_retries,
+                )
+                llm = FallbackLLM(llm, backup_llm)
+                logger.info("Configured Gemini as failover fallback for OpenRouter.")
         except Exception as err:
             logger.warning(
                 "Could not initialize %s LLM: %s. Running retrieval-only.",

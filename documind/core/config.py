@@ -36,9 +36,16 @@ class Settings:
     llm_provider: str = "none"
     openai_base_url: str = ""
     openai_api_key: str = ""
+    openrouter_api_key: str = ""
+    require_auth: bool = True
+    database_url: str = ""
+    google_client_id: str = ""
+    google_client_secret: str = ""
+    google_redirect_uri: str = ""
+    session_secret_key: str = ""
 
     def __post_init__(self) -> None:
-        valid_providers = {"none", "ollama", "openai_compat", "anthropic"}
+        valid_providers = {"none", "ollama", "openai_compat", "anthropic", "gemini", "openrouter"}
         if self.llm_provider.lower() not in valid_providers:
             raise ValueError(
                 f"DOCUMIND_LLM_PROVIDER must be one of {sorted(valid_providers)}, "
@@ -177,6 +184,7 @@ def load_settings() -> Settings:
     allow_debug = _parse_bool("DOCUMIND_ALLOW_DEBUG", os.getenv("DOCUMIND_ALLOW_DEBUG"), False)
 
     raw_provider = os.getenv("DOCUMIND_LLM_PROVIDER")
+    openrouter_key = os.getenv("OPENROUTER_API_KEY", "").strip()
     gemini_key = os.getenv("GEMINI_API_KEY", "").strip()
     openai_key = os.getenv("DOCUMIND_OPENAI_API_KEY", os.getenv("OPENAI_API_KEY", "")).strip()
     openai_base_url = os.getenv("DOCUMIND_OPENAI_BASE_URL", "").strip()
@@ -185,25 +193,55 @@ def load_settings() -> Settings:
         llm_provider = raw_provider.strip().lower()
     elif os.getenv("ANTHROPIC_API_KEY"):
         llm_provider = "anthropic"
-    elif openai_key or gemini_key:
+    elif gemini_key:
+        llm_provider = "gemini"
+    elif openrouter_key:
+        llm_provider = "openrouter"
+    elif openai_key:
         llm_provider = "openai_compat"
     else:
         llm_provider = "none"
 
-    if not openai_key and gemini_key:
-        openai_key = gemini_key
-
-    if not openai_base_url and gemini_key:
-        openai_base_url = "https://generativelanguage.googleapis.com/v1beta/openai/"
-
-    if (
-        gemini_key
-        and (model_env is None or not model_env.strip())
-        and (not os.getenv("ANTHROPIC_API_KEY"))
-    ):
-        model = "gemini-1.5-flash"
+    if llm_provider == "openrouter":
+        if not openai_key and openrouter_key:
+            openai_key = openrouter_key
+        if not openai_base_url:
+            openai_base_url = "https://openrouter.ai/api/v1"
+        if model_env is None or not model_env.strip():
+            model = "meta-llama/llama-3.1-8b-instruct"
+    elif llm_provider == "gemini":
+        if not openai_key and gemini_key:
+            openai_key = gemini_key
+        if not openai_base_url:
+            openai_base_url = "https://generativelanguage.googleapis.com/v1beta/openai/"
+        if model_env is None or not model_env.strip():
+            model = "gemini-3.5-flash"
+    else:
+        if not openai_key and gemini_key:
+            openai_key = gemini_key
+        if not openai_base_url and gemini_key:
+            openai_base_url = "https://generativelanguage.googleapis.com/v1beta/openai/"
+        if (
+            gemini_key
+            and (model_env is None or not model_env.strip())
+            and (not os.getenv("ANTHROPIC_API_KEY"))
+        ):
+            model = "gemini-3.5-flash"
 
     openai_api_key = openai_key
+
+    require_auth = _parse_bool("DOCUMIND_REQUIRE_AUTH", os.getenv("DOCUMIND_REQUIRE_AUTH"), True)
+    database_url = os.getenv("DOCUMIND_DATABASE_URL", os.getenv("DATABASE_URL", "")).strip()
+    google_client_id = os.getenv(
+        "DOCUMIND_GOOGLE_CLIENT_ID", os.getenv("GOOGLE_CLIENT_ID", "")
+    ).strip()
+    google_client_secret = os.getenv(
+        "DOCUMIND_GOOGLE_CLIENT_SECRET", os.getenv("GOOGLE_CLIENT_SECRET", "")
+    ).strip()
+    google_redirect_uri = os.getenv(
+        "DOCUMIND_GOOGLE_REDIRECT_URI", os.getenv("GOOGLE_REDIRECT_URI", "")
+    ).strip()
+    session_secret_key = os.getenv("DOCUMIND_SESSION_SECRET", os.getenv("SECRET_KEY", "")).strip()
 
     return Settings(
         home=home,
@@ -227,4 +265,11 @@ def load_settings() -> Settings:
         llm_provider=llm_provider,
         openai_base_url=openai_base_url,
         openai_api_key=openai_api_key,
+        openrouter_api_key=openrouter_key,
+        require_auth=require_auth,
+        database_url=database_url,
+        google_client_id=google_client_id,
+        google_client_secret=google_client_secret,
+        google_redirect_uri=google_redirect_uri,
+        session_secret_key=session_secret_key,
     )
