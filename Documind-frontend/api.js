@@ -32,23 +32,13 @@
     return "http://127.0.0.1:8000";
   }
 
-  function generateSessionToken() {
-    if (typeof crypto !== "undefined" && crypto.randomUUID) {
-      return crypto.randomUUID().replace(/-/g, "");
-    }
-    return "sess_" + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-  }
+  let _sessionPromise = null;
 
   function getSessionId() {
     if (typeof window === "undefined" || !window.sessionStorage) {
-      return "anon_session_default_1234567890";
+      return null;
     }
-    let sid = window.sessionStorage.getItem("documind_session_id");
-    if (!sid || sid.length < 16) {
-      sid = generateSessionToken();
-      window.sessionStorage.setItem("documind_session_id", sid);
-    }
-    return sid;
+    return window.sessionStorage.getItem("documind_session_id") || null;
   }
 
   async function initSession(forceNew = false) {
@@ -58,29 +48,38 @@
         return existing;
       }
     }
-    try {
-      const baseUrl = getBaseUrl();
-      const res = await fetch(`${baseUrl}/api/demo/session`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data && data.session_id) {
-          if (typeof window !== "undefined" && window.sessionStorage) {
-            window.sessionStorage.setItem("documind_session_id", data.session_id);
+    if (_sessionPromise) {
+      return _sessionPromise;
+    }
+
+    _sessionPromise = (async () => {
+      try {
+        const baseUrl = getBaseUrl();
+        const res = await fetch(`${baseUrl}/api/demo/session`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.session_id) {
+            if (typeof window !== "undefined" && window.sessionStorage) {
+              window.sessionStorage.setItem("documind_session_id", data.session_id);
+            }
+            return data.session_id;
           }
-          return data.session_id;
         }
+        const errData = await res.json().catch(() => ({}));
+        const errMsg = (errData.error && errData.error.message) || errData.detail || `Session creation failed with HTTP ${res.status}`;
+        const err = new Error(errMsg);
+        err.status = res.status;
+        err.code = (errData.error && errData.error.code) || "SESSION_INIT_FAILED";
+        throw err;
+      } finally {
+        _sessionPromise = null;
       }
-    } catch (e) {
-      console.warn("Could not negotiate server session token, using fallback:", e);
-    }
-    const sid = generateSessionToken();
-    if (typeof window !== "undefined" && window.sessionStorage) {
-      window.sessionStorage.setItem("documind_session_id", sid);
-    }
-    return sid;
+    })();
+
+    return _sessionPromise;
   }
 
   async function request(endpoint, options = {}) {
@@ -88,12 +87,21 @@
     const url = `${baseUrl}${endpoint}`;
     const timeoutMs = options.timeoutMs || DEFAULT_TIMEOUT_MS;
 
+    let sid = getSessionId();
+    if (!sid && endpoint !== "/api/demo/session" && endpoint !== "/healthz") {
+      try {
+        sid = await initSession();
+      } catch (sessErr) {
+        // If session init fails, proceed to attempt request or bubble error
+      }
+    }
+
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
     const headers = new Headers(options.headers || {});
-    if (!headers.has("X-Session-ID")) {
-      headers.set("X-Session-ID", getSessionId());
+    if (sid && !headers.has("X-Session-ID")) {
+      headers.set("X-Session-ID", sid);
     }
 
     const fetchOptions = {
@@ -111,10 +119,14 @@
       clearTimeout(timeoutId);
 
       if (res.status === 401 && !options._retried) {
-        const newSid = await initSession(true);
-        const retryHeaders = new Headers(options.headers || {});
-        retryHeaders.set("X-Session-ID", newSid);
-        return request(endpoint, { ...options, headers: retryHeaders, _retried: true });
+        try {
+          const newSid = await initSession(true);
+          const retryHeaders = new Headers(options.headers || {});
+          retryHeaders.set("X-Session-ID", newSid);
+          return request(endpoint, { ...options, headers: retryHeaders, _retried: true });
+        } catch (retryErr) {
+          // let normal error handler process the 401 response
+        }
       }
 
       if (res.status === 204) {
@@ -428,26 +440,33 @@
   };
 
   // Cross-view Navigation handler
-  if (typeof document !== "undefined") {
-    document.addEventListener("DOMContentLoaded", () => {
-      const pathMap = {
-        architecture: "../architecture/code.html",
-        console: "../console/code.html",
-        proof: "../proof/code.html",
-        library: "../library/code.html",
-        benchmarks: "../proof/code.html",
-        compliance: "../proof/code.html",
-      };
-      document.querySelectorAll("[data-path]").forEach((el) => {
-        const target = pathMap[el.getAttribute("data-path")];
-        if (target) {
-          el.addEventListener("click", (e) => {
-            e.preventDefault();
-            window.location.href = target;
-          });
-        }
-      });
+  function bindNavigation() {
+    const pathMap = {
+      chat: "../chat.html",
+      architecture: "../architecture/code.html",
+      console: "../console/code.html",
+      proof: "../proof/code.html",
+      library: "../library/code.html",
+      benchmarks: "../proof/code.html",
+      compliance: "../proof/code.html",
+    };
+    document.querySelectorAll("[data-path]").forEach((el) => {
+      const target = pathMap[el.getAttribute("data-path")];
+      if (target) {
+        el.addEventListener("click", (e) => {
+          e.preventDefault();
+          window.location.href = target;
+        });
+      }
     });
+  }
+
+  if (typeof document !== "undefined") {
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", bindNavigation);
+    } else {
+      bindNavigation();
+    }
   }
 
   return API;

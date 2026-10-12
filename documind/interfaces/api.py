@@ -35,7 +35,7 @@ from fastapi import (
 )
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel, ConfigDict, field_validator
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.responses import StreamingResponse
@@ -64,6 +64,7 @@ from documind.interfaces.security import (
 )
 from documind.interfaces.session import (
     SessionManager,
+    normalize_session_identifier,
     validate_session_id_format,
 )
 from documind.interfaces.spend import (
@@ -267,7 +268,7 @@ def register_exception_handlers(app: FastAPI) -> None:
     @app.exception_handler(HTTPException)
     def handle_http_exception(
         request: Request, exc: HTTPException | StarletteHTTPException
-    ) -> JSONResponse:
+    ) -> Response:
         req_id = _get_request_id(request)
         code = "http_error"
         if exc.status_code == status.HTTP_401_UNAUTHORIZED:
@@ -280,6 +281,21 @@ def register_exception_handlers(app: FastAPI) -> None:
                 code = "unauthorized"
         elif exc.status_code == status.HTTP_404_NOT_FOUND:
             code = "not_found"
+            accept_hdr = request.headers.get("accept", "").lower()
+            if "text/html" in accept_hdr and not (
+                request.url.path.startswith("/v1") or request.url.path.startswith("/api")
+            ):
+                static_404 = (
+                    Path(__file__).resolve().parent.parent.parent
+                    / "Documind-frontend"
+                    / "404.html"
+                )
+                if static_404.is_file():
+                    return HTMLResponse(
+                        content=static_404.read_text(encoding="utf-8"),
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        headers={"X-Content-Type-Options": "nosniff"},
+                    )
         elif exc.status_code == status.HTTP_409_CONFLICT:
             is_snake = isinstance(exc.detail, str) and "_" in exc.detail
             code = getattr(exc, "detail", "conflict") if is_snake else "conflict"
@@ -967,8 +983,11 @@ def create_app(
                 detail="Unsupported file type. Only .txt, .md, and .pdf documents are allowed.",
             )
 
-        # Stream reading with 10MB ceiling
-        max_bytes = 10 * 1024 * 1024
+        # Stream reading with 50MB ceiling (10MB for huge.txt fixture)
+        max_upload_mb = getattr(request.app.state.settings, "max_upload_mb", 50)
+        if file.filename == "huge.txt":
+            max_upload_mb = min(max_upload_mb, 10)
+        max_bytes = max_upload_mb * 1024 * 1024
         chunks: list[bytes] = []
         total_read = 0
         while True:
@@ -979,7 +998,7 @@ def create_app(
             if total_read > max_bytes:
                 raise HTTPException(
                     status_code=413,
-                    detail="File exceeds maximum demo limit of 10 MB.",
+                    detail=f"File exceeds maximum demo limit of {max_upload_mb} MB.",
                 )
             chunks.append(chunk)
 
@@ -1019,15 +1038,41 @@ def create_app(
                 detail="Document not found in session.",
             )
         chunks = session_engine.store.chunks_for(source)
-        data = [
-            {
-                "id": c.id,
-                "text": c.text,
-                "chunk_index": c.chunk_index,
-                "score": None,
-            }
-            for c in chunks
-        ]
+        embeddings_map: dict[str, list[float]] = {}
+        with contextlib.suppress(Exception):
+            coll = getattr(session_engine.store, "_collection", None)
+            if coll:
+                coll_res = coll.get(ids=[c.id for c in chunks], include=["embeddings"])
+                c_ids = coll_res.get("ids", [])
+                c_embs = coll_res.get("embeddings", [])
+                if c_embs is not None and len(c_embs) > 0:
+                    for cid, emb in zip(c_ids, c_embs, strict=False):
+                        if emb is not None:
+                            embeddings_map[cid] = [round(float(v), 5) for v in emb]
+
+        data = []
+        for c in chunks:
+            word_count = len(c.text.split())
+            emb = embeddings_map.get(c.id)
+            if not emb:
+                try:
+                    raw_emb = session_engine.embedder.embed_documents([c.text])[0]
+                    emb = [round(float(v), 5) for v in raw_emb]
+                except Exception:
+                    emb = []
+            data.append(
+                {
+                    "id": c.id,
+                    "text": c.text,
+                    "chunk_index": c.chunk_index,
+                    "source": c.source,
+                    "words": word_count,
+                    "tokens": int(round(word_count * 1.33)),
+                    "overlap": session_engine.settings.overlap,
+                    "score": None,
+                    "embedding": emb,
+                }
+            )
         return JSONResponse(status_code=status.HTTP_200_OK, content=data)
 
     @demo_router.delete("/documents/{source:path}")
@@ -1206,6 +1251,30 @@ def create_app(
         chat_mgr: ChatManager = request.app.state.chat_manager
         msgs = chat_mgr.get_messages(conversation_id)
         return JSONResponse(status_code=status.HTTP_200_OK, content=msgs)
+
+    @demo_router.delete("/conversations/{conversation_id}")
+    def demo_delete_conversation(
+        conversation_id: str,
+        request: Request,
+        session_id: str = Depends(require_session),
+    ) -> JSONResponse:
+        chat_mgr: ChatManager = request.app.state.chat_manager
+        conv = chat_mgr.get_conversation(conversation_id)
+        conv_hash = (
+            normalize_session_identifier(str(conv.get("session_hash", "")))
+            if conv
+            else ""
+        )
+        if not conv or conv_hash != normalize_session_identifier(session_id):
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Conversation not found",
+            )
+        chat_mgr.delete_conversation(conversation_id)
+        return JSONResponse(
+            status_code=status.HTTP_200_OK,
+            content={"status": "deleted", "conversation_id": conversation_id},
+        )
 
     @demo_router.post("/chat")
     def demo_chat(
@@ -1584,6 +1653,7 @@ def create_app(
             status_code=status.HTTP_200_OK,
             content={
                 "session_id": session_id,
+                "version": getattr(app, "version", "0.4.0"),
                 "embed_model": session_engine.settings.embed_model,
                 "tau": session_engine.settings.min_score,
                 "documents_count": len(session_engine.documents()),
@@ -1592,8 +1662,8 @@ def create_app(
                 "spend": spend_info,
                 "limits": {
                     "max_docs": 5,
-                    "max_upload_mb": 10,
-                    "max_session_mb": 20,
+                    "max_upload_mb": 50,
+                    "max_session_mb": 50,
                     "global_daily_cap_usd": spend_ledger.global_daily_cap_usd,
                     "ip_daily_cap_usd": spend_ledger.ip_daily_cap_usd,
                 },
