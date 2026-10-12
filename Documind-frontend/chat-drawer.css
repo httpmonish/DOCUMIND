@@ -1,0 +1,580 @@
+/* Documind Chat Drawer Component CSS */
+:root {
+  --docu-chat-width: 480px;
+  --docu-chat-bg: #ffffff;
+  --docu-chat-shell: #0e0e0e;
+  --docu-chat-text: #0f172a;
+  --docu-chat-muted: #64748b;
+  --docu-chat-border: #e2e8f0;
+  --docu-chat-user-bubble: #f1f5f9;
+  --docu-chat-primary: #ff571d;
+  --docu-chat-primary-hover: #af3100;
+  --docu-chat-blue: #2563eb;
+  --docu-chat-blue-hover: #1d4ed8;
+  --docu-chat-chip-bg: #eff6ff;
+  --docu-chat-chip-border: #bfdbfe;
+  --docu-chat-chip-text: #1d4ed8;
+  --docu-chat-green: #10b981;
+  --docu-chat-amber: #f59e0b;
+  --docu-chat-red: #ef4444;
+}
+
+/* Backdrop */
+.documind-chat-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 99998;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.documind-chat-backdrop.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Main Drawer Panel */
+.documind-chat-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: var(--docu-chat-width);
+  max-width: 100vw;
+  background: var(--docu-chat-bg);
+  color: var(--docu-chat-text);
+  z-index: 99999;
+  display: flex;
+  flex-direction: column;
+  box-shadow: -10px 0 36px rgba(0, 0, 0, 0.45);
+  transform: translateX(100%);
+  transition: transform 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.documind-chat-drawer.open {
+  transform: translateX(0);
+}
+
+@media (max-width: 640px) {
+  .documind-chat-drawer {
+    width: 100vw;
+  }
+}
+
+/* Header */
+.docu-drawer-header {
+  padding: 14px 18px;
+  background: #ffffff;
+  border-bottom: 1px solid var(--docu-chat-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  shrink: 0;
+  z-index: 10;
+}
+
+.docu-drawer-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.docu-drawer-brand-icon {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.docu-drawer-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--docu-chat-text);
+  letter-spacing: -0.015em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.docu-drawer-status-pill {
+  font-size: 10px;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 2px 7px;
+  border-radius: 9999px;
+  background: #f1f5f9;
+  color: var(--docu-chat-muted);
+  border: 1px solid var(--docu-chat-border);
+}
+
+.docu-drawer-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.docu-btn-icon {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--docu-chat-muted);
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.docu-btn-icon:hover {
+  background: #f1f5f9;
+  color: var(--docu-chat-text);
+  border-color: var(--docu-chat-border);
+}
+
+.docu-btn-text {
+  background: #ffffff;
+  border: 1px solid var(--docu-chat-border);
+  color: var(--docu-chat-muted);
+  padding: 5px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.15s ease;
+}
+
+.docu-btn-text:hover {
+  background: #f8fafc;
+  color: var(--docu-chat-text);
+  border-color: #cbd5e1;
+}
+
+/* Document Tray */
+.docu-docs-tray {
+  background: #f8fafc;
+  border-bottom: 1px solid var(--docu-chat-border);
+  padding: 10px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  shrink: 0;
+}
+
+.docu-docs-tray-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--docu-chat-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.docu-docs-chips-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  max-height: 90px;
+  overflow-y: auto;
+}
+
+.docu-doc-chip {
+  background: #ffffff;
+  border: 1px solid var(--docu-chat-border);
+  border-radius: 6px;
+  padding: 3px 8px;
+  font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--docu-chat-text);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+.docu-doc-chip-badge {
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-size: 9px;
+  font-family: 'JetBrains Mono', monospace;
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.docu-doc-chip-chunks {
+  font-size: 10px;
+  color: var(--docu-chat-muted);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Messages Scrollable Area */
+.docu-messages-area {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: #ffffff;
+}
+
+/* Empty / Welcome State */
+.docu-welcome-card {
+  margin: auto;
+  text-align: center;
+  padding: 24px 16px;
+  max-width: 360px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.docu-welcome-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: #eff6ff;
+  color: var(--docu-chat-blue);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.docu-welcome-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--docu-chat-text);
+}
+
+.docu-welcome-desc {
+  font-size: 13px;
+  color: var(--docu-chat-muted);
+  line-height: 1.5;
+}
+
+/* Message Rows */
+.docu-msg-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+}
+
+.docu-msg-row.user {
+  align-items: flex-end;
+}
+
+.docu-msg-row.assistant {
+  align-items: flex-start;
+}
+
+.docu-msg-role {
+  font-size: 10px;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--docu-chat-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0 4px;
+}
+
+.docu-user-bubble {
+  background: var(--docu-chat-user-bubble);
+  color: var(--docu-chat-text);
+  padding: 10px 14px;
+  border-radius: 16px 16px 4px 16px;
+  font-size: 13.5px;
+  line-height: 1.5;
+  max-width: 85%;
+  word-break: break-word;
+  border: 1px solid var(--docu-chat-border);
+}
+
+.docu-assistant-card {
+  background: #ffffff;
+  color: var(--docu-chat-text);
+  padding: 14px 16px;
+  border-radius: 16px 16px 16px 4px;
+  font-size: 13.5px;
+  line-height: 1.6;
+  width: 100%;
+  border: 1px solid var(--docu-chat-border);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  word-break: break-word;
+}
+
+/* Streaming Cursor */
+.docu-streaming-cursor {
+  display: inline-block;
+  width: 6px;
+  height: 14px;
+  background: var(--docu-chat-primary);
+  margin-left: 2px;
+  vertical-align: middle;
+  animation: docu-blink 0.8s infinite;
+}
+
+@keyframes docu-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* Assistant Metadata Footer */
+.docu-assistant-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 8px;
+  border-top: 1px solid #f1f5f9;
+  font-size: 11px;
+  color: var(--docu-chat-muted);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.docu-worked-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #f8fafc;
+  padding: 2px 7px;
+  border-radius: 4px;
+  border: 1px solid #e2e8f0;
+}
+
+/* Citation Pills */
+.docu-citation-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: var(--docu-chat-chip-bg);
+  color: var(--docu-chat-chip-text);
+  border: 1px solid var(--docu-chat-chip-border);
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-size: 11px;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
+  cursor: pointer;
+  margin: 0 2px;
+  vertical-align: baseline;
+  transition: all 0.15s ease;
+  text-decoration: none;
+}
+
+.docu-citation-pill:hover {
+  background: #dbeafe;
+  border-color: #93c5fd;
+  transform: translateY(-1px);
+}
+
+.docu-citations-tray {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding-top: 6px;
+  border-top: 1px dashed var(--docu-chat-border);
+}
+
+/* Status Banners */
+.docu-banner-abstain {
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  color: #9a3412;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.docu-banner-unconfigured {
+  background: #fefce8;
+  border: 1px solid #fef08a;
+  color: #854d0e;
+  border-radius: 8px;
+  padding: 12px 14px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.docu-banner-error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 12.5px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+/* Evidence Inspector Overlay Drawer */
+.docu-evidence-drawer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background: #ffffff;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  transform: translateY(100%);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.docu-evidence-drawer.active {
+  transform: translateY(0);
+}
+
+.docu-evidence-header {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--docu-chat-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.docu-evidence-body {
+  padding: 18px;
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.docu-evidence-snippet {
+  background: #f8fafc;
+  border: 1px solid var(--docu-chat-border);
+  border-radius: 8px;
+  padding: 14px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--docu-chat-text);
+  white-space: pre-wrap;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Bottom Composer */
+.docu-composer-tray {
+  padding: 14px 18px;
+  background: #ffffff;
+  border-top: 1px solid var(--docu-chat-border);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  shrink: 0;
+}
+
+.docu-composer-wrapper {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  background: #f8fafc;
+  border: 1.5px solid var(--docu-chat-border);
+  border-radius: 16px;
+  padding: 8px 10px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.docu-composer-wrapper:focus-within {
+  border-color: var(--docu-chat-blue);
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.docu-composer-textarea {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  resize: none;
+  font-family: inherit;
+  font-size: 13.5px;
+  line-height: 1.4;
+  color: var(--docu-chat-text);
+  max-height: 120px;
+  min-height: 22px;
+  padding: 2px 4px;
+}
+
+.docu-composer-textarea::placeholder {
+  color: #94a3b8;
+}
+
+.docu-btn-send {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--docu-chat-blue);
+  color: #ffffff;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.1s ease;
+  shrink: 0;
+}
+
+.docu-btn-send:hover {
+  background: var(--docu-chat-blue-hover);
+  transform: scale(1.05);
+}
+
+.docu-btn-send:disabled {
+  background: #cbd5e1;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.docu-composer-hints {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--docu-chat-muted);
+  font-family: 'JetBrains Mono', monospace;
+  padding: 0 4px;
+}
+
+/* Reduced Motion Override */
+@media (prefers-reduced-motion: reduce) {
+  .documind-chat-drawer,
+  .documind-chat-backdrop,
+  .docu-evidence-drawer {
+    transition: none !important;
+  }
+  .docu-streaming-cursor {
+    animation: none !important;
+    opacity: 1;
+  }
+}

@@ -423,6 +423,14 @@
       });
     },
 
+    async getEvals() {
+      try {
+        return await request("/api/demo/evals", { method: "GET" });
+      } catch (e) {
+        return null;
+      }
+    },
+
     async getAuthUser() {
       try {
         return await request("/api/auth/me", { method: "GET" });
