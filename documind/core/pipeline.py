@@ -507,12 +507,14 @@ class DocuMind:
             record["question"] = question
 
         self.logger.write(record)
-        self.write_event({
-            "time": record["ts"],
-            "request_id": req_id,
-            "stage": "ask",
-            "msg": f"Ask completed with outcome: {ans.outcome}",
-            "duration_ms": total_ms,
-            "cost_usd": cost,
-            "latency_ms": total_ms,
-        })
+        self.write_event(
+            {
+                "time": record["ts"],
+                "request_id": req_id,
+                "stage": "ask",
+                "msg": f"Ask completed with outcome: {ans.outcome}",
+                "duration_ms": total_ms,
+                "cost_usd": cost,
+                "latency_ms": total_ms,
+            }
+        )

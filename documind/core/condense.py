@@ -121,8 +121,7 @@ def condense_query(
 
     # If LLM is available, perform prompt-based condensation
     turns_text = "\n".join(
-        f"{t.get('role', 'user').capitalize()}: {t.get('content', '')}"
-        for t in history[-4:]
+        f"{t.get('role', 'user').capitalize()}: {t.get('content', '')}" for t in history[-4:]
     )
     system_prompt = (
         "You are a search query reformulation assistant. Given the chat history and a follow-up "

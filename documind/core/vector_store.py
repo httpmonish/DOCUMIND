@@ -285,14 +285,14 @@ class ChromaStore:
         existing = self._collection.get(
             where={"source": source}, include=["documents", "metadatas"]
         )
-        
+
         ids = existing.get("ids", [])
         docs = existing.get("documents", [])
         metas = existing.get("metadatas", [])
-        
+
         if not ids or not docs or not metas:
             return []
-            
+
         chunks = []
         for cid, doc, meta in zip(ids, docs, metas, strict=True):
             chunks.append(
@@ -304,6 +304,6 @@ class ChromaStore:
                     doc_sha256=str(meta["doc_sha256"]),
                 )
             )
-            
+
         chunks.sort(key=lambda c: c.chunk_index)
         return chunks
