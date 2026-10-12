@@ -57,6 +57,13 @@ from documind.core.pipeline import DocuMind
 from documind.core.prompt import build_prompt
 from documind.core.retrieval import expand_neighbors
 from documind.core.serialize import answer_to_dict
+from documind.interfaces.auth import (
+    AUTH_COOKIE_NAME,
+    AuthError,
+    AuthManager,
+    clear_auth_cookie,
+    set_auth_cookie,
+)
 from documind.interfaces.ratelimit import MultiActionRateLimiter, TokenBucketLimiter
 from documind.interfaces.security import (
     client_ip,
@@ -140,14 +147,36 @@ class AnalyzeRequest(BaseModel):
         return clean
 
 
+class AuthPayload(BaseModel):
+    email: str
+    password: str
+    claim_guest_session: str | None = None
+
+
 def require_session(request: Request) -> str:
     """Extract and validate session token against SQLite registry.
-    Returns the session identifier (hash or id).
-    Raises 400 for format errors, 401 for unknown/expired sessions.
+    If authenticated via documind_auth_session cookie or Bearer token,
+    routes automatically to the user's isolated tenant workspace.
+    Otherwise, enforces strict guest token validation.
     """
+    auth_mgr = getattr(request.app.state, "auth_manager", None)
+    mgr: SessionManager | None = getattr(request.app.state, "session_manager", None)
+    if auth_mgr and mgr:
+        auth_token = request.cookies.get(AUTH_COOKIE_NAME)
+        if not auth_token:
+            auth_header = request.headers.get("Authorization")
+            if auth_header and auth_header.startswith("Bearer "):
+                auth_token = auth_header.split(" ", 1)[1].strip()
+        if auth_token:
+            user_info = auth_mgr.get_user_by_session(auth_token)
+            if user_info:
+                user, _ = user_info
+                user_hash = auth_mgr.get_user_workspace_hash(user.id)
+                mgr.register_session(user_hash, ip_hash="auth_" + user.id)
+                return str(user_hash)
+
     raw = request.headers.get("X-Session-ID") or request.cookies.get("documind_session")
     clean_token = validate_session_id_format(raw)
-    mgr: SessionManager | None = getattr(request.app.state, "session_manager", None)
     if not mgr:
         return clean_token
     session_hash = mgr.validate_token(clean_token)
@@ -430,6 +459,11 @@ def create_app(
                 settings=app_settings,
             )
 
+        if getattr(app_instance.state, "auth_manager", None) is None:
+            app_instance.state.auth_manager = AuthManager(
+                db_path=app_settings.home / "auth.db"
+            )
+
         yield
 
     # Documentation disabled in production
@@ -445,13 +479,16 @@ def create_app(
 
     app.state.settings = app_settings
     app.state.engine = dm
-    if dm is not None:
-        app.state.session_manager = SessionManager(
-            base_dir=app_settings.home / "sessions",
-            shared_embedder=dm.embedder,
-            shared_llm=dm.llm,
-            settings=app_settings,
-        )
+    from documind.core.factory import build_default
+
+    active_engine = dm if dm is not None else build_default(app_settings)
+    app.state.session_manager = SessionManager(
+        base_dir=Path(app_settings.home) / "sessions",
+        shared_embedder=active_engine.embedder,
+        shared_llm=active_engine.llm,
+        settings=app_settings,
+    )
+    app.state.auth_manager = AuthManager(db_path=Path(app_settings.home) / "auth.db")
     app.state.limiter = limiter or TokenBucketLimiter(rate_per_min=app_settings.rate_limit_per_min)
     app.state.multi_limiter = MultiActionRateLimiter()
     app.state.spend_ledger = SpendLedger(
@@ -1720,6 +1757,100 @@ def create_app(
             },
         )
 
+    auth_router = APIRouter(prefix="/api/auth", tags=["auth"])
+
+    @auth_router.post("/register", status_code=status.HTTP_201_CREATED)
+    async def auth_register(
+        body: AuthPayload,
+        request: Request,
+        response: Response,
+    ) -> dict[str, Any]:
+        check_demo_rate_limit(request)
+        auth_mgr: AuthManager = request.app.state.auth_manager
+        session_mgr: SessionManager = request.app.state.session_manager
+        try:
+            user, session_token, csrf_token = auth_mgr.register(body.email, body.password)
+        except AuthError as e:
+            raise HTTPException(status_code=e.status_code, detail=e.message) from e
+
+        if body.claim_guest_session:
+            auth_mgr.claim_guest_workspace(body.claim_guest_session, user.id, session_mgr)
+
+        set_auth_cookie(response, session_token, request)
+        return {
+            "status": "ok",
+            "user": user.to_dict(),
+            "csrf_token": csrf_token,
+            "token": session_token,
+        }
+
+    @auth_router.post("/login", status_code=status.HTTP_200_OK)
+    async def auth_login(
+        body: AuthPayload,
+        request: Request,
+        response: Response,
+    ) -> dict[str, Any]:
+        check_demo_rate_limit(request)
+        auth_mgr: AuthManager = request.app.state.auth_manager
+        session_mgr: SessionManager = request.app.state.session_manager
+        try:
+            user, session_token, csrf_token = auth_mgr.login(body.email, body.password)
+        except AuthError as e:
+            raise HTTPException(status_code=e.status_code, detail=e.message) from e
+
+        if body.claim_guest_session:
+            auth_mgr.claim_guest_workspace(body.claim_guest_session, user.id, session_mgr)
+
+        set_auth_cookie(response, session_token, request)
+        return {
+            "status": "ok",
+            "user": user.to_dict(),
+            "csrf_token": csrf_token,
+            "token": session_token,
+        }
+
+    @auth_router.post("/logout", status_code=status.HTTP_200_OK)
+    async def auth_logout(
+        request: Request,
+        response: Response,
+    ) -> dict[str, Any]:
+        auth_mgr: AuthManager = request.app.state.auth_manager
+        auth_token = request.cookies.get(AUTH_COOKIE_NAME)
+        if not auth_token:
+            auth_header = request.headers.get("Authorization")
+            if auth_header and auth_header.startswith("Bearer "):
+                auth_token = auth_header.split(" ", 1)[1].strip()
+
+        if auth_token:
+            auth_mgr.logout(auth_token)
+
+        clear_auth_cookie(response)
+        return {"status": "ok"}
+
+    @auth_router.get("/me", status_code=status.HTTP_200_OK)
+    async def auth_me(
+        request: Request,
+    ) -> dict[str, Any]:
+        auth_mgr: AuthManager = request.app.state.auth_manager
+        auth_token = request.cookies.get(AUTH_COOKIE_NAME)
+        if not auth_token:
+            auth_header = request.headers.get("Authorization")
+            if auth_header and auth_header.startswith("Bearer "):
+                auth_token = auth_header.split(" ", 1)[1].strip()
+
+        if auth_token:
+            res = auth_mgr.get_user_by_session(auth_token)
+            if res:
+                user, csrf_token = res
+                return {
+                    "authenticated": True,
+                    "user": user.to_dict(),
+                    "csrf_token": csrf_token,
+                }
+
+        return {"authenticated": False, "user": None, "csrf_token": None}
+
+    app.include_router(auth_router)
     app.include_router(demo_router)
 
     # Static files mounting for Same-Origin serving

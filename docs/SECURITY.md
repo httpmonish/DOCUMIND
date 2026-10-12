@@ -102,3 +102,16 @@ When querying `/v1/ask`:
 | **Delimiter Escaping** | Untrusted document chunks sanitized via `escape_chunk_delimiters` preventing prompt-injection breakout from XML `<sources>` and `<chunk>` tags. | **PASS** |
 | **Defensive Headers** | All HTTP responses enforce `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: strict-origin-when-cross-origin`. | **PASS** |
 
+---
+
+## 7. User Authentication & Multi-Tenant Isolation (Phase 5)
+
+| Security Property | Implementation Details | Status |
+|---|---|---|
+| **Password Storage** | Passwords hashed using `hashlib.scrypt` with $N=16384, r=8, p=1$ and per-user 16-byte random salts. Minimum password length enforced at 10 characters. | **PASS** |
+| **Verification & Anti-Enumeration** | Verification performed via constant-time `hmac.compare_digest`. Non-existent emails trigger dummy scrypt hashing to eliminate timing differentials. Generic error messages prevent account enumeration. | **PASS** |
+| **Session Cookies** | Server-issued tokens stored in `HttpOnly`, `SameSite=Lax` cookies with secure flag activated automatically over HTTPS. | **PASS** |
+| **Tenant Workspace Isolation** | Authenticated accounts route to isolated workspaces. User B accessing User A's chunks or documents strictly returns HTTP 404 `DOCUMENT_NOT_FOUND`. | **PASS** |
+| **Known Limitations & Security Gaps** | **Email Verification**: User registration currently does not send an outbound email verification link. Accounts are activated immediately upon credential validation. Outbound SMTP verification is deferred to enterprise identity integrations. | **KNOWN GAP** |
+
+
