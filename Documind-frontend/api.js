@@ -6,10 +6,12 @@
  */
 
 (function (root, factory) {
+  const api = factory();
   if (typeof module === "object" && module.exports) {
-    module.exports = factory();
-  } else {
-    root.DocuMindAPI = factory();
+    module.exports = api;
+  }
+  if (typeof root !== "undefined") {
+    root.DocuMindAPI = api;
   }
 })(typeof self !== "undefined" ? self : this, function () {
   "use strict";
@@ -93,11 +95,17 @@
 
       if (!res.ok) {
         const errObj = (data && data.error) || {};
-        const code = errObj.code || `http_${res.status}`;
-        const message = errObj.message || data.detail || (typeof data === "string" ? data : `Request failed with HTTP ${res.status}`);
+        const code = errObj.code || `HTTP_${res.status}`;
+        let message = errObj.message || data.detail || (typeof data === "string" ? data : `Request failed with HTTP ${res.status}`);
+        const retryAfter = res.headers.get("Retry-After");
+        if (res.status === 429 && retryAfter) {
+          message += ` (Retry after ${retryAfter}s)`;
+        }
         const err = new Error(message);
+        err.type = "server_error";
         err.code = code;
         err.status = res.status;
+        err.retryAfter = retryAfter;
         err.requestId = errObj.request_id || res.headers.get("X-Request-ID");
         throw err;
       }
@@ -105,12 +113,23 @@
       return data;
     } catch (err) {
       clearTimeout(timeoutId);
+      if (err.type === "server_error") {
+        throw err;
+      }
       if (err.name === "AbortError") {
         const timeoutErr = new Error(`Request timed out after ${timeoutMs}ms`);
-        timeoutErr.code = "timeout";
+        timeoutErr.type = "network_error";
+        timeoutErr.code = "TIMEOUT";
         timeoutErr.status = 408;
         throw timeoutErr;
       }
+      if (err instanceof TypeError || (err.message && err.message.toLowerCase().includes("fetch"))) {
+        const netErr = new Error("Cannot reach DocuMind server. Check connection or CORS.");
+        netErr.type = "network_error";
+        netErr.code = "NETWORK_ERROR";
+        throw netErr;
+      }
+      err.type = "client_error";
       throw err;
     }
   }
@@ -229,16 +248,29 @@
     window.showError = API.showError;
   }
 
+  API.formatError = function (err) {
+    if (!err) return { code: "ERROR", message: "Unknown error occurred" };
+    if (err.type === "server_error") {
+      let msg = err.message || "Server error";
+      return { code: err.code || `HTTP ${err.status}`, message: msg };
+    }
+    if (err.type === "network_error") {
+      return { code: err.code || "NETWORK", message: err.message || "Cannot reach server" };
+    }
+    console.error("Frontend exception:", err);
+    return { code: "FRONTEND_ERROR", message: err.message || "Frontend execution error" };
+  };
+
   // Cross-view Navigation handler
   if (typeof document !== "undefined") {
     document.addEventListener("DOMContentLoaded", () => {
       const pathMap = {
-        architecture: "/stitch_documind_glass_box_ui/code.html",
-        console: "/stitch_documind_glass_box_ui (1)/code.html",
-        proof: "/stitch_documind_glass_box_ui (2)/code.html",
-        library: "/stitch_documind_glass_box_ui (3)/code.html",
-        benchmarks: "/stitch_documind_glass_box_ui (2)/code.html",
-        compliance: "/stitch_documind_glass_box_ui (2)/code.html",
+        architecture: "../architecture/code.html",
+        console: "../console/code.html",
+        proof: "../proof/code.html",
+        library: "../library/code.html",
+        benchmarks: "../proof/code.html",
+        compliance: "../proof/code.html",
       };
       document.querySelectorAll("[data-path]").forEach((el) => {
         const target = pathMap[el.getAttribute("data-path")];

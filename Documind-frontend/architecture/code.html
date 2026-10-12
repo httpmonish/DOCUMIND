@@ -185,7 +185,7 @@
 <span class="text-surface-variant">/</span>
 <span class="text-on-surface-variant font-code-sm">EMBEDDINGS: all-MiniLM-L6-v2 (384-d)</span>
 <span class="text-surface-variant">/</span>
-<span class="text-on-surface-variant font-code-sm">TAU CONFIDENCE: τ = 0.45</span>
+<span class="text-on-surface-variant font-code-sm">TAU CONFIDENCE: τ = 0.35</span>
 <span class="text-surface-variant">/</span>
 <span class="text-on-surface-variant font-code-sm">STORE: CHROMA LOCAL ENGINE</span>
 </div>
@@ -234,7 +234,7 @@
 <div class="grid grid-cols-2 sm:grid-cols-4 border-t border-b border-surface-variant py-4 divide-y sm:divide-y-0 sm:divide-x divide-surface-variant">
 <div class="px-3 py-2 flex flex-col">
 <span class="font-label-caps text-label-caps text-on-surface-variant mb-1">TOTAL VECTORS</span>
-<span id="hero-chunks" class="font-metric-display text-[18px] text-on-surface">1,240</span>
+<span id="hero-chunks" class="font-metric-display text-[18px] text-on-surface">—</span>
 <span class="font-code-sm text-[10px] text-tertiary">CHUNKS INDEXED</span>
 </div>
 <div class="px-3 py-2 flex flex-col">
@@ -249,7 +249,7 @@
 </div>
 <div class="px-3 py-2 flex flex-col">
 <span class="font-label-caps text-label-caps text-on-surface-variant mb-1">COSINE CUTOFF</span>
-<span id="hero-tau" class="font-metric-display text-[18px] text-primary-container">τ 0.45</span>
+<span id="hero-tau" class="font-metric-display text-[18px] text-primary-container">τ 0.35</span>
 <span class="font-code-sm text-[10px] text-primary-container">GATE THRESHOLD</span>
 </div>
 </div>
@@ -599,7 +599,7 @@
 </div>
 <div class="mt-4 md:mt-0 px-4 py-2 bg-surface-container border border-surface-variant rounded-xl flex items-center gap-3">
 <span class="font-label-caps text-label-caps text-on-surface-variant">TOTAL PIPELINE:</span>
-<span class="font-metric-display text-[20px] text-tertiary">3,006 ms</span>
+<span class="font-metric-display text-[20px] text-tertiary">— ms</span>
 </div>
 </div>
 <!-- Linear Blueprint Track -->
@@ -696,21 +696,21 @@
 <!-- Gate visual line -->
 <div class="relative w-full h-4 bg-surface-container rounded-sm overflow-hidden flex items-center">
 <div class="absolute left-0 top-0 bottom-0 bg-tertiary/20 w-[71%]"></div>
-<!-- Threshold Marker τ = 0.45 -->
+<!-- Threshold Marker τ = 0.35 -->
 <div class="absolute left-[45%] top-0 bottom-0 w-0.5 bg-primary-container z-10"></div>
 <!-- Top Score Indicator -->
 <div class="absolute left-[71%] top-0 bottom-0 w-1 bg-tertiary z-20"></div>
 </div>
 <div class="flex justify-between font-code-sm text-[10px] text-on-surface-variant">
 <span>0.0</span>
-<span class="text-primary-container font-semibold">τ = 0.45 THRESHOLD</span>
+<span class="text-primary-container font-semibold">τ = 0.35 THRESHOLD</span>
 <span>1.0</span>
 </div>
 </div>
 </div>
 <div class="flex items-center gap-2 p-2 bg-tertiary/10 border border-tertiary/30 rounded font-code-sm text-tertiary text-[11px]">
 <span class="material-symbols-outlined text-sm">verified</span>
-            DECISION: 0.71 ≥ 0.45 (GATE PASS)
+            DECISION: 0.71 ≥ 0.35 (GATE PASS)
           </div>
 </div>
 <!-- Q4B ABSTAIN BRANCH (DETERMINISTIC FALLBACK) -->
@@ -724,7 +724,7 @@
 <div class="p-3 bg-surface-container-low border border-surface-variant rounded flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-3">
 <div class="flex flex-col">
 <span class="font-headline-sm text-headline-sm text-on-surface">LLM Call Suppressed</span>
-<span class="font-body-sm text-on-surface-variant text-[12px]">If maximum candidate similarity fails threshold τ 0.45, zero tokens are dispatched.</span>
+<span class="font-body-sm text-on-surface-variant text-[12px]">If maximum candidate similarity fails threshold τ 0.35, zero tokens are dispatched.</span>
 </div>
 <div class="px-3 py-1.5 bg-error/10 border border-error/40 rounded text-error font-code-sm text-[12px] font-semibold shrink-0">
                 ₹0.00 SPENT
@@ -834,7 +834,7 @@
 <span class="text-surface-variant">/</span>
 <span>INFERENCE: 2,950ms</span>
 <span class="text-surface-variant">/</span>
-<span class="text-on-surface font-semibold">TOTAL: 3,006 ms</span>
+<span class="text-on-surface font-semibold">TOTAL: — ms</span>
 </div>
 </div>
 </section>
@@ -868,9 +868,9 @@
 </div>
 <h3 class="font-headline-sm text-headline-sm text-on-surface mb-2">Retrieval you can inspect</h3>
 <p class="font-body-sm text-on-surface-variant mb-6">
-              Every score is calculated via normalized dot product. Passages falling below the τ 0.45 cut-line are explicitly severed prior to context assembly.
+              Every score is calculated via normalized dot product. Passages falling below the τ 0.35 cut-line are explicitly severed prior to context assembly.
             </p>
-<!-- 5 Score Bars with 0.45 threshold line -->
+<!-- 5 Score Bars with 0.35 threshold line -->
 <div class="space-y-3 p-4 bg-surface-container-lowest border border-surface-variant rounded relative">
 <!-- Threshold marker line -->
 <div class="absolute top-2 bottom-2 left-[45%] w-px bg-primary-container border-r border-dashed border-primary-container z-10"></div>
@@ -911,7 +911,7 @@
 </div>
 <div class="flex justify-between items-center text-[10px] font-code-sm text-on-surface-variant pt-2">
 <span>COSINE PROJECTION</span>
-<span class="text-primary-container font-semibold">τ = 0.45 THRESHOLD CUTOFF</span>
+<span class="text-primary-container font-semibold">τ = 0.35 THRESHOLD CUTOFF</span>
 <span>TOP K = 5</span>
 </div>
 </div>
@@ -1112,7 +1112,7 @@
 <div class="p-3 bg-surface-container-low border border-surface-variant rounded">
 <span class="font-label-caps text-on-surface-variant text-[9px]">COMPONENT 06</span>
 <div class="font-code-sm text-[13px] text-primary-container font-semibold">Confidence Gate</div>
-<div class="font-code-sm text-[10px] text-primary-container">τ 0.45 cut-off barrier</div>
+<div class="font-code-sm text-[10px] text-primary-container">τ 0.35 cut-off barrier</div>
 </div>
 <div class="p-3 bg-surface-container-low border border-surface-variant rounded">
 <span class="font-label-caps text-on-surface-variant text-[9px]">COMPONENT 07</span>
@@ -1200,7 +1200,7 @@
       ]);
 
       chunksEl.textContent = (healthz.index_chunks || 0).toLocaleString();
-      tauEl.textContent = `τ ${healthz.tau || 0.45}`;
+      tauEl.textContent = `τ ${healthz.tau || 0.35}`;
 
       if (events && events.length > 0) {
         const askEvents = events.filter(e => e.stage === "ask");

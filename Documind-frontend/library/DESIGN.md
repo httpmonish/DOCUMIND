@@ -176,7 +176,7 @@ This system avoids blurred drop shadows and heavy skeumorphism, creating spatial
 - **Layer 1 (Tonal Panel - `#0B0B0B`):** Docked sidebars, canvas control bars, and terminal log viewports. Delimited by a crisp `1px solid #222222` border.
 - **Layer 2 (Floating Instrument - `#121212`):** Inspectable cards, prompt chunk viewers, and pipeline node bodies. Edges feature a subtle top inset highlight: `box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.06)`.
 - **Layer 3 (Overlays & Menus - `#1A1A1A`):** Quick-filter overlays, command palettes, and contextual inspector popovers. Framed by `1px solid #333333` with a focused dark ambient drop: `box-shadow: 0 12px 32px rgba(0, 0, 0, 0.85)`.
-- **Luminescence (Active Signals):** When an SVG node or edge is actively processing or streaming tokens, it emits an electrical luminescence: `box-shadow: 0 0 16px -2px rgba(59, 130, 246, 0.45)`. Critical exceptions utilize: `box-shadow: 0 0 16px -2px rgba(255, 75, 0, 0.5)`.
+- **Luminescence (Active Signals):** When an SVG node or edge is actively processing or streaming tokens, it emits an electrical luminescence: `box-shadow: 0 0 16px -2px rgba(59, 130, 246, 0.40)`. Critical exceptions utilize: `box-shadow: 0 0 16px -2px rgba(255, 75, 0, 0.5)`.
 
 ## Shapes
 

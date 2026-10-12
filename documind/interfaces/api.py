@@ -427,7 +427,7 @@ def create_app(
             "index_chunks": int(index_chunks),
             "embed_model": model_name,
             "schema_version": 1,
-            "tau": engine.settings.min_score if engine else 0.45,
+            "tau": engine.settings.min_score if engine else app_settings.min_score,
         }
 
     # Protected v1 API router
@@ -1035,6 +1035,18 @@ def create_app(
         )
 
     app.include_router(demo_router)
+
+    # Static files mounting for Same-Origin serving
+    frontend_dir = Path(__file__).resolve().parent.parent.parent / "Documind-frontend"
+    if frontend_dir.is_dir():
+        from starlette.responses import RedirectResponse
+        from starlette.staticfiles import StaticFiles
+
+        app.mount("/app", StaticFiles(directory=str(frontend_dir), html=True), name="frontend")
+
+        @app.get("/", include_in_schema=False)
+        def root_redirect() -> RedirectResponse:
+            return RedirectResponse(url="/app/console/code.html", status_code=307)
 
     return app
 

@@ -525,7 +525,7 @@ Delete this document
 
     function renderDocumentList() {
       if (currentDocuments.length === 0) {
-        docListContainer.innerHTML = '<div class="p-4 text-[#8A8690] text-xs text-center">No documents in this session.<br><span class="text-[#F05A24]">Drop a file above to index.</span></div>';
+        docListContainer.innerHTML = '<div class="p-4 text-[#8A8690] text-xs text-center">No documents yet. Upload a file to begin.</div>';
         return;
       }
 
@@ -667,29 +667,32 @@ Delete this document
         return;
       }
 
-      if (file.size > 50 * 1024 * 1024) {
-        alert("File exceeds maximum allowed limit (50 MB).");
+      const maxMb = window.DOCUMIND_MAX_UPLOAD_MB || 10;
+      if (file.size > maxMb * 1024 * 1024) {
+        alert(`File exceeds maximum allowed limit (${maxMb} MB).`);
         return;
       }
 
       resetSteps();
-      dropZoneText.textContent = `Ingesting ${file.name}…`;
-      dropZoneSubtext.textContent = "Pipeline executing: validation -> extraction -> chunking -> embedding -> indexing";
-
+      const startTime = performance.now();
+      dropZoneText.textContent = `Uploading ${file.name}…`;
+      dropZoneSubtext.textContent = "Transferring document to server…";
       setStepState("validate", "active");
-      await delay(250);
-      setStepState("validate", "done");
-      setStepState("extract", "active");
 
       try {
+        setStepState("validate", "done");
+        setStepState("extract", "active");
         setStepState("chunk", "active");
         setStepState("embed", "active");
         setStepState("store", "active");
+        dropZoneText.textContent = `Indexing ${file.name}…`;
+        dropZoneSubtext.textContent = "Server extracting text, generating embeddings, and storing vectors…";
 
         const result = await DocuMindAPI.uploadDocument(file, replace);
+        const elapsedSec = ((performance.now() - startTime) / 1000).toFixed(2);
         allStepsDone();
         dropZoneText.textContent = `Successfully indexed ${file.name}`;
-        dropZoneSubtext.textContent = `${result.chunks || 0} chunks created in ${DocuMindAPI.fmtMs(result.seconds * 1000)}`;
+        dropZoneSubtext.textContent = `${result.chunks || 0} chunks created in ${elapsedSec}s`;
 
         await loadDocuments();
         if (fileInput) fileInput.value = "";

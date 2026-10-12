@@ -181,14 +181,14 @@
 <span class="flex items-center gap-space-xs">
 <span class="w-1.5 h-1.5 rounded-full bg-tertiary inline-block"></span>
 <span class="text-on-surface">INDEX READY:</span>
-<span class="text-on-surface">1,240 chunks</span>
+<span id="ribbon-chunks" class="text-on-surface">0 chunks</span>
 </span>
 <span class="text-surface-variant">/</span>
-<span class="">12 documents</span>
+<span id="ribbon-docs" class="">0 documents</span>
 <span class="text-surface-variant">/</span>
 <span class="text-secondary font-code-sm">bge-small-en-v1.5 (384-d)</span>
 <span class="text-surface-variant">/</span>
-<span class="text-primary-container font-code-sm">τ 0.45</span>
+<span id="ribbon-tau" class="text-primary-container font-code-sm">τ 0.35</span>
 <span class="text-surface-variant">/</span>
 <span class="text-on-surface">top-k: 5</span>
 </div>
@@ -253,7 +253,7 @@ Try abstention demo →
 </div>
 <div class="flex items-center gap-space-xs font-code-sm text-code-sm text-tertiary">
 <span class="text-on-surface-variant font-label-caps">END TO END</span>
-<span class="font-bold">3,006 ms</span>
+<span id="trace-total-ms" class="font-bold">— ms</span>
 </div>
 </div>
 <!-- Interactive SVG Pipeline Diagram -->
@@ -267,7 +267,7 @@ Try abstention demo →
 <path d="M 370 40 L 370 100 L 480 100" fill="none" opacity="0.6" stroke="#ff571d" stroke-dasharray="4 3" stroke-width="1.5"></path>
 <circle cx="480" cy="100" fill="#ff571d" opacity="0.8" r="3"></circle>
 <text fill="#ffb59f" font-family="JetBrains Mono" font-size="10" font-weight="600" letter-spacing="0.04em" x="490" y="104">ABSTAIN · LLM SKIPPED</text>
-<text fill="#e6beb2" font-family="JetBrains Mono" font-size="9" x="490" y="116">Threshold: τ &lt; 0.45</text>
+<text fill="#e6beb2" font-family="JetBrains Mono" font-size="9" x="490" y="116">Threshold: τ &lt; 0.35</text>
 <!-- Node 1: Question -->
 <g class="cursor-pointer">
 <circle cx="40" cy="40" fill="#201f1f" r="14" stroke="#ff571d" stroke-width="2"></circle>
@@ -331,9 +331,9 @@ Try abstention demo →
 <span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span>
 <span class="text-on-surface font-semibold tracking-wider">INDEXING TOPOLOGY</span>
 <span class="text-surface-variant">·</span>
-<span class="">12 documents</span>
+<span id="topology-docs" class="">0 documents</span>
 <span class="text-surface-variant">·</span>
-<span class="">1,240 chunks</span>
+<span id="topology-chunks" class="">0 chunks</span>
 <span class="text-surface-variant">·</span>
 <span class="">last run 16:40:12</span>
 </div>
@@ -413,7 +413,7 @@ Provenance: Level 1 Rigorous
 </div>
 <span class="font-code-sm text-code-sm text-on-surface-variant">Source: core/retrieval.py</span>
 </div>
-<!-- Score Bars Relative to Threshold Tau 0.45 -->
+<!-- Score Bars Relative to Threshold Tau 0.35 -->
 <div class="flex flex-col gap-space-sm pt-space-xs">
 <div class="flex items-center justify-between font-label-caps text-label-caps text-on-surface-variant">
 <span class="">CANDIDATE CHUNKS</span>
@@ -861,6 +861,7 @@ Execute a query above to inspect retrieved candidate chunks, cosine distances, a
 
     function handleError(err) {
       console.error("Query failed:", err);
+      const formatted = DocuMindAPI.formatError ? DocuMindAPI.formatError(err) : { code: err.code || "ERROR", message: err.message };
       if (err.status === 409 || err.message === "index_empty") {
         answerHeaderIcon.className = "material-symbols-outlined text-[16px] text-primary-container";
         answerHeaderIcon.textContent = "folder_open";
@@ -872,7 +873,7 @@ Execute a query above to inspect retrieved candidate chunks, cosine distances, a
           <div class="p-4 rounded-lg bg-surface-container border border-surface-variant text-on-surface flex flex-col gap-2">
             <div class="text-[#ffb59f] font-semibold text-sm">Your Session Has No Documents Yet</div>
             <p class="text-sm">Please navigate to the Library view and upload a document to begin indexing and grounded question answering.</p>
-            <button class="w-fit mt-2 px-space-md py-1 bg-primary-container text-on-primary-container rounded-lg font-code-sm text-xs font-semibold" onclick="window.location.href='/stitch_documind_glass_box_ui (3)/code.html'">
+            <button class="w-fit mt-2 px-space-md py-1 bg-primary-container text-on-primary-container rounded-lg font-code-sm text-xs font-semibold" onclick="window.location.href='../library/code.html'">
               Open Library to Upload →
             </button>
           </div>
@@ -882,12 +883,12 @@ Execute a query above to inspect retrieved candidate chunks, cosine distances, a
         answerHeaderIcon.textContent = "error";
         answerHeaderTitle.textContent = "REQUEST FAILED";
         answerBadge.className = "px-space-xs py-0.5 rounded-DEFAULT bg-error-container text-on-error-container font-code-sm text-code-sm";
-        answerBadge.textContent = `HTTP ${err.status || 500}`;
+        answerBadge.textContent = formatted.code;
 
         answerBody.innerHTML = `
           <div class="p-4 rounded-lg bg-surface-container border border-error/30 text-error flex flex-col gap-1">
-            <div class="font-semibold text-sm">${escapeHtml(err.message)}</div>
-            <div class="text-xs text-on-surface-variant font-mono">Error code: ${escapeHtml(err.code || "unknown")}</div>
+            <div class="font-semibold text-sm">${escapeHtml(formatted.message)}</div>
+            <div class="text-xs text-on-surface-variant font-mono">Error category: ${escapeHtml(err.type || "client_error")} · ID: ${escapeHtml(err.requestId || "none")}</div>
           </div>
         `;
       }
@@ -928,13 +929,30 @@ Execute a query above to inspect retrieved candidate chunks, cosine distances, a
       });
     }
 
-    // Initial check of documents
-    DocuMindAPI.getDocuments().then(docs => {
+    // Initial sync with backend meta and documents
+    Promise.all([
+      DocuMindAPI.getMeta ? DocuMindAPI.getMeta().catch(() => null) : Promise.resolve(null),
+      DocuMindAPI.getDocuments().catch(() => [])
+    ]).then(([meta, docs]) => {
       const arr = Array.isArray(docs) ? docs : (docs.documents || []);
-      const stripBtn = document.getElementById("toggle-index-strip");
-      if (stripBtn) {
-        const countSpan = stripBtn.querySelector("span:nth-child(4)");
-        if (countSpan) countSpan.textContent = `${arr.length} document${arr.length === 1 ? "" : "s"}`;
+      const totalChunks = arr.reduce((sum, d) => sum + (d.chunks || 0), 0);
+      const docCount = arr.length;
+      
+      const ribbonChunks = document.getElementById("ribbon-chunks");
+      if (ribbonChunks) ribbonChunks.textContent = `${totalChunks} chunk${totalChunks === 1 ? "" : "s"}`;
+      
+      const ribbonDocs = document.getElementById("ribbon-docs");
+      if (ribbonDocs) ribbonDocs.textContent = `${docCount} document${docCount === 1 ? "" : "s"}`;
+      
+      const topologyChunks = document.getElementById("topology-chunks");
+      if (topologyChunks) topologyChunks.textContent = `${totalChunks} chunks`;
+      
+      const topologyDocs = document.getElementById("topology-docs");
+      if (topologyDocs) topologyDocs.textContent = `${docCount} documents`;
+      
+      if (meta && meta.tau != null) {
+        const ribbonTau = document.getElementById("ribbon-tau");
+        if (ribbonTau) ribbonTau.textContent = `τ ${meta.tau}`;
       }
     }).catch(console.error);
 
