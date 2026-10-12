@@ -698,6 +698,7 @@ def create_app(
                         "status": "unchanged",
                         "source": safe_name,
                         "chunks": engine.chunk_count(safe_name),
+                        "chunk_count": engine.chunk_count(safe_name),
                         "sha256": file_sha,
                     },
                     headers={
@@ -752,6 +753,7 @@ def create_app(
                 "status": "indexed",
                 "source": safe_name,
                 "chunks": num_chunks,
+                "chunk_count": num_chunks,
                 "sha256": file_sha,
             },
             headers={
@@ -947,6 +949,7 @@ def create_app(
             {
                 "source": doc,
                 "chunks": session_engine.chunk_count(doc),
+                "chunk_count": session_engine.chunk_count(doc),
                 "sha256": session_engine.doc_sha(doc) or "",
             }
             for doc in docs
@@ -1508,9 +1511,45 @@ def create_app(
                         collected_tokens.append(chunk)
                         yield f"event: token\ndata: {json_lib.dumps({'delta': chunk})}\n\n"
                 else:
-                    fallback_text = "No language model configured."
-                    collected_tokens.append(fallback_text)
-                    yield f"event: token\ndata: {json_lib.dumps({'delta': fallback_text})}\n\n"
+                    setup_notice = (
+                        "No language model configured. DocuMind has verified your document "
+                        "and retrieved the relevant passages above, but cannot generate text "
+                        "without an LLM.\n\n"
+                        "To enable generation, configure your API key in `.env`:\n"
+                        "• Anthropic: set `ANTHROPIC_API_KEY=sk-ant-...`\n"
+                        "• Gemini: set `GEMINI_API_KEY=AIzaSy...`\n"
+                        "• OpenAI: `DOCUMIND_LLM_PROVIDER=openai_compat` and "
+                        "`DOCUMIND_OPENAI_API_KEY=...`\n"
+                        "• Ollama (local): set `DOCUMIND_LLM_PROVIDER=ollama`"
+                    )
+                    yield f"event: token\ndata: {json_lib.dumps({'delta': setup_notice})}\n\n"
+                    latency = int((time.perf_counter() - t0) * 1000)
+                    cit_dicts = [
+                        {
+                            "marker": f"[S{i+1}]",
+                            "source": c.chunk.source,
+                            "chunk_index": c.chunk.chunk_index,
+                            "snippet": c.chunk.text[:200],
+                            "score": round(float(c.score), 4),
+                        }
+                        for i, c in enumerate(all_chunks)
+                    ]
+                    yield f"event: citations\ndata: {json_lib.dumps({'citations': cit_dicts})}\n\n"
+                    done_payload = {
+                        "outcome": "unconfigured_model",
+                        "latency_ms": latency,
+                        "usage": {"input_tokens": 0, "output_tokens": 0, "cost_usd": 0.0},
+                    }
+                    yield f"event: done\ndata: {json_lib.dumps(done_payload)}\n\n"
+                    chat_mgr.add_message(conv_id, "user", body.question)
+                    chat_mgr.add_message(
+                        conv_id,
+                        "assistant",
+                        setup_notice,
+                        citations=cit_dicts,
+                        retrieved=candidates,
+                    )
+                    return
 
                 full_answer = "".join(collected_tokens)
                 latency = int((time.perf_counter() - t0) * 1000)

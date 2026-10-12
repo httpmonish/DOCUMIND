@@ -1,0 +1,1103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DocuMind — Document Intelligence Chat</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-shell: #0d0f14;
+      --card-bg: #ffffff;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --text-light: #94a3b8;
+      --border-subtle: #e2e8f0;
+      --border-dark: #1e2430;
+      --user-bubble: #f1f5f9;
+      --accent-blue: #2563eb;
+      --accent-blue-hover: #1d4ed8;
+      --chip-bg: #eff6ff;
+      --chip-border: #bfdbfe;
+      --chip-text: #1d4ed8;
+      --status-bg: #f8fafc;
+      --danger-red: #ef4444;
+      --success-green: #10b981;
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-shell);
+      font-family: var(--font-sans);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      overflow: hidden;
+    }
+
+    /* Outer Container */
+    .app-shell {
+      width: 100%;
+      max-width: 860px;
+      height: calc(100vh - 32px);
+      background: var(--card-bg);
+      border-radius: 24px;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Header */
+    .chat-header {
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #ffffff;
+      z-index: 10;
+    }
+
+    .brand-section {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-badge {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: #eff6ff;
+      border: 1px solid #dbeafe;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent-blue);
+    }
+
+    .brand-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .session-badge {
+      font-size: 11px;
+      font-family: var(--font-mono);
+      background: #f1f5f9;
+      color: var(--text-muted);
+      padding: 2px 8px;
+      border-radius: 9999px;
+      border: 1px solid var(--border-subtle);
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-header {
+      background: #ffffff;
+      border: 1px solid var(--border-subtle);
+      color: var(--text-muted);
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      text-decoration: none;
+      transition: all 0.15s ease;
+    }
+
+    .btn-header:hover {
+      background: #f8fafc;
+      color: var(--text-main);
+      border-color: #cbd5e1;
+    }
+
+    .docs-toggle-active {
+      background: #eff6ff !important;
+      color: var(--accent-blue) !important;
+      border-color: #bfdbfe !important;
+    }
+
+    /* Documents Bar / Drawer */
+    .docs-bar {
+      background: #f8fafc;
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 12px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      transition: all 0.2s ease;
+    }
+
+    .docs-bar.collapsed {
+      display: none;
+    }
+
+    .docs-bar-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .docs-chip-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .doc-chip {
+      background: #ffffff;
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 6px 10px;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+    }
+
+    .doc-chip-name {
+      font-weight: 500;
+      color: var(--text-main);
+      max-width: 180px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .doc-chip-chunks {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-muted);
+      background: #f1f5f9;
+      padding: 1px 5px;
+      border-radius: 4px;
+    }
+
+    .doc-chip-delete {
+      color: var(--text-light);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      border: none;
+      background: transparent;
+      padding: 0;
+      transition: color 0.15s ease;
+    }
+
+    .doc-chip-delete:hover {
+      color: var(--danger-red);
+    }
+
+    .upload-zone-hint {
+      font-size: 12px;
+      color: var(--text-light);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Message Stream */
+    .message-stream {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      scroll-behavior: smooth;
+    }
+
+    /* Empty State */
+    .empty-state {
+      margin: auto;
+      text-align: center;
+      max-width: 440px;
+      padding: 32px 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .empty-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      background: #f1f5f9;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent-blue);
+    }
+
+    .empty-title {
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .empty-desc {
+      font-size: 14px;
+      line-height: 1.5;
+      color: var(--text-muted);
+    }
+
+    .suggestion-chips {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .suggestion-chip {
+      background: #f8fafc;
+      border: 1px solid var(--border-subtle);
+      border-radius: 9999px;
+      padding: 6px 14px;
+      font-size: 13px;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .suggestion-chip:hover {
+      background: #eff6ff;
+      border-color: #bfdbfe;
+      color: var(--accent-blue);
+    }
+
+    /* Message Rows */
+    .message-row {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+    }
+
+    .message-row.user {
+      align-items: flex-end;
+    }
+
+    .message-row.assistant {
+      align-items: flex-start;
+    }
+
+    /* User Bubble */
+    .user-bubble {
+      background: var(--user-bubble);
+      color: var(--text-main);
+      padding: 12px 18px;
+      border-radius: 20px 20px 4px 20px;
+      max-width: 78%;
+      font-size: 15px;
+      line-height: 1.5;
+      word-wrap: break-word;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    }
+
+    /* Assistant Elements */
+    .status-line {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-family: var(--font-mono);
+      color: var(--text-muted);
+      margin-bottom: 8px;
+      user-select: none;
+    }
+
+    .status-line .chevron {
+      color: var(--text-light);
+      font-weight: bold;
+    }
+
+    .assistant-body {
+      color: #1e293b;
+      font-size: 15px;
+      line-height: 1.65;
+      max-width: 90%;
+      word-wrap: break-word;
+    }
+
+    .assistant-body p {
+      margin-bottom: 12px;
+    }
+
+    .assistant-body p:last-child {
+      margin-bottom: 0;
+    }
+
+    /* Citation Chips */
+    .citation-chip {
+      display: inline-flex;
+      align-items: center;
+      background: var(--chip-bg);
+      color: var(--chip-text);
+      border: 1px solid var(--chip-border);
+      border-radius: 6px;
+      padding: 1px 6px;
+      font-size: 11px;
+      font-weight: 600;
+      font-family: var(--font-mono);
+      cursor: pointer;
+      margin: 0 3px;
+      vertical-align: baseline;
+      transition: all 0.15s ease;
+      line-height: 1.4;
+    }
+
+    .citation-chip:hover {
+      background: #dbeafe;
+      border-color: #93c5fd;
+      transform: translateY(-1px);
+    }
+
+    /* Abstain Notification */
+    .abstain-notice {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      background: #fffbeb;
+      border: 1px solid #fef3c7;
+      border-radius: 12px;
+      padding: 14px 16px;
+      color: #92400e;
+      font-size: 14px;
+      line-height: 1.5;
+      max-width: 90%;
+    }
+
+    /* Typing cursor */
+    .stream-cursor {
+      display: inline-block;
+      width: 6px;
+      height: 14px;
+      background: var(--accent-blue);
+      margin-left: 2px;
+      vertical-align: text-bottom;
+      animation: blink 0.8s infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+
+    /* Input Bar */
+    .input-wrapper {
+      padding: 0 20px 20px 20px;
+      background: transparent;
+    }
+
+    .input-bar {
+      background: #ffffff;
+      border: 1px solid var(--border-subtle);
+      border-radius: 32px;
+      padding: 8px 10px 8px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .input-bar:focus-within {
+      border-color: #cbd5e1;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    }
+
+    .input-icon-btn {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: transparent;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      flex-shrink: 0;
+    }
+
+    .input-icon-btn:hover {
+      background: #f1f5f9;
+      color: var(--text-main);
+    }
+
+    .chat-textarea {
+      flex: 1;
+      border: none;
+      outline: none;
+      background: transparent;
+      font-family: var(--font-sans);
+      font-size: 15px;
+      color: var(--text-main);
+      resize: none;
+      max-height: 120px;
+      line-height: 1.4;
+      padding: 4px 0;
+    }
+
+    .chat-textarea::placeholder {
+      color: var(--text-light);
+    }
+
+    .send-btn {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: var(--accent-blue);
+      color: #ffffff;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s ease;
+      flex-shrink: 0;
+    }
+
+    .send-btn:hover:not(:disabled) {
+      background: var(--accent-blue-hover);
+      transform: scale(1.04);
+    }
+
+    .send-btn:disabled {
+      background: #cbd5e1;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* Citation Side Drawer */
+    .citation-drawer {
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 340px;
+      height: 100%;
+      background: #ffffff;
+      border-left: 1px solid var(--border-subtle);
+      box-shadow: -8px 0 24px rgba(0, 0, 0, 0.06);
+      transform: translateX(100%);
+      transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 20;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .citation-drawer.open {
+      transform: translateX(0);
+    }
+
+    .drawer-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .drawer-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .drawer-close {
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      color: var(--text-muted);
+      display: flex;
+      padding: 4px;
+      border-radius: 4px;
+    }
+
+    .drawer-close:hover {
+      background: #f1f5f9;
+      color: var(--text-main);
+    }
+
+    .drawer-content {
+      padding: 20px;
+      overflow-y: auto;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .source-meta-card {
+      background: #f8fafc;
+      border: 1px solid var(--border-subtle);
+      border-radius: 10px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .source-meta-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+    }
+
+    .source-meta-label {
+      color: var(--text-muted);
+    }
+
+    .source-meta-val {
+      font-weight: 600;
+      font-family: var(--font-mono);
+      color: var(--text-main);
+    }
+
+    .source-snippet-box {
+      background: #ffffff;
+      border: 1px solid var(--border-subtle);
+      border-radius: 10px;
+      padding: 14px;
+      font-size: 13px;
+      line-height: 1.6;
+      color: #334155;
+      font-style: italic;
+      border-left: 3px solid var(--accent-blue);
+    }
+
+    /* Hidden file input */
+    #file-upload-input {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell" id="app-shell">
+    <!-- Header -->
+    <header class="chat-header">
+      <div class="brand-section">
+        <div class="logo-badge">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+          </svg>
+        </div>
+        <div class="brand-title">
+          DocuMind
+          <span class="session-badge" id="session-badge">Initializing…</span>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="btn-header" id="btn-toggle-docs">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+          </svg>
+          <span id="docs-count-label">0 Documents</span>
+        </button>
+        <button class="btn-header" id="btn-clear-chat">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          New Chat
+        </button>
+        <a href="console/code.html" class="btn-header">
+          Console
+        </a>
+      </div>
+    </header>
+
+    <!-- Documents Bar -->
+    <div class="docs-bar" id="docs-bar">
+      <div class="docs-bar-header">
+        <span>Active Knowledge Base</span>
+        <span id="upload-status" class="upload-zone-hint">Upload PDF, Markdown, or TXT</span>
+      </div>
+      <div class="docs-chip-list" id="docs-chip-list">
+        <div class="upload-zone-hint">No documents uploaded yet. Click + below to add project documents.</div>
+      </div>
+    </div>
+
+    <!-- Message Stream -->
+    <div class="message-stream" id="message-stream" role="log" aria-live="polite">
+      <div class="empty-state" id="empty-state">
+        <div class="empty-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+          </svg>
+        </div>
+        <h2 class="empty-title">Ask your documents anything</h2>
+        <p class="empty-desc">DocuMind synthesizes answers strictly grounded in your uploaded project documents with verifiable [S1] citations.</p>
+        <div class="suggestion-chips">
+          <button class="suggestion-chip" data-q="What are the key concepts in this document?">What are the key concepts?</button>
+          <button class="suggestion-chip" data-q="Summarize the core architecture and components.">Summarize core architecture</button>
+          <button class="suggestion-chip" data-q="What are the main findings and conclusions?">Main findings</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Input Bar -->
+    <div class="input-wrapper">
+      <div class="input-bar">
+        <button class="input-icon-btn" id="btn-attach" title="Attach document (PDF, MD, TXT)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+        </button>
+        <button class="input-icon-btn" id="btn-grid-docs" title="Toggle document drawer">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="7"></rect>
+            <rect x="14" y="3" width="7" height="7"></rect>
+            <rect x="14" y="14" width="7" height="7"></rect>
+            <rect x="3" y="14" width="7" height="7"></rect>
+          </svg>
+        </button>
+        <textarea id="chat-input" class="chat-textarea" rows="1" placeholder="Ask anything..."></textarea>
+        <button id="btn-send" class="send-btn" disabled title="Send message">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="19" x2="12" y2="5"></line>
+            <polyline points="5 12 12 5 19 12"></polyline>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Citation Drawer -->
+    <aside class="citation-drawer" id="citation-drawer" aria-label="Citation details">
+      <div class="drawer-header">
+        <div class="drawer-title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+          </svg>
+          <span id="drawer-marker-title">Citation [S1]</span>
+        </div>
+        <button class="drawer-close" id="btn-close-drawer">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="drawer-content">
+        <div class="source-meta-card">
+          <div class="source-meta-row">
+            <span class="source-meta-label">Source Document</span>
+            <span class="source-meta-val" id="drawer-doc-name">—</span>
+          </div>
+          <div class="source-meta-row">
+            <span class="source-meta-label">Chunk Index</span>
+            <span class="source-meta-val" id="drawer-chunk-idx">—</span>
+          </div>
+          <div class="source-meta-row">
+            <span class="source-meta-label">Relevance Score</span>
+            <span class="source-meta-val" id="drawer-score" style="color: var(--accent-blue);">—</span>
+          </div>
+        </div>
+        <div>
+          <div style="font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; margin-bottom: 8px;">Grounded Excerpt</div>
+          <div class="source-snippet-box" id="drawer-snippet">—</div>
+        </div>
+      </div>
+    </aside>
+
+    <input type="file" id="file-upload-input" accept=".pdf,.md,.txt">
+  </div>
+
+  <script src="api.js"></script>
+  <script>
+    (function () {
+      "use strict";
+
+      const streamEl = document.getElementById("message-stream");
+      const emptyStateEl = document.getElementById("empty-state");
+      const inputEl = document.getElementById("chat-input");
+      const sendBtn = document.getElementById("btn-send");
+      const attachBtn = document.getElementById("btn-attach");
+      const gridBtn = document.getElementById("btn-grid-docs");
+      const fileInput = document.getElementById("file-upload-input");
+      const docsBar = document.getElementById("docs-bar");
+      const docsChipList = document.getElementById("docs-chip-list");
+      const docsCountLabel = document.getElementById("docs-count-label");
+      const uploadStatus = document.getElementById("upload-status");
+      const sessionBadge = document.getElementById("session-badge");
+      const btnClearChat = document.getElementById("btn-clear-chat");
+      const btnToggleDocs = document.getElementById("btn-toggle-docs");
+
+      // Citation drawer elements
+      const citationDrawer = document.getElementById("citation-drawer");
+      const btnCloseDrawer = document.getElementById("btn-close-drawer");
+      const drawerMarkerTitle = document.getElementById("drawer-marker-title");
+      const drawerDocName = document.getElementById("drawer-doc-name");
+      const drawerChunkIdx = document.getElementById("drawer-chunk-idx");
+      const drawerScore = document.getElementById("drawer-score");
+      const drawerSnippet = document.getElementById("drawer-snippet");
+
+      let isStreaming = false;
+      let currentConversationId = null;
+      let activeCitationsMap = {}; // marker -> citation object
+
+      // Initialize
+      async function init() {
+        try {
+          const sid = await DocuMindAPI.initSession();
+          sessionBadge.textContent = sid.substring(0, 12) + "…";
+          await refreshDocuments();
+        } catch (e) {
+          console.warn("Session init warning:", e);
+          sessionBadge.textContent = "Offline / Local";
+        }
+      }
+
+      // Refresh documents
+      async function refreshDocuments() {
+        try {
+          const docs = await DocuMindAPI.getDocuments();
+          renderDocuments(docs || []);
+        } catch (e) {
+          console.warn("Failed to load documents:", e);
+        }
+      }
+
+      function renderDocuments(docs) {
+        docsCountLabel.textContent = `${docs.length} Document${docs.length === 1 ? "" : "s"}`;
+        if (!docs.length) {
+          docsChipList.innerHTML = '<div class="upload-zone-hint">No documents uploaded yet. Click + below to add project documents.</div>';
+          return;
+        }
+
+        docsChipList.innerHTML = "";
+        docs.forEach((doc) => {
+          const chip = document.createElement("div");
+          chip.className = "doc-chip";
+          chip.innerHTML = `
+            <span class="doc-chip-name" title="${escapeHtml(doc.source)}">${escapeHtml(doc.source)}</span>
+            <span class="doc-chip-chunks">${doc.chunk_count || 0} chunks</span>
+            <button class="doc-chip-delete" title="Delete document" data-source="${escapeHtml(doc.source)}">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          `;
+          const delBtn = chip.querySelector(".doc-chip-delete");
+          delBtn.addEventListener("click", async () => {
+            if (confirm(`Remove ${doc.source} from knowledge base?`)) {
+              try {
+                await DocuMindAPI.deleteDocument(doc.source);
+                await refreshDocuments();
+              } catch (err) {
+                alert("Failed to delete document: " + err.message);
+              }
+            }
+          });
+          docsChipList.appendChild(chip);
+        });
+      }
+
+      // Upload handling
+      attachBtn.addEventListener("click", () => fileInput.click());
+      fileInput.addEventListener("change", async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        docsBar.classList.remove("collapsed");
+        btnToggleDocs.classList.add("docs-toggle-active");
+        uploadStatus.textContent = `Indexing ${file.name}…`;
+
+        try {
+          await DocuMindAPI.uploadDocument(file);
+          uploadStatus.textContent = "Upload complete!";
+          setTimeout(() => { uploadStatus.textContent = "Upload PDF, Markdown, or TXT"; }, 3000);
+          await refreshDocuments();
+        } catch (err) {
+          uploadStatus.textContent = `Upload failed: ${err.message}`;
+        } finally {
+          fileInput.value = "";
+        }
+      });
+
+      // Toggle documents drawer
+      btnToggleDocs.addEventListener("click", () => {
+        docsBar.classList.toggle("collapsed");
+        btnToggleDocs.classList.toggle("docs-toggle-active", !docsBar.classList.contains("collapsed"));
+      });
+      gridBtn.addEventListener("click", () => {
+        docsBar.classList.toggle("collapsed");
+        btnToggleDocs.classList.toggle("docs-toggle-active", !docsBar.classList.contains("collapsed"));
+      });
+
+      // Clear / New chat
+      btnClearChat.addEventListener("click", async () => {
+        if (currentConversationId) {
+          try {
+            await DocuMindAPI.deleteConversation(currentConversationId);
+          } catch (e) {
+            console.warn("Delete conversation error:", e);
+          }
+        }
+        currentConversationId = null;
+        activeCitationsMap = {};
+        streamEl.innerHTML = "";
+        streamEl.appendChild(emptyStateEl);
+        inputEl.value = "";
+        updateSendBtn();
+      });
+
+      // Input sizing & send state
+      inputEl.addEventListener("input", () => {
+        inputEl.style.height = "auto";
+        inputEl.style.height = Math.min(inputEl.scrollHeight, 120) + "px";
+        updateSendBtn();
+      });
+
+      inputEl.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" && !e.shiftKey) {
+          e.preventDefault();
+          if (!sendBtn.disabled) {
+            handleSend();
+          }
+        }
+      });
+
+      function updateSendBtn() {
+        sendBtn.disabled = isStreaming || !inputEl.value.trim();
+      }
+
+      sendBtn.addEventListener("click", handleSend);
+
+      // Suggestions
+      document.querySelectorAll(".suggestion-chip").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          inputEl.value = btn.getAttribute("data-q");
+          updateSendBtn();
+          handleSend();
+        });
+      });
+
+      // Main Send Logic
+      async function handleSend() {
+        const query = inputEl.value.trim();
+        if (!query || isStreaming) return;
+
+        // Hide empty state
+        if (emptyStateEl.parentNode) {
+          emptyStateEl.remove();
+        }
+
+        // 1. Render User Message
+        appendUserMessage(query);
+        inputEl.value = "";
+        inputEl.style.height = "auto";
+        isStreaming = true;
+        updateSendBtn();
+
+        // 2. Prepare Assistant Message Container
+        const { row, statusLine, bodyEl } = createAssistantRow();
+        streamEl.appendChild(row);
+        scrollToBottom();
+
+        const startTime = performance.now();
+        let accumulatedText = "";
+        let streamedCitations = [];
+
+        try {
+          await DocuMindAPI.chatStream(
+            query,
+            currentConversationId,
+            (eventName, data) => {
+              if (eventName === "meta") {
+                if (data && data.conversation_id) {
+                  currentConversationId = data.conversation_id;
+                }
+              } else if (eventName === "token") {
+                if (data && data.delta) {
+                  accumulatedText += data.delta;
+                  renderAssistantContent(bodyEl, accumulatedText, streamedCitations, true);
+                  scrollToBottom();
+                }
+              } else if (eventName === "citations") {
+                if (data && data.citations) {
+                  streamedCitations = data.citations;
+                  streamedCitations.forEach((c) => {
+                    activeCitationsMap[c.marker] = c;
+                  });
+                  renderAssistantContent(bodyEl, accumulatedText, streamedCitations, true);
+                }
+              } else if (eventName === "done") {
+                const elapsedSec = ((performance.now() - startTime) / 1000).toFixed(1);
+                statusLine.innerHTML = `<span class="chevron">›</span> Worked for ${elapsedSec}s`;
+                renderAssistantContent(bodyEl, accumulatedText, streamedCitations, false);
+                scrollToBottom();
+              } else if (eventName === "error") {
+                renderErrorNotice(bodyEl, data.message || "An error occurred.");
+              }
+            }
+          );
+        } catch (err) {
+          console.error("Chat streaming error:", err);
+          renderErrorNotice(bodyEl, err.message || "Network error. Please try again.");
+        } finally {
+          isStreaming = false;
+          updateSendBtn();
+          // Ensure cursor removed
+          const cursor = bodyEl.querySelector(".stream-cursor");
+          if (cursor) cursor.remove();
+        }
+      }
+
+      function appendUserMessage(text) {
+        const row = document.createElement("div");
+        row.className = "message-row user";
+        const bubble = document.createElement("div");
+        bubble.className = "user-bubble";
+        bubble.textContent = text;
+        row.appendChild(bubble);
+        streamEl.appendChild(row);
+      }
+
+      function createAssistantRow() {
+        const row = document.createElement("div");
+        row.className = "message-row assistant";
+
+        const statusLine = document.createElement("div");
+        statusLine.className = "status-line";
+        statusLine.innerHTML = '<span class="chevron">›</span> Thinking…';
+
+        const bodyEl = document.createElement("div");
+        bodyEl.className = "assistant-body";
+        bodyEl.innerHTML = '<span class="stream-cursor"></span>';
+
+        row.appendChild(statusLine);
+        row.appendChild(bodyEl);
+        return { row, statusLine, bodyEl };
+      }
+
+      function renderAssistantContent(container, rawText, citations, showCursor) {
+        // Check for abstention notice
+        if (rawText.includes("I couldn't find any sufficiently relevant passages") || rawText.includes("No documents uploaded yet")) {
+          container.innerHTML = `
+            <div class="abstain-notice">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+              </svg>
+              <div>${escapeHtml(rawText)}</div>
+            </div>
+          `;
+          return;
+        }
+
+        // Parse paragraphs and citation markers [S1], [S2]
+        let formatted = escapeHtml(rawText);
+
+        // Replace citation markers with interactive chips
+        formatted = formatted.replace(/\[S(\d+)\]/g, (match, num) => {
+          const marker = `S${num}`;
+          return `<button class="citation-chip" data-marker="${marker}">[S${num}]</button>`;
+        });
+
+        // Split paragraphs
+        const paragraphs = formatted.split("\n\n").filter(Boolean);
+        const html = paragraphs.map((p) => `<p>${p.replace(/\n/g, "<br>")}</p>`).join("");
+
+        container.innerHTML = html + (showCursor ? '<span class="stream-cursor"></span>' : "");
+
+        // Bind citation click handlers
+        container.querySelectorAll(".citation-chip").forEach((chip) => {
+          chip.addEventListener("click", () => {
+            const marker = chip.getAttribute("data-marker");
+            openCitationDrawer(marker);
+          });
+        });
+      }
+
+      function renderErrorNotice(container, msg) {
+        container.innerHTML = `
+          <div class="abstain-notice" style="background:#fef2f2; border-color:#fee2e2; color:#991b1b;">
+            <div>${escapeHtml(msg)}</div>
+          </div>
+        `;
+      }
+
+      function openCitationDrawer(marker) {
+        const cit = activeCitationsMap[marker];
+        drawerMarkerTitle.textContent = `Citation [${marker}]`;
+        if (cit) {
+          drawerDocName.textContent = cit.source || "Document";
+          drawerChunkIdx.textContent = `#${cit.chunk_index ?? 0}`;
+          drawerScore.textContent = cit.score ? cit.score.toFixed(3) : "—";
+          drawerSnippet.textContent = cit.snippet || "No snippet text available.";
+        } else {
+          drawerDocName.textContent = "Referenced Chunk";
+          drawerChunkIdx.textContent = "—";
+          drawerScore.textContent = "—";
+          drawerSnippet.textContent = `Grounded excerpt for [${marker}]`;
+        }
+        citationDrawer.classList.add("open");
+      }
+
+      btnCloseDrawer.addEventListener("click", () => {
+        citationDrawer.classList.remove("open");
+      });
+
+      function scrollToBottom() {
+        streamEl.scrollTop = streamEl.scrollHeight;
+      }
+
+      function escapeHtml(str) {
+        if (!str) return "";
+        return str
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#039;");
+      }
+
+      // Initialize on load
+      init();
+    })();
+  </script>
+</body>
+</html>

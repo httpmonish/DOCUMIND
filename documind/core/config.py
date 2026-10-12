@@ -177,15 +177,33 @@ def load_settings() -> Settings:
     allow_debug = _parse_bool("DOCUMIND_ALLOW_DEBUG", os.getenv("DOCUMIND_ALLOW_DEBUG"), False)
 
     raw_provider = os.getenv("DOCUMIND_LLM_PROVIDER")
+    gemini_key = os.getenv("GEMINI_API_KEY", "").strip()
+    openai_key = os.getenv("DOCUMIND_OPENAI_API_KEY", os.getenv("OPENAI_API_KEY", "")).strip()
+    openai_base_url = os.getenv("DOCUMIND_OPENAI_BASE_URL", "").strip()
+
     if raw_provider is not None and raw_provider.strip():
         llm_provider = raw_provider.strip().lower()
     elif os.getenv("ANTHROPIC_API_KEY"):
         llm_provider = "anthropic"
+    elif openai_key or gemini_key:
+        llm_provider = "openai_compat"
     else:
         llm_provider = "none"
 
-    openai_base_url = os.getenv("DOCUMIND_OPENAI_BASE_URL", "").strip()
-    openai_api_key = os.getenv("DOCUMIND_OPENAI_API_KEY", os.getenv("OPENAI_API_KEY", "")).strip()
+    if not openai_key and gemini_key:
+        openai_key = gemini_key
+
+    if not openai_base_url and gemini_key:
+        openai_base_url = "https://generativelanguage.googleapis.com/v1beta/openai/"
+
+    if (
+        gemini_key
+        and (model_env is None or not model_env.strip())
+        and (not os.getenv("ANTHROPIC_API_KEY"))
+    ):
+        model = "gemini-1.5-flash"
+
+    openai_api_key = openai_key
 
     return Settings(
         home=home,
