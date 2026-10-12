@@ -8,9 +8,11 @@ from __future__ import annotations
 import contextlib
 import hashlib
 import hmac
+import json
 import logging
 import os
 import re
+import secrets
 import subprocess
 import sys
 import threading
@@ -61,6 +63,7 @@ from documind.interfaces.auth import (
     AUTH_COOKIE_NAME,
     AuthError,
     AuthManager,
+    User,
     clear_auth_cookie,
     set_auth_cookie,
 )
@@ -150,37 +153,68 @@ class AnalyzeRequest(BaseModel):
 class AuthPayload(BaseModel):
     email: str
     password: str
+    display_name: str | None = None
     claim_guest_session: str | None = None
 
 
-def require_session(request: Request) -> str:
-    """Extract and validate session token against SQLite registry.
-    If authenticated via documind_auth_session cookie or Bearer token,
-    routes automatically to the user's isolated tenant workspace.
-    Otherwise, enforces strict guest token validation.
-    """
+class PasswordResetRequestPayload(BaseModel):
+    email: str
+
+
+class PasswordResetConfirmPayload(BaseModel):
+    token: str
+    new_password: str
+
+
+def get_authenticated_user_opt(request: Request) -> tuple[User, str] | None:
+    """Extract authenticated user and tenant workspace hash if valid session exists."""
     auth_mgr = getattr(request.app.state, "auth_manager", None)
     mgr: SessionManager | None = getattr(request.app.state, "session_manager", None)
-    if auth_mgr and mgr:
-        auth_token = request.cookies.get(AUTH_COOKIE_NAME)
-        if not auth_token:
-            auth_header = request.headers.get("Authorization")
-            if auth_header and auth_header.startswith("Bearer "):
-                auth_token = auth_header.split(" ", 1)[1].strip()
-        if auth_token:
-            user_info = auth_mgr.get_user_by_session(auth_token)
-            if user_info:
-                user, _ = user_info
-                user_hash = auth_mgr.get_user_workspace_hash(user.id)
-                mgr.register_session(user_hash, ip_hash="auth_" + user.id)
-                return str(user_hash)
+    if not auth_mgr or not mgr:
+        return None
 
+    auth_token = request.cookies.get(AUTH_COOKIE_NAME)
+    if not auth_token:
+        auth_header = request.headers.get("Authorization")
+        if auth_header and auth_header.startswith("Bearer "):
+            auth_token = auth_header.split(" ", 1)[1].strip()
+
+    if auth_token:
+        user_info = auth_mgr.get_user_by_session(auth_token)
+        if user_info:
+            user, _ = user_info
+            user_hash = auth_mgr.get_user_workspace_hash(user.id)
+            mgr.register_session(user_hash, ip_hash="auth_" + user.id)
+            return user, str(user_hash)
+    return None
+
+
+def require_authenticated_user(request: Request) -> tuple[User, str]:
+    """Dependency returning the authenticated user or active guest user and workspace hash."""
+    auth_user = get_authenticated_user_opt(request)
+    if auth_user:
+        return auth_user
+
+    # Fallback to validated guest session token (raises 400 if missing/invalid, 401 if unregistered)
     raw = request.headers.get("X-Session-ID") or request.cookies.get("documind_session")
     clean_token = validate_session_id_format(raw)
-    if not mgr:
-        return clean_token
-    session_hash = mgr.validate_token(clean_token)
-    return session_hash
+    mgr: SessionManager | None = getattr(request.app.state, "session_manager", None)
+    if mgr:
+        session_hash = mgr.validate_token(clean_token)
+        pseudo_user = User(id="guest_" + session_hash[:8], email="guest@example.com")
+        return pseudo_user, session_hash
+
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Authentication required. Please sign in or initialize a guest session.",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
+
+def require_session(request: Request) -> str:
+    """Dependency returning the validated workspace hash. Enforces authentication by default."""
+    _, user_hash = require_authenticated_user(request)
+    return user_hash
 
 
 def check_demo_rate_limit(request: Request) -> None:
@@ -196,7 +230,6 @@ def check_demo_rate_limit(request: Request) -> None:
                 detail=f"Too many requests. Retry in {retry_after} s.",
                 headers={"Retry-After": str(retry_after)},
             )
-
 
 
 def _get_request_id(request: Request) -> str:
@@ -315,9 +348,7 @@ def register_exception_handlers(app: FastAPI) -> None:
                 request.url.path.startswith("/v1") or request.url.path.startswith("/api")
             ):
                 static_404 = (
-                    Path(__file__).resolve().parent.parent.parent
-                    / "Documind-frontend"
-                    / "404.html"
+                    Path(__file__).resolve().parent.parent.parent / "Documind-frontend" / "404.html"
                 )
                 if static_404.is_file():
                     return HTMLResponse(
@@ -461,7 +492,8 @@ def create_app(
 
         if getattr(app_instance.state, "auth_manager", None) is None:
             app_instance.state.auth_manager = AuthManager(
-                db_path=app_settings.home / "auth.db"
+                db_path=app_settings.home / "auth.db",
+                database_url=app_settings.database_url,
             )
 
         yield
@@ -488,7 +520,10 @@ def create_app(
         shared_llm=active_engine.llm,
         settings=app_settings,
     )
-    app.state.auth_manager = AuthManager(db_path=Path(app_settings.home) / "auth.db")
+    app.state.auth_manager = AuthManager(
+        db_path=Path(app_settings.home) / "auth.db",
+        database_url=app_settings.database_url,
+    )
     app.state.limiter = limiter or TokenBucketLimiter(rate_per_min=app_settings.rate_limit_per_min)
     app.state.multi_limiter = MultiActionRateLimiter()
     app.state.spend_ledger = SpendLedger(
@@ -641,6 +676,8 @@ def create_app(
         settings: Settings,
         req_id: str,
         write_lock: threading.Lock,
+        user: User | None = None,
+        auth_mgr: AuthManager | None = None,
     ) -> JSONResponse:
         # 1. Sanitize filename
         filename = file.filename or "upload.txt"
@@ -729,6 +766,13 @@ def create_app(
         existing_sha = engine.doc_sha(safe_name)
         if existing_sha is not None:
             if existing_sha == file_sha:
+                if auth_mgr and user and not user.id.startswith("guest_"):
+                    auth_mgr.record_document_owner(
+                        user.id,
+                        safe_name,
+                        chunk_count=engine.chunk_count(safe_name),
+                        content_hash=file_sha,
+                    )
                 return JSONResponse(
                     status_code=status.HTTP_200_OK,
                     content={
@@ -783,6 +827,13 @@ def create_app(
                 extracted_text = final_path.read_text(encoding="utf-8")
 
             num_chunks = engine.index_text(extracted_text, safe_name, file_sha)
+            if auth_mgr and user and not user.id.startswith("guest_"):
+                auth_mgr.record_document_owner(
+                    user.id,
+                    safe_name,
+                    chunk_count=num_chunks,
+                    content_hash=file_sha,
+                )
 
         return JSONResponse(
             status_code=status.HTTP_201_CREATED,
@@ -997,8 +1048,10 @@ def create_app(
         request: Request,
         file: UploadFile = File(...),  # noqa: B008
         replace: bool = Query(default=False),  # noqa: B008
-        session_id: str = Depends(require_session),
+        auth_info: tuple[User, str] = Depends(require_authenticated_user),
     ) -> JSONResponse:
+        user, session_id = auth_info
+        auth_mgr = getattr(request.app.state, "auth_manager", None)
         ip = client_ip(request)
         ip_h = hash_ip(ip)
         multi_limiter: MultiActionRateLimiter = getattr(
@@ -1062,6 +1115,8 @@ def create_app(
             settings=session_engine.settings,
             req_id=req_id,
             write_lock=write_lock,
+            user=user,
+            auth_mgr=auth_mgr,
         )
 
     @demo_router.get("/documents/{source:path}/chunks")
@@ -1119,8 +1174,9 @@ def create_app(
     def demo_delete_document(
         source: str,
         request: Request,
-        session_id: str = Depends(require_session),
+        auth_info: tuple[User, str] = Depends(require_authenticated_user),
     ) -> Response:
+        user, session_id = auth_info
         mgr: SessionManager = request.app.state.session_manager
         session_engine, write_lock = mgr.get_engine(session_id)
         req_id = _get_request_id(request)
@@ -1141,6 +1197,10 @@ def create_app(
             for f in uploads_dir.glob(f"*_{source}"):
                 with contextlib.suppress(OSError):
                     f.unlink(missing_ok=True)
+
+        auth_mgr = getattr(request.app.state, "auth_manager", None)
+        if auth_mgr and user and not user.id.startswith("guest_"):
+            auth_mgr.delete_document_record(user.id, source)
 
         return Response(
             status_code=status.HTTP_204_NO_CONTENT,
@@ -1300,11 +1360,7 @@ def create_app(
     ) -> JSONResponse:
         chat_mgr: ChatManager = request.app.state.chat_manager
         conv = chat_mgr.get_conversation(conversation_id)
-        conv_hash = (
-            normalize_session_identifier(str(conv.get("session_hash", "")))
-            if conv
-            else ""
-        )
+        conv_hash = normalize_session_identifier(str(conv.get("session_hash", ""))) if conv else ""
         if not conv or conv_hash != normalize_session_identifier(session_id):
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -1441,10 +1497,12 @@ def create_app(
             import json as json_lib
 
             if session_engine.store.count() == 0:
-                err_data = json_lib.dumps({
-                    "code": "index_empty",
-                    "message": "No documents uploaded yet in this demo session.",
-                })
+                err_data = json_lib.dumps(
+                    {
+                        "code": "index_empty",
+                        "message": "No documents uploaded yet in this demo session.",
+                    }
+                )
                 yield f"event: error\ndata: {err_data}\n\n"
                 return
 
@@ -1455,13 +1513,15 @@ def create_app(
             condensed_q = condense_query(body.question, history, llm=session_engine.llm)
 
             # 1. Event: meta
-            meta_data = json_lib.dumps({
-                "conversation_id": conv_id,
-                "query": body.question,
-                "condensed_query": condensed_q,
-                "tau": session_engine.settings.min_score,
-                "request_id": req_id,
-            })
+            meta_data = json_lib.dumps(
+                {
+                    "conversation_id": conv_id,
+                    "query": body.question,
+                    "condensed_query": condensed_q,
+                    "tau": session_engine.settings.min_score,
+                    "request_id": req_id,
+                }
+            )
             yield f"event: meta\ndata: {meta_data}\n\n"
 
             # Dense retrieval
@@ -1469,6 +1529,24 @@ def create_app(
             q_vec = session_engine.embedder.embed_query(condensed_q)
             retrieved = session_engine.store.query(q_vec, effective_k)
             all_chunks = expand_neighbors(retrieved, session_engine.store, max_top_to_expand=2)
+
+            # If summary or overview query, prepend document lead chunks for true document context
+            q_lower = condensed_q.lower()
+            is_overview = any(w in q_lower for w in ("summar", "what is inside", "overview", "what is this", "tell me about", "about the doc", "contents"))
+            if is_overview and session_engine.documents():
+                first_doc = session_engine.documents()[0]
+                doc_chunks = session_engine.store.chunks_for(first_doc)
+                if doc_chunks:
+                    existing_chunk_ids = {c.chunk.id for c in all_chunks}
+                    from documind.core.types import RetrievedChunk
+                    lead_rcs = [
+                        RetrievedChunk(chunk=c, score=0.9, rank=0)
+                        for c in doc_chunks[:2]
+                        if c.id not in existing_chunk_ids
+                    ]
+                    all_chunks = lead_rcs + all_chunks
+                    if not retrieved and lead_rcs:
+                        retrieved = lead_rcs
 
             candidates = [
                 {
@@ -1492,11 +1570,13 @@ def create_app(
                     "I couldn't find any sufficiently relevant passages in your documents."
                 )
                 yield f"event: token\ndata: {json_lib.dumps({'delta': decline_msg})}\n\n"
-                done_data = json_lib.dumps({
-                    "outcome": "abstained",
-                    "reason": "low_score",
-                    "latency_ms": 1,
-                })
+                done_data = json_lib.dumps(
+                    {
+                        "outcome": "abstained",
+                        "reason": "low_score",
+                        "latency_ms": 1,
+                    }
+                )
                 yield f"event: done\ndata: {done_data}\n\n"
                 chat_mgr.add_message(conv_id, "user", body.question)
                 chat_mgr.add_message(conv_id, "assistant", decline_msg)
@@ -1514,11 +1594,13 @@ def create_app(
                     "Showing retrieved candidate passages only."
                 )
                 yield f"event: token\ndata: {json_lib.dumps({'delta': cap_msg})}\n\n"
-                done_data = json_lib.dumps({
-                    "outcome": "retrieval_only",
-                    "reason": reason,
-                    "latency_ms": 1,
-                })
+                done_data = json_lib.dumps(
+                    {
+                        "outcome": "retrieval_only",
+                        "reason": reason,
+                        "latency_ms": 1,
+                    }
+                )
                 yield f"event: done\ndata: {done_data}\n\n"
                 return
 
@@ -1554,7 +1636,7 @@ def create_app(
                         "without an LLM.\n\n"
                         "To enable generation, configure your API key in `.env`:\n"
                         "• Anthropic: set `ANTHROPIC_API_KEY=sk-ant-...`\n"
-                        "• Gemini: set `GEMINI_API_KEY=AIzaSy...`\n"
+                        "• Gemini: set `GEMINI_API_KEY=AQ...` or `DOCUMIND_LLM_PROVIDER=gemini`\n"
                         "• OpenAI: `DOCUMIND_LLM_PROVIDER=openai_compat` and "
                         "`DOCUMIND_OPENAI_API_KEY=...`\n"
                         "• Ollama (local): set `DOCUMIND_LLM_PROVIDER=ollama`"
@@ -1563,7 +1645,7 @@ def create_app(
                     latency = int((time.perf_counter() - t0) * 1000)
                     cit_dicts = [
                         {
-                            "marker": f"[S{i+1}]",
+                            "marker": f"[S{i + 1}]",
                             "source": c.chunk.source,
                             "chunk_index": c.chunk.chunk_index,
                             "snippet": c.chunk.text[:200],
@@ -1711,9 +1793,7 @@ def create_app(
         return JSONResponse(status_code=status.HTTP_200_OK, content=session_engine.get_events())
 
     @demo_router.get("/meta")
-    def demo_get_meta(
-        request: Request, session_id: str = Depends(require_session)
-    ) -> JSONResponse:
+    def demo_get_meta(request: Request, session_id: str = Depends(require_session)) -> JSONResponse:
         mgr: SessionManager = request.app.state.session_manager
         session_engine, _ = mgr.get_engine(session_id)
         ip = client_ip(request)
@@ -1753,6 +1833,55 @@ def create_app(
                     "max_session_mb": 50,
                     "global_daily_cap_usd": spend_ledger.global_daily_cap_usd,
                     "ip_daily_cap_usd": spend_ledger.ip_daily_cap_usd,
+                },
+            },
+        )
+
+    @demo_router.get("/evals")
+    def demo_get_evals() -> JSONResponse:
+        return JSONResponse(
+            status_code=status.HTTP_200_OK,
+            content={
+                "retrieval_benchmark_200": {
+                    "sample_size": 200,
+                    "recall_at_1": 0.575,
+                    "recall_at_3": 0.795,
+                    "recall_at_5": 0.840,
+                    "recall_at_5_ci": [0.783, 0.884],
+                    "recall_at_10": 0.930,
+                    "mrr_at_10": 0.692,
+                },
+                "e2e_evaluation_test_33": {
+                    "sample_size": 33,
+                    "answerable_count": 22,
+                    "recall_at_5": 1.000,
+                    "recall_at_5_ci": [0.851, 1.000],
+                    "mrr_at_10": 0.947,
+                    "faithfulness": 1.000,
+                    "faithfulness_ci": [0.851, 1.000],
+                    "correctness": 1.000,
+                    "correctness_ci": [0.851, 1.000],
+                    "false_abstain_rate": 0.000,
+                    "false_abstain_ci": [0.000, 0.149],
+                    "off_topic_abstain_rate": 1.000,
+                    "off_topic_abstain_ci": [0.566, 1.000],
+                    "squad_impossible_abstain_rate": 0.000,
+                    "squad_impossible_abstain_ci": [0.000, 0.390],
+                    "citation_precision": 0.909,
+                    "citation_precision_ci": [0.722, 0.975],
+                    "latency_p95_ms": 5.0,
+                    "cost_per_query_usd": 0.00214,
+                },
+                "dev_split_27": {
+                    "sample_size": 27,
+                    "recall_at_5": 0.944,
+                    "recall_at_5_ci": [0.742, 0.990],
+                    "mrr_at_10": 0.889,
+                    "faithfulness": 1.000,
+                    "correctness": 1.000,
+                    "false_abstain_rate": 0.056,
+                    "off_topic_abstain_rate": 0.800,
+                    "squad_impossible_abstain_rate": 0.250,
                 },
             },
         )
@@ -1827,6 +1956,243 @@ def create_app(
         clear_auth_cookie(response)
         return {"status": "ok"}
 
+    async def exchange_google_code_for_user(
+        request: Request,
+        code: str,
+        redirect_uri: str,
+        client_id: str,
+        client_secret: str,
+    ) -> dict[str, Any]:
+        mock_oauth = getattr(request.app.state, "mock_google_oauth", None)
+        if mock_oauth:
+            mock_res: dict[str, Any] = mock_oauth(code=code, redirect_uri=redirect_uri)
+            return mock_res
+
+        import urllib.parse
+        import urllib.request
+
+        google_token_endpoint = "https://oauth2.googleapis.com/token"  # noqa: S105
+        token_data = urllib.parse.urlencode(
+            {
+                "code": code,
+                "client_id": client_id,
+                "client_secret": client_secret,
+                "redirect_uri": redirect_uri,
+                "grant_type": "authorization_code",
+            }
+        ).encode("utf-8")
+
+        token_req = urllib.request.Request(
+            google_token_endpoint,
+            data=token_data,
+            headers={
+                "Content-Type": "application/x-www-form-urlencoded",
+                "Accept": "application/json",
+            },
+        )
+        with urllib.request.urlopen(token_req, timeout=10.0) as resp:  # noqa: S310
+            token_payload = json.loads(resp.read().decode("utf-8"))
+
+        access_token = token_payload.get("access_token")
+        if not access_token:
+            raise AuthError("Failed to obtain access token from Google.", status_code=400)
+
+        userinfo_url = "https://www.googleapis.com/oauth2/v3/userinfo"
+        userinfo_req = urllib.request.Request(
+            userinfo_url,
+            headers={"Authorization": f"Bearer {access_token}", "Accept": "application/json"},
+        )
+        with urllib.request.urlopen(userinfo_req, timeout=10.0) as resp:  # noqa: S310
+            userinfo_payload = json.loads(resp.read().decode("utf-8"))
+
+        sub = userinfo_payload.get("sub")
+        email = userinfo_payload.get("email")
+        if not sub or not email:
+            raise AuthError("Google profile missing verified subject ID or email.", status_code=400)
+
+        return {
+            "sub": str(sub),
+            "email": str(email),
+            "name": userinfo_payload.get("name"),
+            "picture": userinfo_payload.get("picture"),
+            "email_verified": userinfo_payload.get("email_verified", True),
+        }
+
+    @auth_router.get("/google/authorize")
+    async def auth_google_authorize(
+        request: Request,
+        redirect: str = Query(default="/app/console/code.html"),
+    ) -> Response:
+        import urllib.parse
+
+        settings: Settings = request.app.state.settings
+        if not settings.google_client_id or not settings.google_client_secret:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail=(
+                    "Google OAuth is not configured. Please set "
+                    "DOCUMIND_GOOGLE_CLIENT_ID and DOCUMIND_GOOGLE_CLIENT_SECRET "
+                    "in server environment."
+                ),
+            )
+
+        state_nonce = secrets.token_urlsafe(32)
+        base_redirect = settings.google_redirect_uri or (
+            str(request.base_url).rstrip("/") + "/api/auth/google/callback"
+        )
+        state_cookie_val = f"{state_nonce}:{redirect}"
+
+        params = {
+            "client_id": settings.google_client_id,
+            "redirect_uri": base_redirect,
+            "response_type": "code",
+            "scope": "openid email profile",
+            "state": state_nonce,
+            "access_type": "online",
+            "prompt": "select_account",
+        }
+        google_url = "https://accounts.google.com/o/oauth2/v2/auth?" + urllib.parse.urlencode(
+            params
+        )
+
+        if "application/json" in request.headers.get("accept", ""):
+            resp: Response = JSONResponse({"url": google_url, "state": state_nonce})
+        else:
+            resp = RedirectResponse(url=google_url, status_code=status.HTTP_302_FOUND)
+
+        is_https = (
+            request.url.scheme == "https" or request.headers.get("x-forwarded-proto") == "https"
+        )
+        resp.set_cookie(
+            key="documind_oauth_state",
+            value=state_cookie_val,
+            max_age=600,
+            httponly=True,
+            samesite="lax",
+            secure=is_https,
+            path="/",
+        )
+        return resp
+
+    @auth_router.get("/google/callback")
+    async def auth_google_callback(
+        request: Request,
+        code: str | None = Query(default=None),
+        state: str | None = Query(default=None),
+        error: str | None = Query(default=None),
+    ) -> Response:
+        import urllib.parse
+
+        settings: Settings = request.app.state.settings
+        auth_mgr: AuthManager = request.app.state.auth_manager
+
+        state_cookie = request.cookies.get("documind_oauth_state")
+        cookie_nonce = ""
+        target_redirect = "/app/console/code.html"
+        if state_cookie and ":" in state_cookie:
+            parts = state_cookie.split(":", 1)
+            cookie_nonce = parts[0]
+            target_redirect = parts[1] or target_redirect
+
+        if error:
+            logger.warning("Google OAuth error in callback: %s", error)
+            redirect_url = (
+                f"/app/auth.html?error={urllib.parse.quote(error)}"
+                f"&redirect={urllib.parse.quote(target_redirect)}"
+            )
+            resp = RedirectResponse(url=redirect_url, status_code=status.HTTP_302_FOUND)
+            resp.delete_cookie("documind_oauth_state", path="/")
+            return resp
+
+        if not state or not code or not cookie_nonce or state != cookie_nonce:
+            logger.warning("Google OAuth callback rejected: state mismatch or missing parameters.")
+            redirect_url = (
+                f"/app/auth.html?error=invalid_state&redirect={urllib.parse.quote(target_redirect)}"
+            )
+            resp = RedirectResponse(url=redirect_url, status_code=status.HTTP_302_FOUND)
+            resp.delete_cookie("documind_oauth_state", path="/")
+            return resp
+
+        base_redirect = settings.google_redirect_uri or (
+            str(request.base_url).rstrip("/") + "/api/auth/google/callback"
+        )
+
+        try:
+            user_info = await exchange_google_code_for_user(
+                request=request,
+                code=code,
+                redirect_uri=base_redirect,
+                client_id=settings.google_client_id,
+                client_secret=settings.google_client_secret,
+            )
+            user, session_token, _ = auth_mgr.authenticate_or_register_google_identity(
+                sub=user_info["sub"],
+                email=user_info["email"],
+                display_name=user_info.get("name"),
+                avatar_url=user_info.get("picture"),
+                ip_hash=hash_ip(client_ip(request)),
+            )
+        except AuthError as e:
+            logger.warning("Google OAuth verification exception: %s", e.message)
+            err_code = "account_exists_link_required" if e.status_code == 409 else "auth_failed"
+            user_email = user_info.get("email", "") if "user_info" in locals() else ""
+            redirect_url = (
+                f"/app/auth.html?error={err_code}&message={urllib.parse.quote(e.message)}"
+                f"&email={urllib.parse.quote(user_email)}&redirect={urllib.parse.quote(target_redirect)}"
+            )
+            resp = RedirectResponse(url=redirect_url, status_code=status.HTTP_302_FOUND)
+            resp.delete_cookie("documind_oauth_state", path="/")
+            return resp
+        except Exception as e:
+            logger.error("Failed to complete Google OAuth exchange: %s", e)
+            redirect_url = (
+                f"/app/auth.html?error=server_error&redirect={urllib.parse.quote(target_redirect)}"
+            )
+            resp = RedirectResponse(url=redirect_url, status_code=status.HTTP_302_FOUND)
+            resp.delete_cookie("documind_oauth_state", path="/")
+            return resp
+
+        resp = RedirectResponse(url=target_redirect, status_code=status.HTTP_302_FOUND)
+        set_auth_cookie(resp, session_token, request)
+        resp.delete_cookie("documind_oauth_state", path="/")
+        return resp
+
+    @auth_router.post("/password-reset/request", status_code=status.HTTP_200_OK)
+    async def auth_password_reset_request(
+        body: PasswordResetRequestPayload,
+        request: Request,
+    ) -> dict[str, Any]:
+        check_demo_rate_limit(request)
+        auth_mgr: AuthManager = request.app.state.auth_manager
+        raw_token = auth_mgr.request_password_reset(body.email)
+        out_msg = {
+            "status": "ok",
+            "message": (
+                "If this email is registered, password recovery instructions "
+                "have been prepared."
+            ),
+        }
+        if getattr(request.app.state.settings, "allow_debug", False) and raw_token:
+            out_msg["debug_token"] = raw_token
+        return out_msg
+
+    @auth_router.post("/password-reset/confirm", status_code=status.HTTP_200_OK)
+    async def auth_password_reset_confirm(
+        body: PasswordResetConfirmPayload,
+        request: Request,
+    ) -> dict[str, Any]:
+        check_demo_rate_limit(request)
+        auth_mgr: AuthManager = request.app.state.auth_manager
+        try:
+            auth_mgr.confirm_password_reset(body.token, body.new_password)
+        except AuthError as e:
+            raise HTTPException(status_code=e.status_code, detail=e.message) from e
+
+        return {
+            "status": "ok",
+            "message": "Password successfully reset. You may now log in with your new password.",
+        }
+
     @auth_router.get("/me", status_code=status.HTTP_200_OK)
     async def auth_me(
         request: Request,
@@ -1860,6 +2226,23 @@ def create_app(
         from starlette.staticfiles import StaticFiles
 
         app.mount("/app", StaticFiles(directory=str(frontend_dir), html=True), name="frontend")
+
+        from starlette.responses import FileResponse
+
+        @app.api_route("/favicon.ico", methods=["GET", "HEAD"], include_in_schema=False)
+        def serve_favicon_ico() -> FileResponse:
+            ico_file = frontend_dir / "favicon.ico"
+            if ico_file.exists():
+                return FileResponse(ico_file, media_type="image/x-icon")
+            return FileResponse(frontend_dir / "favicon.svg", media_type="image/svg+xml")
+
+        @app.api_route("/favicon.png", methods=["GET", "HEAD"], include_in_schema=False)
+        def serve_favicon_png() -> FileResponse:
+            return FileResponse(frontend_dir / "favicon.png", media_type="image/png")
+
+        @app.api_route("/favicon.svg", methods=["GET", "HEAD"], include_in_schema=False)
+        def serve_favicon_svg() -> FileResponse:
+            return FileResponse(frontend_dir / "favicon.svg", media_type="image/svg+xml")
 
         @app.get("/", include_in_schema=False)
         def root_redirect() -> RedirectResponse:
