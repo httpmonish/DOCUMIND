@@ -103,4 +103,3 @@ class MultiActionRateLimiter:
             retry_after = math.ceil(deficit / fill_rate) if fill_rate > 0 else 60
             self._buckets[key] = (tokens, now)
             return False, max(1, retry_after)
-

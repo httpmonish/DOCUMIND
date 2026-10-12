@@ -85,6 +85,7 @@ def escape_chunk_delimiters(text: str) -> str:
     """Escape prompt delimiter tags inside untrusted user document text.
     Prevents prompt-injection attacks from breaking out of document wrappers.
     """
+
     def _sanitize(match: re.Match[str]) -> str:
         tag = match.group(0)
         return tag.replace("<", "&lt;").replace(">", "&gt;")

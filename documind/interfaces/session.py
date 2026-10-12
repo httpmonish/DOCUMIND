@@ -372,6 +372,9 @@ class SessionManager:
                 rate_limit_per_min=self.settings.rate_limit_per_min,
                 max_upload_mb=self.settings.max_upload_mb,
                 allow_debug=self.settings.allow_debug,
+                llm_provider=self.settings.llm_provider,
+                openai_base_url=self.settings.openai_base_url,
+                openai_api_key=self.settings.openai_api_key,
             )
 
             engine = DocuMind(
