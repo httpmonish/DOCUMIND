@@ -1,5 +1,14 @@
-<!DOCTYPE html><html class="dark" lang="en"><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0" name="viewport"><meta content="web_standard" name="shell-type"><link href="https://fonts.googleapis.com" rel="preconnect"><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = {
+<!DOCTYPE html><html class="dark" lang="en"><head><meta charset="utf-8"><title>DocuMind Console — Glass Box RAG</title><meta content="width=device-width, initial-scale=1.0" name="viewport"><meta content="web_standard" name="shell-type"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><link rel="icon" type="image/png" sizes="32x32" href="/favicon.png"><link rel="shortcut icon" href="/favicon.ico"><link rel="alternate icon" href="/favicon.ico"><link href="https://fonts.googleapis.com" rel="preconnect"><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"><link rel="stylesheet" href="../chat-drawer.css"><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = {
     darkMode: "class",
     theme: {
       extend: {
@@ -258,17 +267,17 @@ Try abstention demo →
 </div>
 <!-- Interactive SVG Pipeline Diagram -->
 <div class="min-w-[700px] w-full pt-space-xs pb-space-sm select-none">
-<svg class="w-full h-auto overflow-visible" viewBox="0 0 780 140">
+<svg class="w-full h-auto overflow-visible" viewBox="0 0 780 150">
 <!-- Continuous Connection Line -->
 <path d="M 40 40 L 740 40" fill="none" stroke="#353534" stroke-width="2"></path>
 <!-- Active Sub-segment highlight -->
 <path id="pipeline-active-line" d="M 40 40 L 40 40" fill="none" stroke="#ff571d" stroke-linecap="round" stroke-width="2"></path>
 <!-- Abstain Fallback Dashed Branch -->
 <g id="pipeline-abstain-group" class="opacity-0 transition-opacity duration-300">
-<path d="M 370 40 L 370 100 L 480 100" fill="none" opacity="0.8" stroke="#ff571d" stroke-dasharray="4 3" stroke-width="1.5"></path>
-<circle cx="480" cy="100" fill="#ff571d" r="3"></circle>
-<text fill="#ffb59f" font-family="JetBrains Mono" font-size="10" font-weight="600" letter-spacing="0.04em" x="490" y="104">ABSTAIN · LLM SKIPPED</text>
-<text fill="#e6beb2" font-family="JetBrains Mono" font-size="9" x="490" y="116">Threshold: τ &lt; 0.35</text>
+<path d="M 370 40 L 370 110 L 480 110" fill="none" opacity="0.8" stroke="#ff571d" stroke-dasharray="4 3" stroke-width="1.5"></path>
+<circle cx="480" cy="110" fill="#ff571d" r="3"></circle>
+<text fill="#ffb59f" font-family="JetBrains Mono" font-size="10" font-weight="600" letter-spacing="0.04em" x="490" y="114">ABSTAIN · LLM SKIPPED</text>
+<text fill="#e6beb2" font-family="JetBrains Mono" font-size="9" x="490" y="127">Threshold: τ &lt; 0.35</text>
 </g>
 <!-- Node 1: Question -->
 <g id="node-1-group" class="cursor-pointer" title="Step 1: Input Query Processing">
@@ -837,9 +846,16 @@ Listening for pipeline execution events…
     function animatePipelineDone(res, totalMs) {
       if (traceTotalMs) traceTotalMs.textContent = `${Math.round(totalMs)} ms`;
       const isAbstain = res.outcome === "abstain" || res.abstained === true;
+      const isUnconfigured = res.outcome === "unconfigured_model";
 
       if (isAbstain) {
         if (pipelineAbstainGroup) pipelineAbstainGroup.classList.remove("opacity-0");
+      } else if (isUnconfigured) {
+        if (node6Circle) node6Circle.setAttribute("stroke", "#f59e0b");
+        if (node6Ms) node6Ms.textContent = "unconfigured";
+        if (pipelineActiveLine) pipelineActiveLine.setAttribute("d", "M 40 40 L 730 40");
+        if (node7Circle) node7Circle.setAttribute("stroke", "#4edea3");
+        if (node7Ms) node7Ms.textContent = "retrieved";
       } else {
         if (node6Circle) node6Circle.setAttribute("stroke", "#4edea3");
         if (node6Ms) node6Ms.textContent = `${Math.round(res.llm_ms || res.latency_ms || totalMs)} ms`;
@@ -1198,10 +1214,5 @@ Listening for pipeline execution events…
     }
   })();
 </script>
-</body></html>
-#039;" }[m];
-      });
-    }
-  })();
-</script>
+<script src="../chat-drawer.js"></script>
 </body></html>

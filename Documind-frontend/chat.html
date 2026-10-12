@@ -4,6 +4,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>DocuMind — Document Intelligence Chat</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png">
+  <link rel="shortcut icon" href="/favicon.ico">
+  <link rel="alternate icon" href="/favicon.ico">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -608,6 +612,15 @@
     #file-upload-input {
       display: none;
     }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, ::before, ::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+      }
+    }
   </style>
 </head>
 <body>
@@ -812,7 +825,7 @@
           chip.className = "doc-chip";
           chip.innerHTML = `
             <span class="doc-chip-name" title="${escapeHtml(doc.source)}">${escapeHtml(doc.source)}</span>
-            <span class="doc-chip-chunks">${doc.chunk_count || 0} chunks</span>
+            <span class="doc-chip-chunks">${doc.chunks ?? doc.chunk_count ?? 0} chunks</span>
             <button class="doc-chip-delete" title="Delete document" data-source="${escapeHtml(doc.source)}">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -1013,6 +1026,19 @@
       }
 
       function renderAssistantContent(container, rawText, citations, showCursor) {
+        // Check for unconfigured model notice
+        if (rawText.includes("No language model configured")) {
+          container.innerHTML = `
+            <div style="background:#fefce8; border:1px solid #fef08a; border-radius:12px; padding:14px; color:#854d0e; font-size:13px; line-height:1.6;">
+              <div style="font-weight:600; margin-bottom:6px; display:flex; align-items:center; gap:6px;">
+                <span>⚠️ Language Model Unconfigured</span>
+              </div>
+              <div>${escapeHtml(rawText).replace(/\n/g, "<br>")}</div>
+            </div>
+          `;
+          return;
+        }
+
         // Check for abstention notice
         if (rawText.includes("I couldn't find any sufficiently relevant passages") || rawText.includes("No documents uploaded yet")) {
           container.innerHTML = `

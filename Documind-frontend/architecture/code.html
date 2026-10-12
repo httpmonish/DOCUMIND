@@ -1,5 +1,14 @@
-<!DOCTYPE html><html class="dark" lang="en"><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0" name="viewport"><meta content="web_standard" name="shell-type"><link href="https://fonts.googleapis.com" rel="preconnect"><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = {
+<!DOCTYPE html><html class="dark" lang="en"><head><meta charset="utf-8"><title>DocuMind Architecture — System Pipeline</title><meta content="width=device-width, initial-scale=1.0" name="viewport"><meta content="web_standard" name="shell-type"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><link rel="icon" type="image/png" sizes="32x32" href="/favicon.png"><link rel="shortcut icon" href="/favicon.ico"><link rel="alternate icon" href="/favicon.ico"><link href="https://fonts.googleapis.com" rel="preconnect"><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"><link rel="stylesheet" href="../chat-drawer.css"><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = {
     darkMode: "class",
     theme: {
       extend: {
@@ -183,15 +192,15 @@
         GATEWAY: DETERMINISTIC PIPELINE ACTIVE
       </span>
 <span class="text-surface-variant">/</span>
-<span class="text-on-surface-variant font-code-sm">EMBEDDINGS: all-MiniLM-L6-v2 (384-d)</span>
+<span class="text-on-surface-variant font-code-sm">EMBEDDINGS: BAAI/bge-small-en-v1.5 (384-d)</span>
 <span class="text-surface-variant">/</span>
 <span class="text-on-surface-variant font-code-sm">TAU CONFIDENCE: τ = 0.35</span>
 <span class="text-surface-variant">/</span>
-<span class="text-on-surface-variant font-code-sm">STORE: CHROMA LOCAL ENGINE</span>
+<span class="text-on-surface-variant font-code-sm">STORE: CHROMA LOCAL VECTOR STORE</span>
 </div>
 <div class="flex items-center gap-space-md shrink-0 text-on-surface-variant">
-<span class="font-code-sm uppercase tracking-widest text-[10px]">VERIFIED RECEIPT SHA: 9f8a32d..c4</span>
-<span class="text-tertiary text-[10px]">● ZERO NETWORK PORTS</span>
+<span id="ticker-session-status" class="font-code-sm uppercase tracking-widest text-[10px]">ISOLATED TENANT SESSIONS</span>
+<span class="text-tertiary text-[10px]">● DETERMINISTIC GATE</span>
 </div>
 </div>
 <!-- MAIN CANVAS CONTAINER -->
@@ -264,7 +273,7 @@
 <line stroke="#353534" stroke-dasharray="2 2" stroke-width="0.8" x1="120" x2="120" y1="130" y2="350"></line>
 <line stroke="#353534" stroke-dasharray="2 2" stroke-width="0.8" x1="420" x2="420" y1="130" y2="350"></line>
 <!-- LAYER 1: Top Document Sheet -->
-<g transform="translate(0, -10)">
+<g class="cursor-pointer transition-all hover:opacity-80" data-layer="doc" data-tooltip="Document Layer: Uploaded PDF sanitized, validated, and converted to byte stream" transform="translate(0, -10)">
 <!-- Top Face -->
 <polygon fill="#1c1b1b" points="270,45 420,105 270,165 120,105" stroke="#e5e2e1" stroke-width="1.2"></polygon>
 <!-- Thickness / Droop -->
@@ -279,7 +288,7 @@
 <text fill="#e5e2e1" font-family="JetBrains Mono" font-size="10" letter-spacing="0.08em" x="480" y="88">DOCUMENT LAYER</text>
 </g>
 <!-- LAYER 2: Chunk Tiles Grid -->
-<g transform="translate(0, 80)">
+<g class="cursor-pointer transition-all hover:opacity-80" data-layer="chunk" data-tooltip="Chunk Layer: Sliding window 200 words with 30-word overlap for contextual continuity" transform="translate(0, 80)">
 <!-- 4 Iso Chunks -->
 <!-- Chunk 0 -->
 <polygon fill="#201f1f" points="200,90 250,110 200,130 150,110" stroke="#e5e2e1" stroke-width="1"></polygon>
@@ -299,7 +308,7 @@
 <text fill="#e5e2e1" font-family="JetBrains Mono" font-size="10" letter-spacing="0.08em" x="15" y="98">200-W CHUNKS</text>
 </g>
 <!-- LAYER 3: 384-d Vector Layer (Orange Highlighted) -->
-<g transform="translate(0, 180)">
+<g class="cursor-pointer transition-all hover:opacity-80" data-layer="vector" data-tooltip="Embedding Layer: BAAI/bge-small-en-v1.5 generating 384-dimensional dense semantic vectors" transform="translate(0, 180)">
 <!-- Iso Plate base -->
 <polygon fill="#131313" points="270,55 390,105 270,155 150,105" stroke="#5c4038" stroke-dasharray="2 2" stroke-width="0.8"></polygon>
 <!-- Vertical Vector Spikes (Highlighted strictly in Rust Orange #F05A24 / primary-container) -->
@@ -318,7 +327,7 @@
 <text fill="#ff571d" font-family="JetBrains Mono" font-size="10" font-weight="600" letter-spacing="0.08em" x="480" y="38">384-D VECTORS</text>
 </g>
 <!-- LAYER 4: Chroma Vector Store (Cylinder at Bottom) -->
-<g transform="translate(0, 275)">
+<g class="cursor-pointer transition-all hover:opacity-80" data-layer="store" data-tooltip="Vector Store Layer: Chroma local persistent vector store with isolated session partitions" transform="translate(0, 275)">
 <!-- Top Ellipse -->
 <ellipse cx="270" cy="65" fill="#201f1f" rx="110" ry="32" stroke="#e5e2e1" stroke-width="1"></ellipse>
 <!-- Body -->
@@ -1084,42 +1093,42 @@
               CORE ENGINE BOUNDARY
             </div>
 <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-2">
-<div class="p-3 bg-surface-container-low border border-surface-variant rounded">
+<div class="p-3 bg-surface-container-low border border-surface-variant rounded cursor-pointer transition-all hover:border-primary-container" data-tooltip="PDF Loader: Byte-level sanitization and PDF extraction using pypdf/pdfplumber with deterministic validation">
 <span class="font-label-caps text-on-surface-variant text-[9px]">COMPONENT 01</span>
 <div class="font-code-sm text-[13px] text-on-surface font-semibold">PDF Loader</div>
 <div class="font-code-sm text-[10px] text-on-surface-variant">Byte-level sanitization</div>
 </div>
-<div class="p-3 bg-surface-container-low border border-surface-variant rounded">
+<div class="p-3 bg-surface-container-low border border-surface-variant rounded cursor-pointer transition-all hover:border-primary-container" data-tooltip="Chunker: Token-aware sliding window chunker (200 words with 30-word overlap)">
 <span class="font-label-caps text-on-surface-variant text-[9px]">COMPONENT 02</span>
 <div class="font-code-sm text-[13px] text-on-surface font-semibold">Chunker</div>
 <div class="font-code-sm text-[10px] text-on-surface-variant">200w / 30w overlap</div>
 </div>
-<div class="p-3 bg-surface-container-low border border-surface-variant rounded">
+<div class="p-3 bg-surface-container-low border border-surface-variant rounded cursor-pointer transition-all hover:border-primary-container" data-tooltip="Embedder: Dense semantic embedding model (BAAI/bge-small-en-v1.5, 384 dimensions)">
 <span class="font-label-caps text-on-surface-variant text-[9px]">COMPONENT 03</span>
 <div class="font-code-sm text-[13px] text-on-surface font-semibold">Embedder</div>
 <div class="font-code-sm text-[10px] text-on-surface-variant">MiniLM 384-d tensor</div>
 </div>
-<div class="p-3 bg-surface-container-low border border-surface-variant rounded">
+<div class="p-3 bg-surface-container-low border border-surface-variant rounded cursor-pointer transition-all hover:border-primary-container" data-tooltip="Vector Store: Local Chroma persistent store per workspace session with zero lock contention">
 <span class="font-label-caps text-on-surface-variant text-[9px]">COMPONENT 04</span>
 <div class="font-code-sm text-[13px] text-on-surface font-semibold">Vector Store</div>
 <div class="font-code-sm text-[10px] text-on-surface-variant">Zero-last commit lock</div>
 </div>
-<div class="p-3 bg-surface-container-low border border-surface-variant rounded">
+<div class="p-3 bg-surface-container-low border border-surface-variant rounded cursor-pointer transition-all hover:border-primary-container" data-tooltip="Retriever: Dot-product cosine similarity search retrieving Top-K candidate chunks">
 <span class="font-label-caps text-on-surface-variant text-[9px]">COMPONENT 05</span>
 <div class="font-code-sm text-[13px] text-on-surface font-semibold">Retriever</div>
 <div class="font-code-sm text-[10px] text-on-surface-variant">Dot-product rank</div>
 </div>
-<div class="p-3 bg-surface-container-low border border-surface-variant rounded">
+<div class="p-3 bg-surface-container-low border border-surface-variant rounded cursor-pointer transition-all hover:border-primary-container" data-tooltip="Confidence Gate: Deterministic threshold filter (τ = 0.35) triggering automated abstention when score falls below barrier">
 <span class="font-label-caps text-on-surface-variant text-[9px]">COMPONENT 06</span>
 <div class="font-code-sm text-[13px] text-primary-container font-semibold">Confidence Gate</div>
 <div class="font-code-sm text-[10px] text-primary-container">τ 0.35 cut-off barrier</div>
 </div>
-<div class="p-3 bg-surface-container-low border border-surface-variant rounded">
+<div class="p-3 bg-surface-container-low border border-surface-variant rounded cursor-pointer transition-all hover:border-primary-container" data-tooltip="Prompt Synthesizer: Delimited XML prompt constructor binding retrieved chunks and user question">
 <span class="font-label-caps text-on-surface-variant text-[9px]">COMPONENT 07</span>
 <div class="font-code-sm text-[13px] text-on-surface font-semibold">Prompt Synthesizer</div>
 <div class="font-code-sm text-[10px] text-on-surface-variant">Delimited XML tags</div>
 </div>
-<div class="p-3 bg-surface-container-low border border-surface-variant rounded">
+<div class="p-3 bg-surface-container-low border border-surface-variant rounded cursor-pointer transition-all hover:border-primary-container" data-tooltip="LLM Client & Citations: Multi-provider LLM caller with zero-key retrieval fallback and regex-verified [S1] citation extractor">
 <span class="font-label-caps text-on-surface-variant text-[9px]">COMPONENT 08</span>
 <div class="font-code-sm text-[13px] text-on-surface font-semibold">LLM Client &amp; Citations</div>
 <div class="font-code-sm text-[10px] text-on-surface-variant">Regex verification pass</div>
@@ -1145,10 +1154,41 @@
 <div class="p-4 bg-surface-container border border-surface-variant rounded flex items-center justify-between">
 <div>
 <span class="font-label-caps text-on-surface-variant">EXTERNAL PROVIDER</span>
-<div class="font-headline-sm text-headline-sm text-on-surface">Anthropic Claude Haiku 3.5</div>
+<div id="telemetry-provider-banner" class="font-headline-sm text-headline-sm text-on-surface">Zero-Key / Ollama / OpenAI</div>
 <div class="font-code-sm text-[11px] text-primary-container">Only called if Gate Passes</div>
 </div>
 <span class="material-symbols-outlined text-2xl text-primary-container">api</span>
+</div>
+</div>
+<!-- LIVE TELEMETRY & ENGINE CONFIG READOUT -->
+<div class="p-4 bg-surface-container border border-surface-variant rounded-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+<div class="flex items-center gap-3">
+<span class="w-2.5 h-2.5 rounded-full bg-tertiary animate-pulse shrink-0"></span>
+<div>
+<div class="font-code-sm text-xs text-on-surface font-semibold uppercase tracking-wider flex items-center gap-2">
+<span>RUNTIME HEALTH:</span>
+<span id="telemetry-status" class="text-tertiary">ONLINE</span>
+</div>
+<div class="font-code-sm text-[10px] text-on-surface-variant">Engine Model: <span id="telemetry-model" class="text-on-surface">BAAI/bge-small-en-v1.5</span> · Mode: <span id="telemetry-mode" class="text-tertiary">Retrieval-only</span></div>
+</div>
+</div>
+<div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-[11px] font-code-sm w-full md:w-auto">
+<div class="flex flex-col">
+<span class="text-on-surface-variant text-[9px] uppercase font-semibold">TAU CUTOFF</span>
+<span id="telemetry-tau" class="text-on-surface font-medium">τ = 0.35</span>
+</div>
+<div class="flex flex-col">
+<span class="text-on-surface-variant text-[9px] uppercase font-semibold">CHUNK TOPOLOGY</span>
+<span id="telemetry-chunking" class="text-on-surface font-medium">200w / 30w</span>
+</div>
+<div class="flex flex-col">
+<span class="text-on-surface-variant text-[9px] uppercase font-semibold">EMBED DIMS</span>
+<span id="telemetry-dims" class="text-on-surface font-medium">384-d Dense</span>
+</div>
+<div class="flex flex-col">
+<span class="text-on-surface-variant text-[9px] uppercase font-semibold">CHUNKS TOTAL</span>
+<span id="telemetry-chunks-count" class="text-tertiary font-medium">0</span>
+</div>
 </div>
 </div>
 </div>
@@ -1180,6 +1220,42 @@
 </div>
 </div></main><footer class="w-full bg-surface-container-lowest border-t border-surface-variant"><div class="w-full px-space-xl py-space-xl"><div class="grid grid-cols-2 md:grid-cols-4 gap-space-xl pb-space-xl border-b border-surface-variant"><div class="flex flex-col gap-space-sm"><span class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Architecture</span><a class="font-code-sm text-code-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="architecture" href="#">Overview &amp; Pipeline</a><a class="font-code-sm text-code-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="architecture" href="#">Keyframe Visualizer</a><a class="font-code-sm text-code-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="architecture" href="#">Chunking Topology</a></div><div class="flex flex-col gap-space-sm"><span class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Benchmarks</span><a class="font-code-sm text-code-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="benchmarks" href="#">Retrieval Latency</a><a class="font-code-sm text-code-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="benchmarks" href="#">Token Dissipation</a><a class="font-code-sm text-code-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="benchmarks" href="#">Vector Recall Index</a></div><div class="flex flex-col gap-space-sm"><span class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Reproduce</span><a class="font-code-sm text-code-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="proof" href="#">Trace Receipts</a><a class="font-code-sm text-code-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="proof" href="#">Dataset Artifacts</a><a class="font-code-sm text-code-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="proof" href="#">Verification CLI</a></div><div class="flex flex-col gap-space-sm"><span class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">Compliance</span><a class="font-code-sm text-code-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="compliance" href="#">Cryptographic Audit</a><a class="font-code-sm text-code-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="compliance" href="#">Privacy Enclave</a><a class="font-code-sm text-code-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="compliance" href="#">MIT License Spec</a></div></div><div class="pt-space-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-space-md"><div class="font-code-sm text-code-sm text-on-surface-variant">DocuMind · v1.0.0 · MIT</div><div class="font-code-sm text-code-sm text-on-surface-variant">2025-05-18T09:41:22Z · SHA-256: 7f83b165...8e01 · OPEN SOURCE LICENSE</div></div></div></footer><script src="../api.js"></script>
 <script>
+  // Tooltip handler
+  (function initTooltips() {
+    const tip = document.createElement("div");
+    tip.id = "arch-tooltip";
+    tip.className = "fixed pointer-events-none z-50 px-3 py-1.5 bg-surface-container-highest text-on-surface border border-outline-variant font-code-sm text-[11px] rounded shadow-xl max-w-xs transition-opacity duration-150 opacity-0";
+    document.body.appendChild(tip);
+
+    document.querySelectorAll("[data-tooltip]").forEach(el => {
+      el.addEventListener("mouseenter", (e) => {
+        tip.textContent = el.getAttribute("data-tooltip");
+        tip.style.opacity = "1";
+        positionTip(e);
+      });
+      el.addEventListener("mousemove", (e) => {
+        positionTip(e);
+      });
+      el.addEventListener("mouseleave", () => {
+        tip.style.opacity = "0";
+      });
+    });
+
+    function positionTip(e) {
+      const pad = 12;
+      let x = e.clientX + pad;
+      let y = e.clientY + pad;
+      if (x + tip.offsetWidth > window.innerWidth - pad) {
+        x = e.clientX - tip.offsetWidth - pad;
+      }
+      if (y + tip.offsetHeight > window.innerHeight - pad) {
+        y = e.clientY - tip.offsetHeight - pad;
+      }
+      tip.style.left = `${x}px`;
+      tip.style.top = `${y}px`;
+    }
+  })();
+
   async function loadHomeStats() {
     const chunksEl = document.getElementById("hero-chunks");
     const latencyEl = document.getElementById("hero-latency");
@@ -1187,51 +1263,84 @@
     const tauEl = document.getElementById("hero-tau");
     const bentoCostEl = document.getElementById("bento-cost");
 
-    chunksEl.textContent = "—";
-    latencyEl.textContent = "—";
-    costEl.textContent = "—";
-    tauEl.textContent = "—";
-    if (bentoCostEl) bentoCostEl.textContent = "—";
+    // Telemetry card elements
+    const telemStatus = document.getElementById("telemetry-status");
+    const telemModel = document.getElementById("telemetry-model");
+    const telemMode = document.getElementById("telemetry-mode");
+    const telemTau = document.getElementById("telemetry-tau");
+    const telemChunks = document.getElementById("telemetry-chunks-count");
+    const telemProvider = document.getElementById("telemetry-provider-banner");
 
-    try {
-      const [healthz, events] = await Promise.all([
-        getJSON("/healthz"),
-        getJSON("/v1/events")
-      ]);
-
-      chunksEl.textContent = (healthz.index_chunks || 0).toLocaleString();
-      tauEl.textContent = `τ ${healthz.tau || 0.35}`;
-
-      if (events && events.length > 0) {
-        const askEvents = events.filter(e => e.stage === "ask");
-        if (askEvents.length > 0) {
-          const last10 = askEvents.slice(-10);
-          const avgLat = last10.reduce((sum, e) => sum + (e.total_ms || e.duration_ms || 0), 0) / last10.length;
-          const avgCost = last10.reduce((sum, e) => sum + (e.cost_usd || 0), 0) / last10.length;
-          
-          latencyEl.textContent = `${(avgLat / 1000).toFixed(1)} s`;
-          const costStr = fmtInr(avgCost);
-          costEl.textContent = costStr;
-          if (bentoCostEl) bentoCostEl.textContent = costStr;
-        } else {
-          latencyEl.textContent = "0.0 s";
-          costEl.textContent = "₹0.00";
-          if (bentoCostEl) bentoCostEl.textContent = "₹0.00";
+    if (typeof DocuMindAPI !== "undefined") {
+      DocuMindAPI.getHealth().then(health => {
+        if (health) {
+          if (health.status && telemStatus) {
+            telemStatus.textContent = health.status.toUpperCase();
+          }
+          if (health.index_chunks != null) {
+            if (chunksEl) chunksEl.textContent = health.index_chunks.toLocaleString();
+            if (telemChunks) telemChunks.textContent = health.index_chunks.toLocaleString();
+          }
+          if (health.tau != null) {
+            if (tauEl) tauEl.textContent = `τ ${health.tau}`;
+            if (telemTau) telemTau.textContent = `τ = ${health.tau}`;
+          }
+          if (health.embed_model && telemModel) {
+            telemModel.textContent = health.embed_model;
+          }
         }
-      } else {
-        latencyEl.textContent = "0.0 s";
-        costEl.textContent = "₹0.00";
-        if (bentoCostEl) bentoCostEl.textContent = "₹0.00";
-      }
-    } catch (err) {
-      showError(chunksEl, "ERR");
-      showError(latencyEl, "ERR");
-      showError(costEl, "ERR");
-      showError(tauEl, "ERR");
-      if (bentoCostEl) showError(bentoCostEl, "ERR");
+      }).catch(() => {
+        if (chunksEl) chunksEl.textContent = "0";
+        if (tauEl) tauEl.textContent = "τ 0.35";
+      });
+
+      DocuMindAPI.getMeta().then(meta => {
+        if (meta) {
+          if (meta.llm_mode && telemMode) telemMode.textContent = meta.llm_mode;
+          if (meta.llm_provider && telemProvider) {
+            telemProvider.textContent = meta.llm_provider === "none" ? "Retrieval-Only (Zero-Key)" : meta.llm_provider.toUpperCase();
+          }
+          if (meta.chunks_count != null && telemChunks) {
+            telemChunks.textContent = meta.chunks_count.toLocaleString();
+          }
+        }
+      }).catch(() => {});
+
+      DocuMindAPI.getDocuments().then(docs => {
+        const arr = Array.isArray(docs) ? docs : (docs && docs.documents ? docs.documents : []);
+        const total = arr.reduce((s, d) => s + (d.chunks ?? d.chunk_count ?? 0), 0);
+        if (total > 0) {
+          if (chunksEl) chunksEl.textContent = total.toLocaleString();
+          if (telemChunks) telemChunks.textContent = total.toLocaleString();
+        }
+      }).catch(() => {});
+
+      DocuMindAPI.getEvents().then(events => {
+        if (Array.isArray(events) && events.length > 0) {
+          const askEvents = events.filter(e => e.stage === "ask" || e.action === "ask");
+          if (askEvents.length > 0) {
+            const avgLat = askEvents.reduce((s, e) => s + (e.total_ms || e.duration_ms || 0), 0) / askEvents.length;
+            if (latencyEl) latencyEl.textContent = `${(avgLat / 1000).toFixed(1)} s`;
+            const avgCost = askEvents.reduce((s, e) => s + (e.cost_usd || 0), 0) / askEvents.length;
+            const costStr = avgCost > 0 ? `₹${(avgCost * 83).toFixed(2)}` : "₹0.00";
+            if (costEl) costEl.textContent = costStr;
+            if (bentoCostEl) bentoCostEl.textContent = costStr;
+          } else {
+            if (latencyEl) latencyEl.textContent = "—";
+            if (costEl) costEl.textContent = "₹0.00";
+          }
+        } else {
+          if (latencyEl) latencyEl.textContent = "—";
+          if (costEl) costEl.textContent = "₹0.00";
+        }
+      }).catch(() => {
+        if (latencyEl) latencyEl.textContent = "—";
+        if (costEl) costEl.textContent = "₹0.00";
+      });
     }
   }
 
   loadHomeStats();
 </script>
+<script src="../chat-drawer.js"></script>
 </body></html>

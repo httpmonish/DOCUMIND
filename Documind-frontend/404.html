@@ -4,6 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>404: Not Found — DocuMind</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="alternate icon" href="/favicon.ico">
   <style>
     * {
       box-sizing: border-box;
@@ -54,28 +56,35 @@
       stroke: #2a3447;
       stroke-width: 1.5;
       stroke-dasharray: 4 3;
+      animation: dashFlow 20s linear infinite;
     }
 
     .node-link-solid {
       stroke: #334155;
       stroke-width: 1.5;
+      stroke-dasharray: 120;
+      stroke-dashoffset: 0;
+      animation: lineReveal 1.6s ease-out forwards;
     }
 
     .node-satellite {
       fill: #151b26;
       stroke: #3b82f6;
       stroke-width: 2;
+      transform-origin: center;
+      animation: nodePulse 4s ease-in-out infinite alternate;
     }
 
-    .node-accent-1 { stroke: #38bdf8; }
-    .node-accent-2 { stroke: #a855f7; }
-    .node-accent-3 { stroke: #10b981; }
-    .node-accent-4 { stroke: #f59e0b; }
+    .node-accent-1 { stroke: #38bdf8; animation-delay: 0s; }
+    .node-accent-2 { stroke: #a855f7; animation-delay: 0.8s; }
+    .node-accent-3 { stroke: #10b981; animation-delay: 1.6s; }
+    .node-accent-4 { stroke: #f59e0b; animation-delay: 2.4s; }
 
     .node-center-outer {
       fill: #131924;
       stroke: #2563eb;
       stroke-width: 2;
+      animation: centerGlow 3s ease-in-out infinite alternate;
     }
 
     .node-center-inner {
@@ -88,6 +97,67 @@
       stroke-width: 2.2;
       stroke-linecap: round;
       stroke-linejoin: round;
+      animation: crownShimmer 3s ease-in-out infinite alternate;
+    }
+
+    @keyframes dashFlow {
+      to {
+        stroke-dashoffset: -70;
+      }
+    }
+
+    @keyframes lineReveal {
+      from {
+        stroke-dashoffset: 120;
+      }
+      to {
+        stroke-dashoffset: 0;
+      }
+    }
+
+    @keyframes nodePulse {
+      0% {
+        transform: scale(0.96);
+        opacity: 0.85;
+      }
+      100% {
+        transform: scale(1.05);
+        opacity: 1;
+      }
+    }
+
+    @keyframes centerGlow {
+      0% {
+        stroke: #1d4ed8;
+        filter: drop-shadow(0 0 2px rgba(37, 99, 235, 0.2));
+      }
+      100% {
+        stroke: #3b82f6;
+        filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.45));
+      }
+    }
+
+    @keyframes crownShimmer {
+      0% {
+        stroke: #f59e0b;
+        transform: translateY(0);
+      }
+      100% {
+        stroke: #fde047;
+        transform: translateY(-1px);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .node-link,
+      .node-link-solid,
+      .node-satellite,
+      .node-center-outer,
+      .crown-icon {
+        animation: none !important;
+        transform: none !important;
+        filter: none !important;
+      }
     }
 
     .heading {

@@ -27,3 +27,6 @@ evals/home/
 
 # Secrets
 .env
+
+# Scratch scripts
+scratch/
