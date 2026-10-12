@@ -4,13 +4,13 @@
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Status: Phase 4](https://img.shields.io/badge/Status-v0.4.0%20(CLI)-green.svg)](#status)
+[![Status: Phase 6](https://img.shields.io/badge/Status-v0.6.0%20(Full--Stack%20RAG)-green.svg)](#status)
 
 ---
 
 ## Status
-- **Current (Phase 4):** Production-grade CLI (`documind`) with offline diagnostic tooling (`doctor`), log aggregation (`stats`), and clean stream separation.
-- **Planned:** REST API / FastAPI service (Phase 5) and Model Context Protocol (MCP) server for Claude Desktop (Phase 6).
+- **Current (Phase 6):** Full-stack grounded document intelligence engine with Glass Box UI, server-issued session isolation in SQLite, spend ledger & rate-limiting guards, multi-turn chat persistence, neighbor chunk expansion, and AsyncAnthropic SSE streaming (`text/event-stream`).
+- **Administrative Core:** REST API (`/v1/*`) secured by 32+ character API keys for trusted programmatic microservices.
 
 ---
 
@@ -185,34 +185,36 @@ To allow multiple anonymous public demo visitors to upload documents simultaneou
 
 ### 2. Running Locally
 
-Start the backend and frontend dev servers:
+Start the unified DocuMind application server:
 
 ```console
-# Terminal 1: Start DocuMind Backend
 source .venv/bin/activate
 documind serve --host 127.0.0.1 --port 8000
-
-# Terminal 2: Serve the Frontend
-python3 -m http.server 5500 --directory Documind-frontend
 ```
 
 Open your browser to:
-- **Architecture Overview:** `http://127.0.0.1:5500/stitch_documind_glass_box_ui/code.html`
-- **Document Intelligence Console:** `http://127.0.0.1:5500/stitch_documind_glass_box_ui%20(1)/code.html`
-- **Proof & Telemetry:** `http://127.0.0.1:5500/stitch_documind_glass_box_ui%20(2)/code.html`
-- **Document Library & Ingestion:** `http://127.0.0.1:5500/stitch_documind_glass_box_ui%20(3)/code.html`
+- **Root (Automatic Redirect):** `http://127.0.0.1:8000/`
+- **Document Intelligence Console:** `http://127.0.0.1:8000/app/console/code.html`
+- **Document Library & Ingestion:** `http://127.0.0.1:8000/app/library/code.html`
+- **Architecture Overview:** `http://127.0.0.1:8000/app/architecture/code.html`
+- **Proof & Telemetry:** `http://127.0.0.1:8000/app/proof/code.html`
 
 ### 3. Public Demo Gateway Endpoints (`/api/demo/*`)
 
-All `/api/demo` routes require an `X-Session-ID` header and are rate-limited:
+All `/api/demo` routes require an `X-Session-ID` header and are protected by rate limits and spend caps:
 
 | Endpoint | Method | Description |
 |---|:---:|---|
+| `/api/demo/session` | `POST` | Acquire server-issued opaque session token |
 | `/api/demo/documents` | `GET` | List documents indexed in current visitor session |
 | `/api/demo/documents` | `POST` | Upload and chunk PDF, TXT, or MD into session workspace |
 | `/api/demo/documents/{source}` | `DELETE` | Delete a document from current visitor workspace |
 | `/api/demo/documents/{source}/chunks` | `GET` | Inspect chunk partition text and index order |
 | `/api/demo/ask` | `POST` | Ask a question; returns grounded answer or abstention |
+| `/api/demo/chat` | `POST` | Multi-turn chat with follow-up query condensation |
+| `/api/demo/chat/stream` | `POST` | Live token-by-token SSE stream (`text/event-stream`) |
+| `/api/demo/conversations` | `GET` | List visitor conversation threads |
+| `/api/demo/conversations/{id}/messages` | `GET` | List messages with citations and evidence |
 | `/api/demo/analyze` | `POST` | Bounded agent tasks (`summarize`, `key_points`, `explain`) |
 | `/api/demo/events` | `GET` | Live event stream for session diagnostics |
 | `/api/demo/meta` | `GET` | Active model, tau threshold, and limits |

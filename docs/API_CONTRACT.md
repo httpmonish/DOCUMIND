@@ -69,13 +69,27 @@ Standard error codes:
 
 ### 3.2 Public Demo Gateway Endpoints (`/api/demo/*`)
 
-#### 3.2.1 Upload & Ingest Document
+#### 3.2.1 Acquire Visitor Session
+- **Path:** `POST /api/demo/session`
+- **Auth:** None (Public)
+- **Response `201 Created`:**
+  ```json
+  {
+    "session_id": "949a699b56a40c113b45340115b4c68eef4d9309ba1f7e1314683cedea1ec1ae",
+    "expires_at": 1792440000.0,
+    "ttl_seconds": 86400
+  }
+  ```
+- **Error `401 Unauthorized`:** If an expired or forged session token is passed in subsequent calls.
+
+#### 3.2.2 Upload & Ingest Document
 - **Path:** `POST /api/demo/documents`
 - **Auth:** `X-Session-ID: <session_id>`
 - **Content-Type:** `multipart/form-data`
 - **Form Parameters:**
-  - `file`: Binary file data (`.pdf`, `.txt`, `.md`, max 50 MB)
+  - `file`: Binary file data (`.pdf`, `.txt`, `.md`, max 10 MB streaming abort)
   - `replace`: `boolean` (optional, default: `false`)
+- **Quota Enforced:** Max 5 documents and 20 MB total per session.
 - **Response `200 OK`:**
   ```json
   {
@@ -85,17 +99,8 @@ Standard error codes:
     "sha256": "949a699b56a40c113b45340115b4c68eef4d9309ba1f7e1314683cedea1ec1ae"
   }
   ```
-- **Response `200 OK (idempotent skip)`:**
-  ```json
-  {
-    "status": "unchanged",
-    "source": "os_lecture.pdf",
-    "chunks": 9,
-    "sha256": "949a699b56a40c113b45340115b4c68eef4d9309ba1f7e1314683cedea1ec1ae"
-  }
-  ```
 
-#### 3.2.2 List Session Documents
+#### 3.2.3 List Session Documents
 - **Path:** `GET /api/demo/documents`
 - **Auth:** `X-Session-ID: <session_id>`
 - **Response `200 OK`:**
@@ -109,28 +114,18 @@ Standard error codes:
   ]
   ```
 
-#### 3.2.3 Inspect Document Chunks
+#### 3.2.4 Inspect Document Chunks
 - **Path:** `GET /api/demo/documents/{source}/chunks`
 - **Auth:** `X-Session-ID: <session_id>`
-- **Response `200 OK`:**
-  ```json
-  [
-    {
-      "id": "os_lecture.pdf#0",
-      "text": "Process scheduling is the mechanism by which...",
-      "chunk_index": 0,
-      "score": null
-    }
-  ]
-  ```
+- **Response `200 OK`:** List of chunks with `id`, `text`, `chunk_index`.
 
-#### 3.2.4 Delete Document
+#### 3.2.5 Delete Document
 - **Path:** `DELETE /api/demo/documents/{source}`
 - **Auth:** `X-Session-ID: <session_id>`
 - **Response `204 No Content`**
-- **Error `404 Not Found`:** If document does not belong to this session.
+- **Error `404 Not Found`:** If document does not exist in this session.
 
-#### 3.2.5 Ask Grounded Question
+#### 3.2.6 Ask Grounded Question
 - **Path:** `POST /api/demo/ask`
 - **Auth:** `X-Session-ID: <session_id>`
 - **Content-Type:** `application/json`
@@ -161,59 +156,53 @@ Standard error codes:
     "latency_ms": 1150
   }
   ```
-- **Response `200 OK (Abstained)`:**
-  ```json
-  {
-    "text": "I do not have enough verified context from the indexed documents to answer this question accurately.",
-    "outcome": "abstained",
-    "abstain_reason": "low_score",
-    "citations": [],
-    "model": "claude-haiku-4-5-20251001",
-    "usage": { "input_tokens": 0, "output_tokens": 0 },
-    "latency_ms": 42
-  }
-  ```
 
-#### 3.2.6 Analysis Actions
-- **Path:** `POST /api/demo/analyze`
+#### 3.2.7 Multi-Turn Chat (`POST /api/demo/chat`)
+- **Path:** `POST /api/demo/chat`
 - **Auth:** `X-Session-ID: <session_id>`
 - **Content-Type:** `application/json`
 - **Request Body:**
   ```json
   {
-    "action": "summarize",
-    "source": "os_lecture.pdf"
+    "question": "how does it work?",
+    "conversation_id": "c7a82b9e-64d8-4f27-a0e2-63b75c12e091",
+    "top_k": 5
   }
   ```
-- **Supported Actions:**
-  - `summarize`: Generates grounded document summary.
-  - `key_points`: Extracts bulleted key points and definitions.
-  - `explain`: Explains core technical mechanics described in the document.
-- **Response `200 OK`:** Same schema as `POST /api/demo/ask`.
+- **Behavior:** Condenses anaphora/follow-up questions using conversation turn context, expands neighbor chunks for top-2 hits, and persists turns in SQLite.
+- **Response `200 OK`:** Returns answer envelope with `conversation_id`, `condensed_query`, and `message_id`.
 
-#### 3.2.7 Session Telemetry Events
-- **Path:** `GET /api/demo/events`
+#### 3.2.8 Server-Sent Events (SSE) Streaming Chat (`POST /api/demo/chat/stream`)
+- **Path:** `POST /api/demo/chat/stream`
 - **Auth:** `X-Session-ID: <session_id>`
-- **Response `200 OK`:**
-  ```json
-  [
-    {
-      "time": "2026-10-10T21:25:00Z",
-      "request_id": "4b68e987-9811-42e7-8f55-12e0e4b85c21",
-      "stage": "ask",
-      "msg": "Ask completed with outcome: answered",
-      "duration_ms": 1150,
-      "cost_usd": 0.00045,
-      "latency_ms": 1150
-    }
-  ]
-  ```
+- **Content-Type:** `application/json`
+- **Response:** `text/event-stream`
+- **Event Flow:**
+  1. `event: meta` — `data: {"conversation_id": "...", "query": "...", "condensed_query": "...", "tau": 0.35, "request_id": "..."}`
+  2. `event: retrieval` — `data: {"retrieved": [{"id": "...", "source": "...", "score": 0.82, "passed_gate": true}, ...]}` (immediate Glass Box inspector update)
+  3. `event: token` — `data: {"delta": "word "}` (streamed real-time tokens)
+  4. `event: citations` — `data: {"citations": [{"marker": "S1", "source": "...", "score": 0.82}, ...]}`
+  5. `event: done` — `data: {"outcome": "answered", "latency_ms": 1120, "usage": {"input_tokens": 1400, "output_tokens": 85, "cost_usd": 0.0019}}`
+
+#### 3.2.9 Conversation Thread Management
+- **List Threads:** `GET /api/demo/conversations`
+- **Get Messages:** `GET /api/demo/conversations/{id}/messages`
+- **Delete Thread:** `DELETE /api/demo/conversations/{id}`
+
+#### 3.2.10 Analysis Actions
+- **Path:** `POST /api/demo/analyze`
+- **Actions:** `summarize`, `key_points`, `explain`.
+
+#### 3.2.11 Spend Capping & Rate Limiting
+- **Spend Ceiling:** Global $2.00/day, per-IP $0.25/day (Claude Haiku 4.5 pricing). When cap is hit, endpoints gracefully fail closed to `retrieval_only` with 0 HTTP 500 errors.
+- **Sliding Window Rate Limits:** 60 req/min general, 10 req/min questions, 5/hr uploads, 5/hr sessions. IPv6 addresses are normalized to `/64` subnets.
+- **Security Headers:** `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Content-Security-Policy`.
 
 ---
 
 ## 4. Administrative Core Endpoints (`/v1/*`)
 
-The `/v1` endpoints mirror the core operations for administrative clients:
+The `/v1` endpoints mirror core operations for administrative clients:
 - `POST /v1/documents`
 - `GET /v1/documents`
 - `DELETE /v1/documents/{source}`
@@ -223,4 +212,4 @@ The `/v1` endpoints mirror the core operations for administrative clients:
 - `GET /v1/eval`
 - `GET /v1/meta`
 
-All require `X-API-Key: <DOCUMIND_API_KEY>` and access the global administrative workspace.
+All require `X-API-Key: <DOCUMIND_API_KEY>` (32+ characters).
