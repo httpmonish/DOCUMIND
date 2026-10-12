@@ -81,12 +81,19 @@ def test_session_id_validation_required(isolated_app):
     assert resp.status_code == 400
     assert "Invalid session ID" in resp.json()["error"]["message"]
 
+    # 4. Client-chosen session not registered in SQLite returns 401 SESSION_INVALID
+    unreg_headers = {"X-Session-ID": "unregistered_token_1234567890"}
+    resp = client.get("/api/demo/documents", headers=unreg_headers)
+    assert resp.status_code == 401
+    assert resp.json()["error"]["code"] == "SESSION_INVALID"
+
 
 def test_multi_user_document_isolation(isolated_app):
     client = TestClient(isolated_app)
 
-    session_a = "session_user_alice_1234567890abcdef"
-    session_b = "session_user_bob_1234567890abcdef"
+    # Server issues isolated sessions
+    session_a = client.post("/api/demo/session").json()["session_id"]
+    session_b = client.post("/api/demo/session").json()["session_id"]
 
     headers_a = {"X-Session-ID": session_a}
     headers_b = {"X-Session-ID": session_b}
@@ -183,7 +190,8 @@ def test_multi_user_document_isolation(isolated_app):
 
 def test_no_secret_leakage_in_demo_responses(isolated_app):
     client = TestClient(isolated_app)
-    headers = {"X-Session-ID": "session_security_check_1234567890"}
+    session_id = client.post("/api/demo/session").json()["session_id"]
+    headers = {"X-Session-ID": session_id}
 
     # Upload document
     client.post(
@@ -211,7 +219,8 @@ def test_no_secret_leakage_in_demo_responses(isolated_app):
 
 def test_demo_analyze_and_file_validation(isolated_app):
     client = TestClient(isolated_app)
-    headers = {"X-Session-ID": "session_analyze_test_1234567890"}
+    session_id = client.post("/api/demo/session").json()["session_id"]
+    headers = {"X-Session-ID": session_id}
 
     # Unsupported extension (.exe)
     resp_exe = client.post(

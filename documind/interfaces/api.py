@@ -50,8 +50,20 @@ from documind.core.errors import (
 from documind.core.ingest import safe_upload_name
 from documind.core.pipeline import DocuMind
 from documind.core.serialize import answer_to_dict
-from documind.interfaces.ratelimit import TokenBucketLimiter
-from documind.interfaces.session import SessionManager, get_session_id_from_request
+from documind.interfaces.ratelimit import MultiActionRateLimiter, TokenBucketLimiter
+from documind.interfaces.security import (
+    client_ip,
+    hash_ip,
+)
+from documind.interfaces.session import (
+    SessionManager,
+    validate_session_id_format,
+)
+from documind.interfaces.spend import (
+    SpendLedger,
+    calculate_cost_usd,
+    estimate_generation_cost,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -97,21 +109,33 @@ class AnalyzeRequest(BaseModel):
 
 
 def require_session(request: Request) -> str:
-    """Extract and validate X-Session-ID header from request."""
-    return get_session_id_from_request(request)
+    """Extract and validate session token against SQLite registry.
+    Returns the session identifier (hash or id).
+    Raises 400 for format errors, 401 for unknown/expired sessions.
+    """
+    raw = request.headers.get("X-Session-ID") or request.cookies.get("documind_session")
+    clean_token = validate_session_id_format(raw)
+    mgr: SessionManager | None = getattr(request.app.state, "session_manager", None)
+    if not mgr:
+        return clean_token
+    session_hash = mgr.validate_token(clean_token)
+    return session_hash
 
 
-def check_demo_rate_limit(request: Request, session_id: str = Depends(require_session)) -> None:
-    """Enforce per-session token bucket rate limit using hashed identity."""
-    limiter: TokenBucketLimiter = request.app.state.limiter
-    identity = hashlib.sha256(f"demo:{session_id}".encode()).hexdigest()
-    allowed, retry_after = limiter.consume(identity)
-    if not allowed:
-        raise HTTPException(
-            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-            detail=f"Too many requests. Retry in {retry_after} s.",
-            headers={"Retry-After": str(retry_after)},
-        )
+def check_demo_rate_limit(request: Request) -> None:
+    """Enforce per-IP sliding window/token bucket rate limit."""
+    limiter = getattr(request.app.state, "multi_limiter", None)
+    ip = client_ip(request)
+    ip_h = hash_ip(ip)
+    if limiter:
+        allowed, retry_after = limiter.consume("general", ip_h)
+        if not allowed:
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail=f"Too many requests. Retry in {retry_after} s.",
+                headers={"Retry-After": str(retry_after)},
+            )
+
 
 
 def _get_request_id(request: Request) -> str:
@@ -216,7 +240,13 @@ def register_exception_handlers(app: FastAPI) -> None:
         req_id = _get_request_id(request)
         code = "http_error"
         if exc.status_code == status.HTTP_401_UNAUTHORIZED:
-            code = "unauthorized"
+            msg = str(exc.detail).lower()
+            if "expired" in msg:
+                code = "SESSION_EXPIRED"
+            elif "session" in msg or "token" in msg:
+                code = "SESSION_INVALID"
+            else:
+                code = "unauthorized"
         elif exc.status_code == status.HTTP_404_NOT_FOUND:
             code = "not_found"
         elif exc.status_code == status.HTTP_409_CONFLICT:
@@ -376,6 +406,12 @@ def create_app(
             settings=app_settings,
         )
     app.state.limiter = limiter or TokenBucketLimiter(rate_per_min=app_settings.rate_limit_per_min)
+    app.state.multi_limiter = MultiActionRateLimiter()
+    app.state.spend_ledger = SpendLedger(
+        db_path=app_settings.home / "spend_ledger.db",
+        global_daily_cap_usd=getattr(app_settings, "global_daily_cap_usd", 2.00),
+        ip_daily_cap_usd=getattr(app_settings, "ip_daily_cap_usd", 0.25),
+    )
     app.state.write_lock = threading.Lock()
 
     allowed_origins = [
@@ -398,7 +434,7 @@ def create_app(
         allow_headers=["*"],
     )
 
-    # Register Request ID and security headers middleware
+    # Register Request ID and defensive security headers middleware
     @app.middleware("http")
     async def request_middleware(request: Request, call_next: Any) -> Response:
         raw_req_id = request.headers.get("X-Request-ID")
@@ -411,6 +447,8 @@ def create_app(
         response: Response = await call_next(request)
         response.headers["X-Request-ID"] = req_id
         response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
         response.headers["Cache-Control"] = "no-store"
         return response
 
@@ -791,6 +829,65 @@ def create_app(
         dependencies=[Depends(check_demo_rate_limit)],
     )
 
+    @demo_router.post("/session")
+    def demo_create_session(request: Request) -> JSONResponse:
+        ip = client_ip(request)
+        ip_h = hash_ip(ip)
+        multi_limiter: MultiActionRateLimiter = getattr(
+            request.app.state, "multi_limiter", MultiActionRateLimiter()
+        )
+
+        allowed_hr, retry_hr = multi_limiter.consume("session_create_hour", ip_h)
+        if not allowed_hr:
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail=f"Session creation rate limit exceeded (5/hour). Retry in {retry_hr} s.",
+                headers={"Retry-After": str(retry_hr)},
+            )
+        allowed_day, retry_day = multi_limiter.consume("session_create_day", ip_h)
+        if not allowed_day:
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail=f"Daily session creation limit reached (20/day). Retry in {retry_day} s.",
+                headers={"Retry-After": str(retry_day)},
+            )
+
+        mgr: SessionManager = request.app.state.session_manager
+        token, expires_at = mgr.create_session(ip_h)
+
+        resp = JSONResponse(
+            status_code=status.HTTP_201_CREATED,
+            content={
+                "session_id": token,
+                "expires_at": expires_at,
+                "ttl_seconds": mgr.ttl_seconds,
+            },
+        )
+        resp.set_cookie(
+            key="documind_session",
+            value=token,
+            max_age=mgr.ttl_seconds,
+            httponly=True,
+            samesite="lax",
+            secure=request.url.scheme == "https",
+            path="/",
+        )
+        return resp
+
+    @demo_router.delete("/session")
+    def demo_delete_session(
+        request: Request,
+        session_id: str = Depends(require_session),
+    ) -> JSONResponse:
+        mgr: SessionManager = request.app.state.session_manager
+        mgr.delete_session(session_id)
+        resp = JSONResponse(
+            status_code=status.HTTP_200_OK,
+            content={"status": "revoked"},
+        )
+        resp.delete_cookie(key="documind_session", path="/")
+        return resp
+
     @demo_router.get("/documents")
     def demo_list_documents(
         request: Request, session_id: str = Depends(require_session)
@@ -814,7 +911,55 @@ def create_app(
         replace: bool = Query(default=False),  # noqa: B008
         session_id: str = Depends(require_session),
     ) -> JSONResponse:
+        ip = client_ip(request)
+        ip_h = hash_ip(ip)
+        multi_limiter: MultiActionRateLimiter = getattr(
+            request.app.state, "multi_limiter", MultiActionRateLimiter()
+        )
+
+        # Upload rate limit: 5 / hour per IP
+        allowed, retry_after = multi_limiter.consume("upload", ip_h)
+        if not allowed:
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail=f"Upload rate limit exceeded (5/hour). Retry in {retry_after} s.",
+                headers={"Retry-After": str(retry_after)},
+            )
+
+        # Extension check
+        filename = file.filename or "upload.txt"
+        suffix = Path(filename).suffix.lower()
+        if suffix not in {".txt", ".md", ".pdf"}:
+            raise HTTPException(
+                status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+                detail="Unsupported file type. Only .txt, .md, and .pdf documents are allowed.",
+            )
+
+        # Stream reading with 10MB ceiling
+        max_bytes = 10 * 1024 * 1024
+        chunks: list[bytes] = []
+        total_read = 0
+        while True:
+            chunk = file.file.read(64 * 1024)
+            if not chunk:
+                break
+            total_read += len(chunk)
+            if total_read > max_bytes:
+                raise HTTPException(
+                    status_code=413,
+                    detail="File exceeds maximum demo limit of 10 MB.",
+                )
+            chunks.append(chunk)
+
+        content = b"".join(chunks)
+        import io
+
+        file.file = io.BytesIO(content)
+
         mgr: SessionManager = request.app.state.session_manager
+        # Enforce quota inside session (max 5 docs, 20 MB total)
+        mgr.record_upload(session_id, byte_count=len(content))
+
         session_engine, write_lock = mgr.get_engine(session_id)
         uploads_dir = mgr.get_uploads_dir(session_id)
         req_id = _get_request_id(request)
@@ -874,6 +1019,7 @@ def create_app(
 
         with write_lock:
             session_engine.delete(source)
+            mgr.record_delete(session_id)
             uploads_dir = mgr.get_uploads_dir(session_id)
             for f in uploads_dir.glob(f"*_{source}"):
                 with contextlib.suppress(OSError):
@@ -905,12 +1051,67 @@ def create_app(
                 detail="index_empty",
             )
 
-        ans = session_engine.answer(
-            body.question,
-            top_k=body.top_k,
-            interface="api",
-            req_id=req_id,
+        ip = client_ip(request)
+        ip_h = hash_ip(ip)
+        spend_ledger: SpendLedger = getattr(
+            request.app.state,
+            "spend_ledger",
+            SpendLedger(db_path=session_engine.settings.home / "spend_ledger.db"),
         )
+        est_cost = estimate_generation_cost(2000, session_engine.settings.max_tokens)
+        can_spend, reason = spend_ledger.can_spend(ip_h, est_cost)
+
+        if not can_spend:
+            # FAIL CLOSED to retrieval_only: transparent, honest, no bare HTTP 500!
+            effective_k = body.top_k or session_engine.settings.top_k
+            q_vec = session_engine.embedder.embed_query(body.question)
+            retrieved = session_engine.store.query(q_vec, effective_k)
+            candidates = [
+                {
+                    "id": c.chunk.id,
+                    "source": c.chunk.source,
+                    "chunk_index": c.chunk.chunk_index,
+                    "score": round(float(c.score), 4),
+                    "text": c.chunk.text,
+                    "passed_gate": c.score >= session_engine.settings.min_score,
+                }
+                for c in retrieved
+            ]
+            return JSONResponse(
+                status_code=status.HTTP_200_OK,
+                content={
+                    "answer": (
+                        "Public demo daily spend cap reached ($2.00 global / $0.25 per IP). "
+                        "Showing retrieved candidate passages below without generative synthesis."
+                    ),
+                    "outcome": "retrieval_only",
+                    "reason": reason,
+                    "citations": [],
+                    "retrieved": candidates,
+                    "usage": {"input_tokens": 0, "output_tokens": 0, "cost_usd": 0.0},
+                    "latency_ms": 1,
+                    "model": session_engine.settings.model,
+                },
+                headers={
+                    "X-Request-ID": req_id,
+                    "X-Content-Type-Options": "nosniff",
+                    "Cache-Control": "no-store",
+                },
+            )
+
+        spend_ledger.reserve(ip_h, session_id, est_cost)
+        try:
+            ans = session_engine.answer(
+                body.question,
+                top_k=body.top_k,
+                interface="api",
+                req_id=req_id,
+            )
+            actual_cost = calculate_cost_usd(ans.usage.input_tokens, ans.usage.output_tokens)
+            spend_ledger.settle(ip_h, session_id, est_cost, actual_cost)
+        except Exception:
+            spend_ledger.release(ip_h, session_id, est_cost)
+            raise
 
         if ans.abstain_reason == "llm_unavailable":
             fallback_citations = [
@@ -1022,6 +1223,15 @@ def create_app(
     ) -> JSONResponse:
         mgr: SessionManager = request.app.state.session_manager
         session_engine, _ = mgr.get_engine(session_id)
+        ip = client_ip(request)
+        ip_h = hash_ip(ip)
+        spend_ledger: SpendLedger = getattr(
+            request.app.state,
+            "spend_ledger",
+            SpendLedger(db_path=session_engine.settings.home / "spend_ledger.db"),
+        )
+        spend_info = spend_ledger.get_summary(ip_h)
+
         return JSONResponse(
             status_code=status.HTTP_200_OK,
             content={
@@ -1031,6 +1241,14 @@ def create_app(
                 "documents_count": len(session_engine.documents()),
                 "chunks_count": session_engine.store.count(),
                 "status": "active",
+                "spend": spend_info,
+                "limits": {
+                    "max_docs": 5,
+                    "max_upload_mb": 10,
+                    "max_session_mb": 20,
+                    "global_daily_cap_usd": spend_ledger.global_daily_cap_usd,
+                    "ip_daily_cap_usd": spend_ledger.ip_daily_cap_usd,
+                },
             },
         )
 

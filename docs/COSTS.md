@@ -43,3 +43,17 @@ From the Phase 3 benchmark runs (`scripts/run_eval.py` over 60 questions):
 - **Queries abstaining on `empty_index` or `low_score`:** **$0.00000** (₹0; no LLM call invoked).
 - **Judge evaluation cost per question (Haiku 4.5):** ~$0.00075 / call
 - **Judge evaluation cost per question (Sonnet 5.5):** ~$0.00160 / call
+
+---
+
+## 4. Public Demo Spend Hardening & Daily Caps (Phase B)
+
+To guarantee that the public demo never exceeds budget or incurs unexpected API bills:
+- **Global Daily Cap:** **$2.00 / day** (`DOCUMIND_GLOBAL_DAILY_CAP_USD`).
+- **Per-IP Daily Cap:** **$0.25 / day** (`DOCUMIND_IP_DAILY_CAP_USD`).
+- **Two-Phase Commit Ledger (`SpendLedger`):**
+  1. *Reserve*: Prior to invoking generative LLM inference, an estimated upper-bound cost (~2,000 input tokens + max tokens output = ~$0.005) is atomically reserved in SQLite.
+  2. *Settle*: Upon successful completion, actual measured tokens (`ans.usage.input_tokens` and `ans.usage.output_tokens`) are settled and any reserved surplus is released.
+  3. *Release*: If the client disconnects or an internal error occurs, the entire reservation is released immediately.
+- **Fail-Closed Retrieval-Only Mode:**
+  When either cap is breached, the API **never** crashes or returns an ugly HTTP 500. Instead, it responds with HTTP 200 in honest `outcome="retrieval_only"` mode, serving the vector store's retrieved passages and citations without generative synthesis.

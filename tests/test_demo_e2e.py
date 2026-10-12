@@ -93,8 +93,14 @@ def demo_app(tmp_path: Path):
 
 def test_public_demo_full_journey(demo_app):
     client = TestClient(demo_app)
-    sess_a = "session_user_alice_1234567890abcdef"
-    sess_b = "session_user_bob_0987654321fedcba"
+    # Acquire server-issued sessions
+    sess_a_resp = client.post("/api/demo/session")
+    assert sess_a_resp.status_code == 201
+    sess_a = sess_a_resp.json()["session_id"]
+
+    sess_b_resp = client.post("/api/demo/session")
+    assert sess_b_resp.status_code == 201
+    sess_b = sess_b_resp.json()["session_id"]
 
     headers_a = {"X-Session-ID": sess_a}
     headers_b = {"X-Session-ID": sess_b}

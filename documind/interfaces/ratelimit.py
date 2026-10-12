@@ -55,3 +55,52 @@ class TokenBucketLimiter:
             retry_after = math.ceil(deficit / self.fill_rate) if self.fill_rate > 0 else 60
             self._buckets[identity] = (tokens, now)
             return False, max(1, retry_after)
+
+
+class MultiActionRateLimiter:
+    """Manages rate limits for multiple distinct actions (e.g. ask, upload, session)."""
+
+    DEFAULT_POLICIES: dict[str, tuple[float, float]] = {
+        # action -> (capacity, refill_tokens_per_second)
+        "ask": (10.0, 10.0 / 60.0),  # 10 / min
+        "upload": (5.0, 5.0 / 3600.0),  # 5 / hr
+        "session_create_hour": (5.0, 5.0 / 3600.0),  # 5 / hr
+        "session_create_day": (20.0, 20.0 / 86400.0),  # 20 / day
+        "general": (60.0, 60.0 / 60.0),  # 60 / min
+        "default": (60.0, 60.0 / 60.0),  # 60 / min
+    }
+
+    def __init__(
+        self,
+        policies: dict[str, tuple[float, float]] | None = None,
+        clock: Callable[[], float] | None = None,
+    ) -> None:
+        self.policies = policies or dict(self.DEFAULT_POLICIES)
+        self.clock = clock or time.monotonic
+        self._lock = threading.Lock()
+        # (action, identity) -> (tokens, last_update_time)
+        self._buckets: dict[tuple[str, str], tuple[float, float]] = {}
+
+    def consume(self, action: str, identity: str) -> tuple[bool, int]:
+        """Attempt to consume 1 token for given action and identity.
+        Returns (allowed, retry_after_seconds).
+        """
+        default_policy = self.policies.get("default", (20.0, 20.0 / 60.0))
+        capacity, fill_rate = self.policies.get(action, default_policy)
+        now = self.clock()
+        key = (action, identity)
+
+        with self._lock:
+            tokens, last_time = self._buckets.get(key, (capacity, now))
+            elapsed = max(0.0, now - last_time)
+            tokens = min(capacity, tokens + elapsed * fill_rate)
+
+            if tokens >= 1.0:
+                self._buckets[key] = (tokens - 1.0, now)
+                return True, 0
+
+            deficit = 1.0 - tokens
+            retry_after = math.ceil(deficit / fill_rate) if fill_rate > 0 else 60
+            self._buckets[key] = (tokens, now)
+            return False, max(1, retry_after)
+

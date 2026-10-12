@@ -51,6 +51,38 @@
     return sid;
   }
 
+  async function initSession(forceNew = false) {
+    if (!forceNew && typeof window !== "undefined" && window.sessionStorage) {
+      const existing = window.sessionStorage.getItem("documind_session_id");
+      if (existing && existing.length >= 16) {
+        return existing;
+      }
+    }
+    try {
+      const baseUrl = getBaseUrl();
+      const res = await fetch(`${baseUrl}/api/demo/session`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.session_id) {
+          if (typeof window !== "undefined" && window.sessionStorage) {
+            window.sessionStorage.setItem("documind_session_id", data.session_id);
+          }
+          return data.session_id;
+        }
+      }
+    } catch (e) {
+      console.warn("Could not negotiate server session token, using fallback:", e);
+    }
+    const sid = generateSessionToken();
+    if (typeof window !== "undefined" && window.sessionStorage) {
+      window.sessionStorage.setItem("documind_session_id", sid);
+    }
+    return sid;
+  }
+
   async function request(endpoint, options = {}) {
     const baseUrl = getBaseUrl();
     const url = `${baseUrl}${endpoint}`;
@@ -60,7 +92,9 @@
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
     const headers = new Headers(options.headers || {});
-    headers.set("X-Session-ID", getSessionId());
+    if (!headers.has("X-Session-ID")) {
+      headers.set("X-Session-ID", getSessionId());
+    }
 
     const fetchOptions = {
       method: options.method || "GET",
@@ -75,6 +109,13 @@
     try {
       const res = await fetch(url, fetchOptions);
       clearTimeout(timeoutId);
+
+      if (res.status === 401 && !options._retried) {
+        const newSid = await initSession(true);
+        const retryHeaders = new Headers(options.headers || {});
+        retryHeaders.set("X-Session-ID", newSid);
+        return request(endpoint, { ...options, headers: retryHeaders, _retried: true });
+      }
 
       if (res.status === 204) {
         return null;
@@ -211,6 +252,17 @@
 
     async getMeta() {
       return request("/api/demo/meta");
+    },
+
+    async initSession(forceNew = false) {
+      return initSession(forceNew);
+    },
+
+    async newSession() {
+      if (typeof window !== "undefined" && window.sessionStorage) {
+        window.sessionStorage.removeItem("documind_session_id");
+      }
+      return initSession(true);
     },
   };
 

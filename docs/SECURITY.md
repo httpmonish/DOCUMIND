@@ -87,3 +87,18 @@ When querying `/v1/ask`:
 - Only the **user's query** and the **top-$k$ retrieved text snippets** are transmitted over HTTPS to Anthropic (or the configured LLM provider).
 - The raw question is never logged to disk unless `DOCUMIND_LOG_QUESTIONS=1` is explicitly configured; by default, only a SHA-256 digest and length are logged to `queries.jsonl`.
 - Unretrieved documents and unused chunks remain entirely local on disk.
+
+---
+
+## 6. Public Demo Hardening (Phase B)
+
+| Defense Mechanism | Specification & Implementation | Status |
+|---|---|---|
+| **Server-Issued Sessions** | Tokens generated with `secrets.token_urlsafe(32)`. Client-invented tokens rejected with 401 `SESSION_INVALID`. Stored in SQLite as SHA-256 digests. Expired tokens return 401 `SESSION_EXPIRED`. Revocation via `DELETE /api/demo/session`. | **PASS** |
+| **Reverse Proxy & IPv6** | `client_ip(request)` walks `X-Forwarded-For` right-to-left through trusted reverse proxies. IPv6 addresses masked to `/64` prefix preventing rotating address spoofing. IP hashed with SHA-256 before storage. | **PASS** |
+| **Multi-Action Rate Limits** | Sliding-window token buckets per IP: Asks: 10/min; Uploads: 5/hr; Session creations: 5/hr, 20/day. General API calls: 60/min. Throttled calls return 429 with `Retry-After`. | **PASS** |
+| **Spend Hardening** | Global daily spend cap: $2.00 / day. Per-IP daily cap: $0.25 / day. Two-phase commit ledger (`reserve` before inference, `settle` after completion, `release` on abort). Fails closed into `retrieval_only` (never HTTP 500). | **PASS** |
+| **Upload Guardrails** | Hard streaming abort at 10 MB. Per-session quotas: max 5 documents, 20 MB total. Extension whitelist (`.txt`, `.md`, `.pdf`), rejecting executable binaries with 415. Subprocess PDF parsing with memory ceiling. | **PASS** |
+| **Delimiter Escaping** | Untrusted document chunks sanitized via `escape_chunk_delimiters` preventing prompt-injection breakout from XML `<sources>` and `<chunk>` tags. | **PASS** |
+| **Defensive Headers** | All HTTP responses enforce `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: strict-origin-when-cross-origin`. | **PASS** |
+

@@ -137,7 +137,9 @@ def test_api_js_node_eval():
 
 def test_frontend_end_to_end_journey(smoke_app):
     client = TestClient(smoke_app)
-    session_id = "test_smoke_session_1234567890abcdef"
+    sess_resp = client.post("/api/demo/session")
+    assert sess_resp.status_code == 201
+    session_id = sess_resp.json()["session_id"]
     headers = {"X-Session-ID": session_id}
 
     # 1. Health check & Meta single-source tau verification
