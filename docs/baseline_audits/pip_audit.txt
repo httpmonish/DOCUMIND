@@ -1,0 +1,11 @@
+Name     Version ID              Fix Versions
+-------- ------- --------------- ------------
+]8;;https://pypi.org/project/chromadb/\chromadb]8;;\ 1.5.9   ]8;;https://osv.dev/vulnerability/PYSEC-2026-311\PYSEC-2026-311]8;;\
+]8;;https://pypi.org/project/chromadb/\chromadb]8;;\ 1.5.9   ]8;;https://osv.dev/vulnerability/PYSEC-2026-311\PYSEC-2026-311]8;;\
+]8;;https://pypi.org/project/chromadb/\chromadb]8;;\ 1.5.9   ]8;;https://osv.dev/vulnerability/PYSEC-2026-3814\PYSEC-2026-3814]8;;\
+]8;;https://pypi.org/project/chromadb/\chromadb]8;;\ 1.5.9   ]8;;https://osv.dev/vulnerability/PYSEC-2026-3815\PYSEC-2026-3815]8;;\
+]8;;https://pypi.org/project/chromadb/\chromadb]8;;\ 1.5.9   ]8;;https://osv.dev/vulnerability/PYSEC-2026-3813\PYSEC-2026-3813]8;;\
+
+Name     Skip Reason
+-------- -----------------------------------------------------------------------
+documind Dependency not found on PyPI and could not be audited: documind (0.4.0)

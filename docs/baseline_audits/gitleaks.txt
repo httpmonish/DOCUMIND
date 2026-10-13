@@ -1,0 +1,91 @@
+
+    ○
+    │╲
+    │ ○
+    ○ ░
+    ░    gitleaks
+
+Finding:     "session_token": "[1;3;ma1b2c3d4e5f60718293a4b5c6d7e8f90...[0m"
+Secret:      [1;3;ma1b2c3d4e5f60718293a4b5c6d7e8f90...[0m
+RuleID:      generic-api-key
+Entropy:     4.079144
+File:        README.md
+Line:        188
+Commit:      3648fa9cc3763740d1bb3dc177b0152cd2321b6a
+Author:      https://github.com/httpmonish
+Email:       monishnawaz02@gmail.com
+Date:        2026-10-12T15:18:53Z
+Fingerprint: 3648fa9cc3763740d1bb3dc177b0152cd2321b6a:README.md:generic-api-key:188
+Link:        https://github.com/httpmonish/DOCUMIND/blob/3648fa9cc3763740d1bb3dc177b0152cd2321b6a/README.md?plain=1#L188
+
+Finding:     VALID_API_KEY = "[1;3;mtest-secret-key-that-is-at-least-32-chars-long[0m"
+Secret:      [1;3;mtest-secret-key-that-is-at-least-32-chars-long[0m
+RuleID:      generic-api-key
+Entropy:     3.623560
+File:        tests/test_api.py
+Line:        16
+Commit:      672c9ecbc80c9efc61b2c1048ac718fc3a37ba48
+Author:      https://github.com/httpmonish
+Email:       monishnawaz02@gmail.com
+Date:        2026-10-09T10:28:27Z
+Fingerprint: 672c9ecbc80c9efc61b2c1048ac718fc3a37ba48:tests/test_api.py:generic-api-key:16
+Link:        https://github.com/httpmonish/DOCUMIND/blob/672c9ecbc80c9efc61b2c1048ac718fc3a37ba48/tests/test_api.py#L16
+
+Finding:     $ curl -s -X POST "http://127.0.0.1:8000/v1/documents?replace=true" \
+    -H "X-API-Key:                                                 [1;3;mtest_key_minimum_32_characters_long_for_security_checks[0m" \
+Secret:      [1;3;mtest_key_minimum_32_characters_long_for_security_checks[0m
+RuleID:      curl-auth-header
+Entropy:     4.059013
+File:        README.md
+Line:        141
+Commit:      4baec922e1c1a0ff078b81d14ec18ab68b698304
+Author:      https://github.com/httpmonish
+Email:       monishnawaz02@gmail.com
+Date:        2026-10-09T11:01:35Z
+Fingerprint: 4baec922e1c1a0ff078b81d14ec18ab68b698304:README.md:curl-auth-header:141
+Link:        https://github.com/httpmonish/DOCUMIND/blob/4baec922e1c1a0ff078b81d14ec18ab68b698304/README.md?plain=1#L141-L142
+
+Finding:     $ curl -s -X POST "http://127.0.0.1:8000/v1/ask" \
+    -H "X-API-Key:                              [1;3;mtest_key_minimum_32_characters_long_for_security_checks[0m" \
+Secret:      [1;3;mtest_key_minimum_32_characters_long_for_security_checks[0m
+RuleID:      curl-auth-header
+Entropy:     4.059013
+File:        README.md
+Line:        152
+Commit:      4baec922e1c1a0ff078b81d14ec18ab68b698304
+Author:      https://github.com/httpmonish
+Email:       monishnawaz02@gmail.com
+Date:        2026-10-09T11:01:35Z
+Fingerprint: 4baec922e1c1a0ff078b81d14ec18ab68b698304:README.md:curl-auth-header:152
+Link:        https://github.com/httpmonish/DOCUMIND/blob/4baec922e1c1a0ff078b81d14ec18ab68b698304/README.md?plain=1#L152-L153
+
+Finding:     $ curl -s -w "\nHTTP Status: %{http_code}\n" -X DELETE "http://127.0.0.1:8000/v1/documents/os_notes.md" \
+    -H "X-API-Key:                                                                                     [1;3;mtest_key_minimum_32_characters_long_for_security_checks[0m"
+Secret:      [1;3;mtest_key_minimum_32_characters_long_for_security_checks[0m
+RuleID:      curl-auth-header
+Entropy:     4.059013
+File:        README.md
+Line:        164
+Commit:      4baec922e1c1a0ff078b81d14ec18ab68b698304
+Author:      https://github.com/httpmonish
+Email:       monishnawaz02@gmail.com
+Date:        2026-10-09T11:01:35Z
+Fingerprint: 4baec922e1c1a0ff078b81d14ec18ab68b698304:README.md:curl-auth-header:164
+Link:        https://github.com/httpmonish/DOCUMIND/blob/4baec922e1c1a0ff078b81d14ec18ab68b698304/README.md?plain=1#L164-L165
+
+Finding:     VALID_API_KEY = "[1;3;msk-documind-test-secret-key-32chars[0m"
+Secret:      [1;3;msk-documind-test-secret-key-32chars[0m
+RuleID:      generic-api-key
+Entropy:     3.897300
+File:        tests/security/test_auth.py
+Line:        17
+Commit:      db61dc50a69c910555d8fa76f72f19b5bc8650c2
+Author:      https://github.com/httpmonish
+Email:       monishnawaz02@gmail.com
+Date:        2026-10-09T10:33:47Z
+Fingerprint: db61dc50a69c910555d8fa76f72f19b5bc8650c2:tests/security/test_auth.py:generic-api-key:17
+Link:        https://github.com/httpmonish/DOCUMIND/blob/db61dc50a69c910555d8fa76f72f19b5bc8650c2/tests/security/test_auth.py#L17
+
+[90m11:28PM[0m [32mINF[0m [1m100 commits scanned.[0m
+[90m11:28PM[0m [32mINF[0m [1mscanned ~1422185 bytes (1.42 MB) in 138ms[0m
+[90m11:28PM[0m [33mWRN[0m [1mleaks found: 6[0m

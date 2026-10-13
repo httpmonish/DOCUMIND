@@ -1,0 +1,36 @@
+
+Report Summary
+
+┌──────────────────┬──────┬─────────────────┬───────────────────┬─────────┐
+│      Target      │ Type │ Vulnerabilities │ Misconfigurations │ Secrets │
+├──────────────────┼──────┼─────────────────┼───────────────────┼─────────┤
+│ requirements.txt │ pip  │        4        │         -         │    -    │
+└──────────────────┴──────┴─────────────────┴───────────────────┴─────────┘
+Legend:
+- '-': Not scanned
+- '0': Clean (no security findings detected)
+
+
+requirements.txt (pip)
+======================
+Total: 4 (UNKNOWN: 0, LOW: 0, MEDIUM: 0, HIGH: 2, CRITICAL: 2)
+
+┌──────────┬────────────────┬──────────┬──────────┬───────────────────┬───────────────┬──────────────────────────────────────────────────────────────┐
+│ Library  │ Vulnerability  │ Severity │  Status  │ Installed Version │ Fixed Version │                            Title                             │
+├──────────┼────────────────┼──────────┼──────────┼───────────────────┼───────────────┼──────────────────────────────────────────────────────────────┤
+│ chromadb │ CVE-2026-45829 │ CRITICAL │ affected │ 1.5.9             │               │ chromadb: ChromaDB Python Project: Arbitrary code execution  │
+│          │                │          │          │                   │               │ via pre-authentication code injection                        │
+│          │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2026-45829                   │
+│          ├────────────────┤          │          │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
+│          │ CVE-2026-45833 │          │          │                   │               │ chromadb: ChromaDB: Arbitrary Code Execution via Code        │
+│          │                │          │          │                   │               │ Injection                                                    │
+│          │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2026-45833                   │
+│          ├────────────────┼──────────┤          │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
+│          │ CVE-2026-45830 │ HIGH     │          │                   │               │ chromadb: ChromaDB: Unauthorized data manipulation due to    │
+│          │                │          │          │                   │               │ improper authorization validation                            │
+│          │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2026-45830                   │
+│          ├────────────────┤          │          │                   ├───────────────┼──────────────────────────────────────────────────────────────┤
+│          │ CVE-2026-45831 │          │          │                   │               │ ChromaDB: ChromaDB: Unauthorized cross-tenant actions due to │
+│          │                │          │          │                   │               │ improper authorization checks                                │
+│          │                │          │          │                   │               │ https://avd.aquasec.com/nvd/cve-2026-45831                   │
+└──────────┴────────────────┴──────────┴──────────┴───────────────────┴───────────────┴──────────────────────────────────────────────────────────────┘

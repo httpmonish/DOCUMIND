@@ -1,0 +1,15 @@
+HTTP/1.1 200 OK
+date: Tue, 13 Oct 2026 18:01:51 GMT
+server: uvicorn
+content-type: text/html; charset=utf-8
+accept-ranges: bytes
+content-length: 67557
+last-modified: Tue, 13 Oct 2026 17:00:15 GMT
+etag: "e4034442cb8a25d04e13356fd40f762a"
+vary: Origin
+x-request-id: 041bd79a-2ef4-4d81-ab72-71a02918c9be
+x-content-type-options: nosniff
+x-frame-options: DENY
+referrer-policy: strict-origin-when-cross-origin
+cache-control: no-store
+

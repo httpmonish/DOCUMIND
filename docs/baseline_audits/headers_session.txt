@@ -1,0 +1,14 @@
+HTTP/1.1 201 Created
+date: Tue, 13 Oct 2026 18:01:54 GMT
+server: uvicorn
+content-length: 110
+content-type: application/json
+set-cookie: documind_session=bvwSWKxfbuaQIHQeMYDiFoOfNpLCZ03xN-BsHhUvS6A; HttpOnly; Max-Age=7200; Path=/; SameSite=lax
+vary: Origin
+x-request-id: c8060a6c-c354-4117-8ad9-9a28342cbc39
+x-content-type-options: nosniff
+x-frame-options: DENY
+referrer-policy: strict-origin-when-cross-origin
+cache-control: no-store
+
+{"session_id":"bvwSWKxfbuaQIHQeMYDiFoOfNpLCZ03xN-BsHhUvS6A","expires_at":1791921715.164211,"ttl_seconds":7200}

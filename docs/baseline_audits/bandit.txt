@@ -1,0 +1,97 @@
+Run started:2026-10-13 17:57:44.795522+00:00
+
+Test results:
+>> Issue: [B311:blacklist] Standard pseudo-random generators are not suitable for security/cryptographic purposes.
+   Severity: Low   Confidence: High
+   CWE: CWE-330 (https://cwe.mitre.org/data/definitions/330.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_calls.html#b311-random
+   Location: documind/core/eval_metrics.py:156:10
+155	
+156	    rng = random.Random(seed)  # noqa: S311
+157	    diffs: list[float] = []
+
+--------------------------------------------------
+>> Issue: [B404:blacklist] Consider possible security implications associated with the subprocess module.
+   Severity: Low   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_imports.html#b404-import-subprocess
+   Location: documind/interfaces/api.py:17:0
+16	import secrets
+17	import subprocess
+18	import sys
+
+--------------------------------------------------
+>> Issue: [B603:subprocess_without_shell_equals_true] subprocess call - check for execution of untrusted input.
+   Severity: Low   Confidence: High
+   CWE: CWE-78 (https://cwe.mitre.org/data/definitions/78.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b603_subprocess_without_shell_equals_true.html
+   Location: documind/interfaces/api.py:866:31
+865	                        proc_env["DOCUMIND_MAX_PAGES"] = str(settings.max_pages)
+866	                        proc = subprocess.run(  # noqa: S603
+867	                            [sys.executable, "-m", "documind.core._extract_worker", str(final_path)],
+868	                            timeout=60,
+869	                            capture_output=True,
+870	                            env=proc_env,
+871	                            check=False,
+872	                        )
+873	                    except subprocess.TimeoutExpired as timeout_err:
+
+--------------------------------------------------
+>> Issue: [B105:hardcoded_password_string] Possible hardcoded password: 'https://oauth2.googleapis.com/token'
+   Severity: Low   Confidence: Medium
+   CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b105_hardcoded_password_string.html
+   Location: documind/interfaces/api.py:2437:32
+2436	
+2437	        google_token_endpoint = "https://oauth2.googleapis.com/token"  # noqa: S105
+2438	        token_data = urllib.parse.urlencode(
+
+--------------------------------------------------
+>> Issue: [B310:blacklist] Audit url open for permitted schemes. Allowing use of file:/ or custom schemes is often unexpected.
+   Severity: Medium   Confidence: High
+   CWE: CWE-22 (https://cwe.mitre.org/data/definitions/22.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_calls.html#b310-urllib-urlopen
+   Location: documind/interfaces/api.py:2456:13
+2455	        )
+2456	        with urllib.request.urlopen(token_req, timeout=10.0) as resp:  # noqa: S310
+2457	            token_payload = json.loads(resp.read().decode("utf-8"))
+
+--------------------------------------------------
+>> Issue: [B310:blacklist] Audit url open for permitted schemes. Allowing use of file:/ or custom schemes is often unexpected.
+   Severity: Medium   Confidence: High
+   CWE: CWE-22 (https://cwe.mitre.org/data/definitions/22.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_calls.html#b310-urllib-urlopen
+   Location: documind/interfaces/api.py:2468:13
+2467	        )
+2468	        with urllib.request.urlopen(userinfo_req, timeout=10.0) as resp:  # noqa: S310
+2469	            userinfo_payload = json.loads(resp.read().decode("utf-8"))
+
+--------------------------------------------------
+>> Issue: [B105:hardcoded_password_string] Possible hardcoded password: 'None'
+   Severity: Low   Confidence: Medium
+   CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b105_hardcoded_password_string.html
+   Location: documind/interfaces/api.py:2717:54
+2716	
+2717	        return {"authenticated": False, "user": None, "csrf_token": None}
+2718	
+
+--------------------------------------------------
+
+Code scanned:
+	Total lines of code: 8139
+	Total lines skipped (#nosec): 0
+	Total potential issues skipped due to specifically being disabled (e.g., #nosec BXXX): 0
+
+Run metrics:
+	Total issues (by severity):
+		Undefined: 0
+		Low: 5
+		Medium: 2
+		High: 0
+	Total issues (by confidence):
+		Undefined: 0
+		Low: 0
+		Medium: 2
+		High: 5
+Files skipped (0):
