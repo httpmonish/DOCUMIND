@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>DocuMind — User Authentication & Identity</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png">
+  <link rel="shortcut icon" href="/favicon.ico">
+  <link href="https://fonts.googleapis.com" rel="preconnect">
+  <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+  
+  <style>
+    @layer base {
+      html, body { margin: 0; padding: 0; }
+      body { overscroll-behavior: none; }
+    }
+    ::-webkit-scrollbar { display: none; }
+    @media (prefers-reduced-motion: reduce) {
+      *, ::before, ::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+      }
+    }
+  </style>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "on-surface-variant": "#e6beb2",
+            "primary-fixed": "#ffdbd1",
+            "on-error-container": "#ffdad6",
+            "on-error": "#690005",
+            "inverse-primary": "#af3100",
+            "background": "#131313",
+            "surface-variant": "#353534",
+            "error": "#ffb4ab",
+            "on-primary": "#5f1600",
+            "surface-container-low": "#1c1b1b",
+            "surface-container": "#201f1f",
+            "primary-container": "#ff571d",
+            "secondary": "#adc6ff",
+            "surface-container-highest": "#353534",
+            "tertiary": "#4edea3",
+            "primary": "#ffb59f",
+            "on-background": "#e5e2e1",
+            "outline-variant": "#5c4038",
+            "surface-container-lowest": "#0e0e0e",
+            "surface-container-high": "#2a2a2a",
+            "outline": "#ad897e",
+            "surface": "#131313",
+            "on-surface": "#e5e2e1",
+          },
+          fontFamily: {
+            "headline-sm": ["Inter", "sans-serif"],
+            "headline-lg": ["Inter", "sans-serif"],
+            "code-lg": ["JetBrains Mono", "monospace"],
+            "code-sm": ["JetBrains Mono", "monospace"],
+            "body-lg": ["Inter", "sans-serif"],
+            "body-sm": ["Inter", "sans-serif"],
+          }
+        }
+      }
+    };
+  </script>
+</head>
+<body class="bg-surface-container-lowest font-body-sm text-body-sm text-on-surface antialiased min-h-screen flex flex-col justify-between">
+
+  <!-- Top Navigation Header -->
+  <header class="w-full border-b border-surface-variant bg-surface-container-lowest z-30">
+    <div class="max-w-6xl mx-auto h-14 px-4 sm:px-6 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <svg class="h-8 w-8 object-contain shrink-0" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <polygon points="16,2 29,9.5 29,24.5 16,32 3,24.5 3,9.5" fill="#201f1f" stroke="#ff571d" stroke-width="2"/>
+          <circle cx="16" cy="17" r="4.5" fill="#ff571d"/>
+          <path d="M16 6v6.5M8.5 21.5l5.5-3M23.5 21.5l-5.5-3" stroke="#e5e2e1" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        <span class="font-headline-sm text-headline-sm text-on-surface tracking-tight font-semibold">DocuMind</span>
+      </div>
+      <div>
+        <a id="nav-back-link" href="/app/console/code.html" class="inline-flex items-center gap-1.5 text-xs font-code-sm text-on-surface-variant hover:text-primary transition-colors">
+          <span class="material-symbols-outlined text-[16px]">arrow_back</span>
+          <span>Back to Console</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Central Authentication Card -->
+  <main class="flex-1 flex items-center justify-center p-4 sm:p-6 my-6">
+    <div class="w-full max-w-md bg-surface-container-low border border-surface-variant rounded-2xl p-6 sm:p-8 shadow-2xl relative">
+      
+      <!-- Card Header -->
+      <div class="text-center mb-6">
+        <h1 id="auth-title" class="font-headline-lg text-2xl font-bold text-on-surface tracking-tight">Welcome to DocuMind</h1>
+        <p id="auth-subtitle" class="font-body-sm text-xs text-on-surface-variant mt-1.5">Sign in to securely access document indexing, workspace storage, and AI analysis.</p>
+      </div>
+
+      <!-- Mode Selector Tabs -->
+      <div id="mode-tabs" class="flex p-1 bg-surface-container rounded-xl mb-6 border border-surface-variant/40">
+        <button id="tab-login" type="button" class="flex-1 py-1.5 rounded-lg text-xs font-code-sm font-semibold transition-all bg-surface-container-high text-primary shadow-sm cursor-pointer">
+          SIGN IN
+        </button>
+        <button id="tab-register" type="button" class="flex-1 py-1.5 rounded-lg text-xs font-code-sm font-semibold transition-all text-on-surface-variant hover:text-on-surface cursor-pointer">
+          REGISTER
+        </button>
+      </div>
+
+      <!-- Alert Banners -->
+      <div id="alert-error" class="hidden mb-4 p-3 rounded-xl bg-error/15 border border-error/30 text-error font-body-sm text-xs flex items-start gap-2">
+        <span class="material-symbols-outlined text-sm shrink-0 mt-0.5">error</span>
+        <span id="alert-error-text" class="flex-1"></span>
+      </div>
+
+      <div id="alert-success" class="hidden mb-4 p-3 rounded-xl bg-tertiary/15 border border-tertiary/30 text-tertiary font-body-sm text-xs flex items-start gap-2">
+        <span class="material-symbols-outlined text-sm shrink-0 mt-0.5">check_circle</span>
+        <span id="alert-success-text" class="flex-1"></span>
+      </div>
+
+      <!-- Official Google Sign-In Button -->
+      <div id="google-auth-container" class="mb-5">
+        <button id="btn-google-auth" type="button" class="w-full h-11 bg-[#131313] hover:bg-[#1a1a1a] text-on-surface border border-surface-variant rounded-xl flex items-center justify-center gap-3 font-body-sm text-xs font-medium transition-colors shadow-sm cursor-pointer">
+          <!-- Google Official Multi-color SVG Icon -->
+          <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05"/>
+            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" fill="#EA4335"/>
+          </svg>
+          <span id="google-auth-label">Continue with Google</span>
+        </button>
+
+        <div class="relative flex items-center justify-center my-4">
+          <div class="border-t border-surface-variant w-full"></div>
+          <span class="bg-surface-container-low px-3 font-code-sm text-[10px] text-on-surface-variant uppercase tracking-wider shrink-0">OR EMAIL</span>
+        </div>
+      </div>
+
+      <!-- Main Email/Password Form -->
+      <form id="auth-form" class="space-y-4" novalidate>
+        
+        <!-- Display Name Field (Register Mode Only) -->
+        <div id="field-name-container" class="hidden">
+          <label for="input-name" class="block font-code-sm text-[11px] text-on-surface-variant mb-1 uppercase tracking-wider">Display Name</label>
+          <input id="input-name" type="text" autocomplete="name" placeholder="Alex Rivers" class="w-full bg-surface-container-lowest border border-surface-variant rounded-xl px-3.5 py-2.5 text-sm text-on-surface outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all font-body-sm placeholder:text-surface-variant">
+        </div>
+
+        <!-- Email Field -->
+        <div>
+          <label for="input-email" class="block font-code-sm text-[11px] text-on-surface-variant mb-1 uppercase tracking-wider">Email Address</label>
+          <input id="input-email" type="email" required autocomplete="email" placeholder="you@domain.com" class="w-full bg-surface-container-lowest border border-surface-variant rounded-xl px-3.5 py-2.5 text-sm text-on-surface outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all font-body-sm placeholder:text-surface-variant">
+        </div>
+
+        <!-- Password Field -->
+        <div id="field-password-container">
+          <div class="flex items-center justify-between mb-1">
+            <label for="input-password" class="block font-code-sm text-[11px] text-on-surface-variant uppercase tracking-wider">Password</label>
+            <button id="btn-forgot-password" type="button" class="text-[11px] text-primary hover:underline font-code-sm cursor-pointer">Forgot password?</button>
+          </div>
+          <input id="input-password" type="password" required autocomplete="current-password" minlength="10" placeholder="Minimum 10 characters" class="w-full bg-surface-container-lowest border border-surface-variant rounded-xl px-3.5 py-2.5 text-sm text-on-surface outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all font-body-sm placeholder:text-surface-variant">
+        </div>
+
+        <!-- Password Confirmation (Register Mode Only) -->
+        <div id="field-confirm-password-container" class="hidden">
+          <label for="input-confirm-password" class="block font-code-sm text-[11px] text-on-surface-variant mb-1 uppercase tracking-wider">Confirm Password</label>
+          <input id="input-confirm-password" type="password" autocomplete="new-password" minlength="10" placeholder="Re-enter your password" class="w-full bg-surface-container-lowest border border-surface-variant rounded-xl px-3.5 py-2.5 text-sm text-on-surface outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all font-body-sm placeholder:text-surface-variant">
+        </div>
+
+        <!-- Submit Button -->
+        <button id="btn-submit" type="submit" class="w-full h-11 rounded-xl bg-primary-container text-on-primary-container hover:bg-inverse-primary font-code-sm text-xs font-bold tracking-wider uppercase transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed mt-2">
+          <span id="btn-submit-text">SIGN IN</span>
+          <span id="btn-submit-icon" class="text-sm">›</span>
+          <div id="btn-spinner" class="hidden w-4 h-4 border-2 border-on-primary-container border-t-transparent rounded-full animate-spin"></div>
+        </button>
+      </form>
+
+      <!-- Password Recovery Form (Hidden by default) -->
+      <form id="recovery-form" class="hidden space-y-4" novalidate>
+        <p class="font-body-sm text-xs text-on-surface-variant leading-relaxed">
+          Enter your registered email address and we will generate secure password reset instructions.
+        </p>
+        <div>
+          <label for="recovery-email" class="block font-code-sm text-[11px] text-on-surface-variant mb-1 uppercase tracking-wider">Email Address</label>
+          <input id="recovery-email" type="email" required placeholder="you@domain.com" class="w-full bg-surface-container-lowest border border-surface-variant rounded-xl px-3.5 py-2.5 text-sm text-on-surface outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all font-body-sm">
+        </div>
+        <button id="btn-recovery-submit" type="submit" class="w-full h-11 rounded-xl bg-primary-container text-on-primary-container hover:bg-inverse-primary font-code-sm text-xs font-bold tracking-wider uppercase transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer">
+          <span>SEND INSTRUCTIONS</span>
+          <div id="recovery-spinner" class="hidden w-4 h-4 border-2 border-on-primary-container border-t-transparent rounded-full animate-spin"></div>
+        </button>
+        <div class="text-center pt-2">
+          <button id="btn-recovery-cancel" type="button" class="text-xs text-primary hover:underline font-code-sm cursor-pointer">
+            ← Return to Sign In
+          </button>
+        </div>
+      </form>
+
+      <!-- Password Reset Confirmation Form (When token is provided) -->
+      <form id="reset-confirm-form" class="hidden space-y-4" novalidate>
+        <p class="font-body-sm text-xs text-on-surface-variant leading-relaxed">
+          Create a new secure password for your DocuMind account.
+        </p>
+        <div>
+          <label for="reset-token" class="block font-code-sm text-[11px] text-on-surface-variant mb-1 uppercase tracking-wider">Reset Token</label>
+          <input id="reset-token" type="text" required placeholder="Paste reset token here" class="w-full bg-surface-container-lowest border border-surface-variant rounded-xl px-3.5 py-2.5 text-xs text-on-surface outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all font-code-sm">
+        </div>
+        <div>
+          <label for="reset-new-password" class="block font-code-sm text-[11px] text-on-surface-variant mb-1 uppercase tracking-wider">New Password</label>
+          <input id="reset-new-password" type="password" required minlength="10" placeholder="Minimum 10 characters" class="w-full bg-surface-container-lowest border border-surface-variant rounded-xl px-3.5 py-2.5 text-sm text-on-surface outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all font-body-sm">
+        </div>
+        <button id="btn-reset-confirm-submit" type="submit" class="w-full h-11 rounded-xl bg-primary-container text-on-primary-container hover:bg-inverse-primary font-code-sm text-xs font-bold tracking-wider uppercase transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer">
+          <span>SET NEW PASSWORD</span>
+          <div id="reset-spinner" class="hidden w-4 h-4 border-2 border-on-primary-container border-t-transparent rounded-full animate-spin"></div>
+        </button>
+        <div class="text-center pt-2">
+          <button id="btn-reset-confirm-cancel" type="button" class="text-xs text-primary hover:underline font-code-sm cursor-pointer">
+            ← Back to Sign In
+          </button>
+        </div>
+      </form>
+
+      <!-- Active User Card (Shown if already logged in) -->
+      <div id="active-user-container" class="hidden text-center space-y-4">
+        <div class="w-16 h-16 rounded-full bg-primary mx-auto flex items-center justify-center shadow-lg">
+          <span id="active-user-avatar-initials" class="text-on-primary font-headline-lg text-xl font-bold uppercase">US</span>
+        </div>
+        <div>
+          <h2 id="active-user-email" class="text-sm font-semibold text-on-surface">user@example.com</h2>
+          <span class="inline-block mt-1 px-2.5 py-0.5 rounded-full bg-tertiary/15 text-tertiary font-code-sm text-[11px]">ACTIVE SESSION</span>
+        </div>
+        <div class="pt-2 flex flex-col gap-2">
+          <a id="btn-continue-workspace" href="/app/console/code.html" class="w-full h-10 rounded-xl bg-primary-container text-on-primary-container hover:bg-inverse-primary font-code-sm text-xs font-bold tracking-wider uppercase transition-all flex items-center justify-center">
+            CONTINUE TO CONSOLE ›
+          </a>
+          <button id="btn-logout" type="button" class="w-full h-10 rounded-xl bg-error/15 text-error hover:bg-error/25 font-code-sm text-xs font-semibold tracking-wider uppercase transition-all cursor-pointer">
+            SIGN OUT
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Footer Information -->
+  <footer class="w-full border-t border-surface-variant py-4 px-6 text-center text-on-surface-variant font-code-sm text-[11px]">
+    DocuMind Glass Box Architecture &bull; Document-Grounded Zero-Leakage Privacy &bull; OAuth 2.0 PKCE / OIDC
+  </footer>
+
+  <script src="api.js"></script>
+  <script>
+    (function () {
+      "use strict";
+
+      let currentMode = "login"; // 'login' | 'register' | 'recovery' | 'reset_confirm'
+      const urlParams = new URLSearchParams(window.location.search);
+      const redirectUrl = urlParams.get("redirect") || "/app/console/code.html";
+
+      // Elements
+      const authTitle = document.getElementById("auth-title");
+      const authSubtitle = document.getElementById("auth-subtitle");
+      const modeTabs = document.getElementById("mode-tabs");
+      const tabLogin = document.getElementById("tab-login");
+      const tabRegister = document.getElementById("tab-register");
+      const alertError = document.getElementById("alert-error");
+      const alertErrorText = document.getElementById("alert-error-text");
+      const alertSuccess = document.getElementById("alert-success");
+      const alertSuccessText = document.getElementById("alert-success-text");
+      const googleAuthContainer = document.getElementById("google-auth-container");
+      const btnGoogleAuth = document.getElementById("btn-google-auth");
+      const googleAuthLabel = document.getElementById("google-auth-label");
+
+      const authForm = document.getElementById("auth-form");
+      const fieldNameContainer = document.getElementById("field-name-container");
+      const fieldPasswordContainer = document.getElementById("field-password-container");
+      const fieldConfirmPasswordContainer = document.getElementById("field-confirm-password-container");
+      const inputName = document.getElementById("input-name");
+      const inputEmail = document.getElementById("input-email");
+      const inputPassword = document.getElementById("input-password");
+      const inputConfirmPassword = document.getElementById("input-confirm-password");
+      const btnSubmit = document.getElementById("btn-submit");
+      const btnSubmitText = document.getElementById("btn-submit-text");
+      const btnSubmitIcon = document.getElementById("btn-submit-icon");
+      const btnSpinner = document.getElementById("btn-spinner");
+
+      const recoveryForm = document.getElementById("recovery-form");
+      const recoveryEmail = document.getElementById("recovery-email");
+      const btnForgotPassword = document.getElementById("btn-forgot-password");
+      const btnRecoveryCancel = document.getElementById("btn-recovery-cancel");
+      const recoverySpinner = document.getElementById("recovery-spinner");
+
+      const resetConfirmForm = document.getElementById("reset-confirm-form");
+      const resetToken = document.getElementById("reset-token");
+      const resetNewPassword = document.getElementById("reset-new-password");
+      const btnResetConfirmCancel = document.getElementById("btn-reset-confirm-cancel");
+      const resetSpinner = document.getElementById("reset-spinner");
+
+      const activeUserContainer = document.getElementById("active-user-container");
+      const activeUserEmail = document.getElementById("active-user-email");
+      const activeUserInitials = document.getElementById("active-user-avatar-initials");
+      const btnLogout = document.getElementById("btn-logout");
+      const btnContinueWorkspace = document.getElementById("btn-continue-workspace");
+      const navBackLink = document.getElementById("nav-back-link");
+
+      if (redirectUrl) {
+        navBackLink.href = redirectUrl;
+        btnContinueWorkspace.href = redirectUrl;
+      }
+
+      function showError(msg) {
+        alertErrorText.textContent = msg;
+        alertError.classList.remove("hidden");
+        alertSuccess.classList.add("hidden");
+      }
+
+      function showSuccess(msg) {
+        alertSuccessText.textContent = msg;
+        alertSuccess.classList.remove("hidden");
+        alertError.classList.add("hidden");
+      }
+
+      function clearAlerts() {
+        alertError.classList.add("hidden");
+        alertSuccess.classList.add("hidden");
+      }
+
+      function setMode(mode) {
+        currentMode = mode;
+        clearAlerts();
+
+        if (mode === "login") {
+          authTitle.textContent = "Sign in to DocuMind";
+          authSubtitle.textContent = "Enter your credentials or use Google sign-in to continue.";
+          modeTabs.classList.remove("hidden");
+          tabLogin.className = "flex-1 py-1.5 rounded-lg text-xs font-code-sm font-semibold transition-all bg-surface-container-high text-primary shadow-sm cursor-pointer";
+          tabRegister.className = "flex-1 py-1.5 rounded-lg text-xs font-code-sm font-semibold transition-all text-on-surface-variant hover:text-on-surface cursor-pointer";
+          googleAuthContainer.classList.remove("hidden");
+          googleAuthLabel.textContent = "Continue with Google";
+          authForm.classList.remove("hidden");
+          fieldNameContainer.classList.add("hidden");
+          fieldConfirmPasswordContainer.classList.add("hidden");
+          fieldPasswordContainer.classList.remove("hidden");
+          btnSubmitText.textContent = "SIGN IN";
+          recoveryForm.classList.add("hidden");
+          resetConfirmForm.classList.add("hidden");
+        } else if (mode === "register") {
+          authTitle.textContent = "Create an Account";
+          authSubtitle.textContent = "Register a persistent DocuMind workspace with encrypted tenant isolation.";
+          modeTabs.classList.remove("hidden");
+          tabRegister.className = "flex-1 py-1.5 rounded-lg text-xs font-code-sm font-semibold transition-all bg-surface-container-high text-primary shadow-sm cursor-pointer";
+          tabLogin.className = "flex-1 py-1.5 rounded-lg text-xs font-code-sm font-semibold transition-all text-on-surface-variant hover:text-on-surface cursor-pointer";
+          googleAuthContainer.classList.remove("hidden");
+          googleAuthLabel.textContent = "Register with Google";
+          authForm.classList.remove("hidden");
+          fieldNameContainer.classList.remove("hidden");
+          fieldConfirmPasswordContainer.classList.remove("hidden");
+          fieldPasswordContainer.classList.remove("hidden");
+          btnSubmitText.textContent = "CREATE ACCOUNT";
+          recoveryForm.classList.add("hidden");
+          resetConfirmForm.classList.add("hidden");
+        } else if (mode === "recovery") {
+          authTitle.textContent = "Password Recovery";
+          authSubtitle.textContent = "We will send single-use recovery instructions for your account.";
+          modeTabs.classList.add("hidden");
+          googleAuthContainer.classList.add("hidden");
+          authForm.classList.add("hidden");
+          recoveryForm.classList.remove("hidden");
+          resetConfirmForm.classList.add("hidden");
+        } else if (mode === "reset_confirm") {
+          authTitle.textContent = "Set New Password";
+          authSubtitle.textContent = "Choose a strong password with at least 10 characters.";
+          modeTabs.classList.add("hidden");
+          googleAuthContainer.classList.add("hidden");
+          authForm.classList.add("hidden");
+          recoveryForm.classList.add("hidden");
+          resetConfirmForm.classList.remove("hidden");
+        }
+      }
+
+      tabLogin.addEventListener("click", () => setMode("login"));
+      tabRegister.addEventListener("click", () => setMode("register"));
+      btnForgotPassword.addEventListener("click", () => {
+        recoveryEmail.value = inputEmail.value.trim();
+        setMode("recovery");
+      });
+      btnRecoveryCancel.addEventListener("click", () => setMode("login"));
+      btnResetConfirmCancel.addEventListener("click", () => setMode("login"));
+
+      // Check URL parameters for status/errors
+      const errorParam = urlParams.get("error");
+      const tokenParam = urlParams.get("token");
+      const reasonParam = urlParams.get("reason");
+      const emailParam = urlParams.get("email");
+
+      if (tokenParam) {
+        resetToken.value = tokenParam;
+        setMode("reset_confirm");
+      } else {
+        setMode("login");
+      }
+
+      if (emailParam) {
+        inputEmail.value = emailParam;
+      }
+
+      if (errorParam) {
+        if (errorParam === "invalid_state") {
+          showError("OAuth security verification failed. Please try signing in again.");
+        } else if (errorParam === "account_exists_link_required") {
+          showError(urlParams.get("message") || "An account with this email already exists. Please sign in with your password first.");
+        } else if (errorParam === "google_access_denied") {
+          showError("Google sign-in was cancelled or consent was denied.");
+        } else {
+          showError(`Authentication error: ${urlParams.get("message") || errorParam}`);
+        }
+      } else if (reasonParam === "auth_required") {
+        showError("Authentication required. Please sign in to upload documents or chat.");
+      } else if (reasonParam === "session_expired") {
+        showError("Your session has expired. Please sign in again.");
+      }
+
+      // Check current login state
+      window.DocuMindAPI.getAuthUser().then((res) => {
+        if (res && res.authenticated && res.user) {
+          authForm.classList.add("hidden");
+          modeTabs.classList.add("hidden");
+          googleAuthContainer.classList.add("hidden");
+          recoveryForm.classList.add("hidden");
+          resetConfirmForm.classList.add("hidden");
+          activeUserContainer.classList.remove("hidden");
+          authTitle.textContent = "Authenticated";
+          authSubtitle.textContent = "You are currently signed into DocuMind.";
+          activeUserEmail.textContent = res.user.email;
+          const initials = (res.user.display_name || res.user.email).slice(0, 2).toUpperCase();
+          activeUserInitials.textContent = initials;
+        }
+      });
+
+      // Google Sign-In trigger
+      btnGoogleAuth.addEventListener("click", () => {
+        clearAlerts();
+        window.location.href = `/api/auth/google/authorize?redirect=${encodeURIComponent(redirectUrl)}`;
+      });
+
+      // Email / Password Form Submit
+      authForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        clearAlerts();
+
+        const email = inputEmail.value.trim().toLowerCase();
+        const password = inputPassword.value;
+
+        if (!email) {
+          showError("Please enter a valid email address.");
+          return;
+        }
+
+        if (password.length < 10) {
+          showError("Password must be at least 10 characters long.");
+          return;
+        }
+
+        if (currentMode === "register") {
+          const confirmPw = inputConfirmPassword.value;
+          if (password !== confirmPw) {
+            showError("Passwords do not match.");
+            return;
+          }
+        }
+
+        btnSubmit.disabled = true;
+        btnSubmitText.textContent = currentMode === "login" ? "SIGNING IN..." : "REGISTERING...";
+        btnSubmitIcon.classList.add("hidden");
+        btnSpinner.classList.remove("hidden");
+
+        try {
+          if (currentMode === "login") {
+            await window.DocuMindAPI.login(email, password, true);
+          } else {
+            const displayName = inputName.value.trim() || null;
+            await window.DocuMindAPI.register(email, password, true, displayName);
+          }
+
+          showSuccess("Authentication successful! Redirecting to workspace...");
+          setTimeout(() => {
+            window.location.href = redirectUrl;
+          }, 400);
+        } catch (err) {
+          showError(err.message || "Authentication failed. Please check your credentials.");
+          btnSubmit.disabled = false;
+          btnSubmitText.textContent = currentMode === "login" ? "SIGN IN" : "CREATE ACCOUNT";
+          btnSubmitIcon.classList.remove("hidden");
+          btnSpinner.classList.add("hidden");
+        }
+      });
+
+      // Recovery Form Submit
+      recoveryForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        clearAlerts();
+        const email = recoveryEmail.value.trim().toLowerCase();
+        if (!email) {
+          showError("Please enter your registered email address.");
+          return;
+        }
+
+        recoverySpinner.classList.remove("hidden");
+        try {
+          const res = await fetch("/api/auth/password-reset/request", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email }),
+          });
+          const data = await res.json();
+          showSuccess(data.message || "Password recovery instructions have been prepared.");
+          if (data.debug_token) {
+            showSuccess(`Password recovery instructions prepared. [DEV Token: ${data.debug_token}]`);
+            resetToken.value = data.debug_token;
+            setTimeout(() => setMode("reset_confirm"), 1500);
+          }
+        } catch (err) {
+          showError("Failed to initiate password reset. Please try again.");
+        } finally {
+          recoverySpinner.classList.add("hidden");
+        }
+      });
+
+      // Reset Confirm Form Submit
+      resetConfirmForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        clearAlerts();
+        const token = resetToken.value.trim();
+        const newPassword = resetNewPassword.value;
+
+        if (!token) {
+          showError("Reset token is required.");
+          return;
+        }
+        if (newPassword.length < 10) {
+          showError("Password must be at least 10 characters long.");
+          return;
+        }
+
+        resetSpinner.classList.remove("hidden");
+        try {
+          const res = await fetch("/api/auth/password-reset/confirm", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ token, new_password: newPassword }),
+          });
+          if (!res.ok) {
+            const errData = await res.json();
+            throw new Error(errData.detail || "Reset failed.");
+          }
+          showSuccess("Password reset successfully! Please sign in with your new password.");
+          setTimeout(() => {
+            setMode("login");
+            inputPassword.value = "";
+          }, 1200);
+        } catch (err) {
+          showError(err.message || "Failed to reset password. Token may be expired.");
+        } finally {
+          resetSpinner.classList.add("hidden");
+        }
+      });
+
+      // Logout button handler
+      btnLogout.addEventListener("click", async () => {
+        try {
+          await window.DocuMindAPI.logout();
+          window.location.reload();
+        } catch (e) {
+          window.location.reload();
+        }
+      });
+
+    })();
+  </script>
+</body>
+</html>

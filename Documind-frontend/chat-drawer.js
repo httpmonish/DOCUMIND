@@ -375,7 +375,7 @@
     const assistantRow = document.createElement("div");
     assistantRow.className = "docu-msg-row assistant";
     assistantRow.innerHTML = `
-      <span class="docu-msg-role">DOCUMIND</span>
+      <span class="docu-msg-role"><svg width="12" height="12" viewBox="0 0 32 32" fill="none" style="display:inline-block; vertical-align:-1px; margin-right:5px;"><polygon points="16,2 29,9.5 29,24.5 16,32 3,24.5 3,9.5" fill="#201f1f" stroke="#ff571d" stroke-width="2.5"/><circle cx="16" cy="17" r="4.5" fill="#ff571d"/><path d="M16 6v6.5M8.5 21.5l5.5-3M23.5 21.5l-5.5-3" stroke="#e5e2e1" stroke-width="1.8" stroke-linecap="round"/></svg>DOCUMIND</span>
       <div class="docu-assistant-card">
         <div class="docu-assistant-content"><span class="token-stream"></span><span class="docu-streaming-cursor"></span></div>
         <div class="docu-citations-tray" style="display: none;"></div>
