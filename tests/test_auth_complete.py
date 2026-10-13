@@ -6,13 +6,12 @@ password reset lifecycle, and tenant workspace isolation.
 from __future__ import annotations
 
 import io
+import urllib.parse
 from pathlib import Path
 from typing import Any
-import urllib.parse
 
-from fastapi.testclient import TestClient
 import numpy as np
-import pytest
+from fastapi.testclient import TestClient
 
 from documind.core.config import Settings
 from documind.core.pipeline import DocuMind
@@ -311,7 +310,7 @@ def test_google_oauth_authorize_endpoint(tmp_path: Path) -> None:
     app_configured, _ = build_test_app(
         tmp_path / "app2",
         google_client_id="mock-client-id.apps.googleusercontent.com",
-        google_client_secret="mock-client-secret",
+        google_client_secret="mock-client-secret",  # noqa: S106
     )
     client_configured = TestClient(app_configured)
 
@@ -326,11 +325,13 @@ def test_google_oauth_authorize_endpoint(tmp_path: Path) -> None:
 
 
 def test_google_oauth_callback_flow(tmp_path: Path) -> None:
-    """Google OAuth callback handles errors, state validation, registration, and email collision protection."""
+    """Google OAuth callback handles errors, state validation, registration,
+    and email collision protection.
+    """
     app, _ = build_test_app(
         tmp_path,
         google_client_id="mock-client-id",
-        google_client_secret="mock-client-secret",
+        google_client_secret="mock-client-secret",  # noqa: S106
     )
     client = TestClient(app)
 
@@ -461,9 +462,10 @@ def test_tenant_workspace_isolation_comprehensive(tmp_path: Path) -> None:
         "/api/auth/register",
         json={"email": "usera@example.com", "password": "PasswordUserA123!"},
     )
+    payload_a = io.BytesIO(b"Data owned exclusively by User A.")
     r_up_a = client_a.post(
         "/api/demo/documents",
-        files={"file": ("doc_a.txt", io.BytesIO(b"Data owned exclusively by User A."), "text/plain")},
+        files={"file": ("doc_a.txt", payload_a, "text/plain")},
     )
     assert r_up_a.status_code == 201
 
@@ -472,21 +474,24 @@ def test_tenant_workspace_isolation_comprehensive(tmp_path: Path) -> None:
         "/api/auth/register",
         json={"email": "userb@example.com", "password": "PasswordUserB456!"},
     )
+    payload_b = io.BytesIO(b"Data owned exclusively by User B.")
     r_up_b = client_b.post(
         "/api/demo/documents",
-        files={"file": ("doc_b.txt", io.BytesIO(b"Data owned exclusively by User B."), "text/plain")},
+        files={"file": ("doc_b.txt", payload_b, "text/plain")},
     )
     assert r_up_b.status_code == 201
 
     # 3. Verify User A only sees doc_a.txt
     docs_a = client_a.get("/api/demo/documents").json()
-    sources_a = [d["source"] for d in (docs_a if isinstance(docs_a, list) else docs_a.get("documents", []))]
+    list_a = docs_a if isinstance(docs_a, list) else docs_a.get("documents", [])
+    sources_a = [d["source"] for d in list_a]
     assert "doc_a.txt" in sources_a
     assert "doc_b.txt" not in sources_a
 
     # 4. Verify User B only sees doc_b.txt
     docs_b = client_b.get("/api/demo/documents").json()
-    sources_b = [d["source"] for d in (docs_b if isinstance(docs_b, list) else docs_b.get("documents", []))]
+    list_b = docs_b if isinstance(docs_b, list) else docs_b.get("documents", [])
+    sources_b = [d["source"] for d in list_b]
     assert "doc_b.txt" in sources_b
     assert "doc_a.txt" not in sources_b
 
@@ -511,5 +516,8 @@ def test_tenant_workspace_isolation_comprehensive(tmp_path: Path) -> None:
     assert del_a.status_code in (200, 204)
 
     docs_a_after = client_a.get("/api/demo/documents").json()
-    sources_a_after = [d["source"] for d in (docs_a_after if isinstance(docs_a_after, list) else docs_a_after.get("documents", []))]
+    list_a_after = (
+        docs_a_after if isinstance(docs_a_after, list) else docs_a_after.get("documents", [])
+    )
+    sources_a_after = [d["source"] for d in list_a_after]
     assert "doc_a.txt" not in sources_a_after

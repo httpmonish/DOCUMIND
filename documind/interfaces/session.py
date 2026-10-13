@@ -161,7 +161,7 @@ class SessionManager:
     def register_session(self, token: str, ip_hash: str = "test") -> str:
         """Explicitly register a specific session token (useful for test fixtures)."""
         clean_token = validate_session_id_format(token)
-        s_hash = token_to_hash(clean_token)
+        s_hash = normalize_session_identifier(clean_token)
         now = time.time()
         expires_at = now + self.ttl_seconds
 

@@ -711,13 +711,18 @@ class AuthManager:
                             sha = hashlib.sha256(content.encode("utf-8")).hexdigest()
                             with user_lock:
                                 indexed_doc = user_engine.index_text(content, doc_source, sha)
-                                chunks = getattr(indexed_doc, "chunk_count", 0)
+                                chunks = (
+                                    indexed_doc
+                                    if isinstance(indexed_doc, int)
+                                    else getattr(indexed_doc, "chunk_count", 0)
+                                )
                                 self.record_document_owner(
                                     user_id,
                                     doc_source,
                                     chunk_count=chunks,
                                     content_hash=sha,
                                 )
+                                session_mgr.record_upload(user_hash, len(content.encode("utf-8")))
                         except Exception as e:
                             logger.warning("Error migrating doc %s: %s", item.name, e)
 

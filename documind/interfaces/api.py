@@ -1539,7 +1539,16 @@ def create_app(
 
             # If summary or overview query, prepend document lead chunks for true document context
             q_lower = condensed_q.lower()
-            is_overview = any(w in q_lower for w in ("summar", "what is inside", "overview", "what is this", "tell me about", "about the doc", "contents"))
+            overview_keywords = (
+                "summar",
+                "what is inside",
+                "overview",
+                "what is this",
+                "tell me about",
+                "about the doc",
+                "contents",
+            )
+            is_overview = any(w in q_lower for w in overview_keywords)
             if is_overview and session_engine.documents():
                 first_doc = session_engine.documents()[0]
                 doc_chunks = session_engine.store.chunks_for(first_doc)
