@@ -87,7 +87,7 @@ opentelemetry-exporter-otlp-proto-common==1.45.1
 opentelemetry-exporter-otlp-proto-grpc==1.45.1
 opentelemetry-exporter-otlp-proto-http==1.37.0
 opentelemetry-instrumentation==0.58b0
-opentelemetry-instrumentation-requests==0.58b0
+opentelemetry-instrumentation-requests==0.66b1
 opentelemetry-instrumentation-threading==0.58b0
 opentelemetry-proto==1.45.1
 opentelemetry-sdk==1.45.1
