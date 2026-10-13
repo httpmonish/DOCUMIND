@@ -60,7 +60,7 @@ iniconfig==2.3.1
 Jinja2==3.1.6
 jiter==0.17.0
 joblib==1.6.0
-jsonschema==4.25.1
+jsonschema==4.26.0
 jsonschema-specifications==2025.9.1
 kubernetes==37.0.0
 librt==0.16.0
