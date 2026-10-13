@@ -594,9 +594,18 @@ def create_app(
         CORSMiddleware,
         allow_origins=allowed_origins,
         allow_credentials=True,
-        allow_methods=["*"],
+        allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
         allow_headers=["*"],
     )
+
+    from starlette.middleware.trustedhost import TrustedHostMiddleware
+
+    trusted_hosts = ["localhost", "127.0.0.1", "testserver", "*.localhost", "host.docker.internal"]
+    env_hosts = os.getenv("DOCUMIND_ALLOWED_HOSTS")
+    if env_hosts:
+        trusted_hosts.extend([h.strip() for h in env_hosts.split(",") if h.strip()])
+    if app_settings.env == "production" or os.getenv("DOCUMIND_ENFORCE_TRUSTED_HOSTS") == "1":
+        app.add_middleware(TrustedHostMiddleware, allowed_hosts=trusted_hosts)
 
     # Register Request ID and defensive security headers middleware
     @app.middleware("http")
@@ -612,8 +621,31 @@ def create_app(
         response.headers["X-Request-ID"] = req_id
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "DENY"
-        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        response.headers["Referrer-Policy"] = os.getenv(
+            "DOCUMIND_REFERRER_POLICY", "strict-origin-when-cross-origin"
+        )
         response.headers["Cache-Control"] = "no-store"
+        response.headers["Cross-Origin-Opener-Policy"] = "same-origin"
+        response.headers["Cross-Origin-Resource-Policy"] = "same-origin"
+        response.headers["Permissions-Policy"] = (
+            "accelerometer=(), camera=(), geolocation=(), gyroscope=(), "
+            "magnetometer=(), microphone=(), payment=(), usb=()"
+        )
+        response.headers["Content-Security-Policy"] = (
+            "default-src 'self'; "
+            "script-src 'self'; "
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+            "font-src 'self' https://fonts.gstatic.com data:; "
+            "img-src 'self' data:; "
+            "connect-src 'self'; "
+            "media-src 'none'; "
+            "object-src 'none'; "
+            "base-uri 'none'; "
+            "form-action 'self'; "
+            "frame-ancestors 'none';"
+        )
+        if request.url.scheme == "https" or request.headers.get("x-forwarded-proto") == "https":
+            response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
         return response
 
     register_exception_handlers(app)
@@ -656,6 +688,17 @@ def create_app(
         engine: DocuMind = request.app.state.engine
         settings: Settings = request.app.state.settings
         req_id = _get_request_id(request)
+
+        if os.getenv("DOCUMIND_DISABLE_GENERATION") == "1":
+            return JSONResponse(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                content={
+                    "error": {
+                        "code": "generation_disabled",
+                        "message": "AI generation is currently disabled by administrative kill switch.",
+                    }
+                },
+            )
 
         # Empty index: return 409 conflict with index_empty
         if engine.store.count() == 0:
@@ -1277,6 +1320,8 @@ def create_app(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Document not found",
             )
+        if auth_mgr and not user.id.startswith("guest_"):
+            auth_mgr.touch_document_access(user.id, source)
         mgr: SessionManager = request.app.state.session_manager
         session_engine, _ = mgr.get_engine(session_id)
         if source not in session_engine.documents():
@@ -1457,6 +1502,32 @@ def create_app(
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail="index_empty",
+            )
+
+        if os.getenv("DOCUMIND_DISABLE_GENERATION") == "1":
+            effective_k = body.top_k or session_engine.settings.top_k
+            q_vec = session_engine.embedder.embed_query(body.question)
+            retrieved = session_engine.store.query(q_vec, effective_k)
+            candidates = [
+                {
+                    "id": c.chunk.id,
+                    "source": c.chunk.source,
+                    "chunk_index": c.chunk.chunk_index,
+                    "score": round(float(c.score), 4),
+                    "text": c.chunk.text,
+                    "passed_gate": c.score >= session_engine.settings.min_score,
+                }
+                for c in retrieved
+            ]
+            return JSONResponse(
+                status_code=status.HTTP_200_OK,
+                content={
+                    "text": "AI generation is currently disabled by administrative kill switch. Showing retrieved candidate passages only.",
+                    "outcome": "retrieval_only",
+                    "reason": "kill_switch_active",
+                    "citations": [],
+                    "retrieved": candidates,
+                },
             )
 
         ip = client_ip(request)
@@ -1895,6 +1966,9 @@ def create_app(
         )
 
         # Record turns in SQLite
+        if auth_mgr and not user.id.startswith("guest_"):
+            for c in ans.citations:
+                auth_mgr.touch_document_access(user.id, c.source)
         chat_mgr.add_message(conv_id, "user", body.question)
         msg_id = chat_mgr.add_message(
             conv_id,
@@ -2076,6 +2150,24 @@ def create_app(
                 chat_mgr.add_message(conv_id, "assistant", decline_msg)
                 return
 
+            if os.getenv("DOCUMIND_DISABLE_GENERATION") == "1":
+                if auth_mgr and owner_id:
+                    auth_mgr.log_event(owner_id, "kill_switch_activated", {"request_id": req_id})
+                kill_msg = (
+                    "AI generation is currently disabled by administrative kill switch. "
+                    "Showing retrieved candidate passages only."
+                )
+                yield f"event: token\ndata: {json_lib.dumps({'delta': kill_msg})}\n\n"
+                done_data = json_lib.dumps(
+                    {
+                        "outcome": "retrieval_only",
+                        "reason": "kill_switch_active",
+                        "latency_ms": 1,
+                    }
+                )
+                yield f"event: done\ndata: {done_data}\n\n"
+                return
+
             ip = client_ip(request)
             ip_h = hash_ip(ip)
             spend_ledger: SpendLedger = request.app.state.spend_ledger
@@ -2202,6 +2294,11 @@ def create_app(
                 yield f"event: done\ndata: {json_lib.dumps(done_payload)}\n\n"
 
                 # Persist in SQLite
+                if auth_mgr and not user.id.startswith("guest_"):
+                    for c_dict in cit_dicts:
+                        c_src = c_dict.get("source")
+                        if c_src:
+                            auth_mgr.touch_document_access(user.id, c_src)
                 chat_mgr.add_message(conv_id, "user", body.question)
                 chat_mgr.add_message(
                     conv_id,
@@ -2213,7 +2310,8 @@ def create_app(
                 )
             except Exception as err:
                 spend_ledger.release(ip_h, session_id, est_cost)
-                yield f"event: error\ndata: {json_lib.dumps({'message': str(err)})}\n\n"
+                err_data = json_lib.dumps({"code": "generation_error", "message": str(err)})
+                yield f"event: error\ndata: {err_data}\n\n"
 
         return StreamingResponse(
             event_generator(),
@@ -2468,38 +2566,36 @@ def create_app(
         import urllib.request
 
         google_token_endpoint = "https://oauth2.googleapis.com/token"  # noqa: S105
-        token_data = urllib.parse.urlencode(
-            {
-                "code": code,
-                "client_id": client_id,
-                "client_secret": client_secret,
-                "redirect_uri": redirect_uri,
-                "grant_type": "authorization_code",
-            }
-        ).encode("utf-8")
+        import httpx
 
-        token_req = urllib.request.Request(
-            google_token_endpoint,
-            data=token_data,
-            headers={
-                "Content-Type": "application/x-www-form-urlencoded",
-                "Accept": "application/json",
-            },
-        )
-        with urllib.request.urlopen(token_req, timeout=10.0) as resp:  # noqa: S310
-            token_payload = json.loads(resp.read().decode("utf-8"))
+        data_dict = {
+            "code": code,
+            "client_id": client_id,
+            "client_secret": client_secret,
+            "redirect_uri": redirect_uri,
+            "grant_type": "authorization_code",
+        }
+        with httpx.Client(timeout=10.0) as client:
+            token_resp = client.post(
+                google_token_endpoint,
+                data=data_dict,
+                headers={"Accept": "application/json"},
+            )
+            if token_resp.status_code != 200:
+                raise AuthError("Failed to obtain access token from Google.", status_code=400)
+            token_payload = token_resp.json()
 
-        access_token = token_payload.get("access_token")
-        if not access_token:
-            raise AuthError("Failed to obtain access token from Google.", status_code=400)
+            access_token = token_payload.get("access_token")
+            if not access_token:
+                raise AuthError("Failed to obtain access token from Google.", status_code=400)
 
-        userinfo_url = "https://www.googleapis.com/oauth2/v3/userinfo"
-        userinfo_req = urllib.request.Request(
-            userinfo_url,
-            headers={"Authorization": f"Bearer {access_token}", "Accept": "application/json"},
-        )
-        with urllib.request.urlopen(userinfo_req, timeout=10.0) as resp:  # noqa: S310
-            userinfo_payload = json.loads(resp.read().decode("utf-8"))
+            userinfo_resp = client.get(
+                "https://www.googleapis.com/oauth2/v3/userinfo",
+                headers={"Authorization": f"Bearer {access_token}", "Accept": "application/json"},
+            )
+            if userinfo_resp.status_code != 200:
+                raise AuthError("Failed to fetch profile from Google.", status_code=400)
+            userinfo_payload = userinfo_resp.json()
 
         sub = userinfo_payload.get("sub")
         email = userinfo_payload.get("email")
