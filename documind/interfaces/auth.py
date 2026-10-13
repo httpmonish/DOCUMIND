@@ -947,15 +947,52 @@ class AuthManager:
             user_engine, user_lock = session_mgr.get_engine(user_hash)
 
             if guest_uploads.exists() and guest_uploads.is_dir():
+                import subprocess
+                import sys
+
                 for item in guest_uploads.glob("*"):
                     if item.is_file():
                         dest_file = user_uploads / item.name
                         shutil.copy2(item, dest_file)
                         parts = item.name.split("_", 1)
                         doc_source = parts[1] if len(parts) > 1 else item.name
+                        ext = dest_file.suffix.lower()
+                        mime = (
+                            "application/pdf"
+                            if ext == ".pdf"
+                            else "text/markdown"
+                            if ext == ".md"
+                            else "text/plain"
+                        )
                         try:
-                            content = dest_file.read_text(encoding="utf-8")
-                            sha = hashlib.sha256(content.encode("utf-8")).hexdigest()
+                            file_bytes = dest_file.read_bytes()
+                            file_size = len(file_bytes)
+                            sha = hashlib.sha256(file_bytes).hexdigest()
+
+                            if ext == ".pdf":
+                                proc_env = os.environ.copy()
+                                extract_cmd = [
+                                    sys.executable,
+                                    "-m",
+                                    "documind.core._extract_worker",
+                                    str(dest_file),
+                                ]
+                                proc = subprocess.run(  # noqa: S603
+                                    extract_cmd,
+                                    timeout=60,
+                                    capture_output=True,
+                                    env=proc_env,
+                                    check=False,
+                                )
+                                if proc.returncode != 0:
+                                    logger.warning(
+                                        "Failed to extract PDF %s on migration", item.name
+                                    )
+                                    continue
+                                content = proc.stdout.decode("utf-8")
+                            else:
+                                content = file_bytes.decode("utf-8")
+
                             with user_lock:
                                 indexed_doc = user_engine.index_text(content, doc_source, sha)
                                 chunks = (
@@ -964,12 +1001,19 @@ class AuthManager:
                                     else getattr(indexed_doc, "chunk_count", 0)
                                 )
                                 self.record_document_owner(
-                                    user_id,
-                                    doc_source,
+                                    user_id=user_id,
+                                    source=doc_source,
                                     chunk_count=chunks,
                                     content_hash=sha,
+                                    storage_ref=str(dest_file),
+                                    storage_key=dest_file.name,
+                                    display_name=doc_source,
+                                    file_type=ext.lstrip("."),
+                                    mime_type=mime,
+                                    file_size=file_size,
+                                    status="indexed",
                                 )
-                                session_mgr.record_upload(user_hash, len(content.encode("utf-8")))
+                                session_mgr.record_upload(user_hash, file_size)
                         except Exception as e:
                             logger.warning("Error migrating doc %s: %s", item.name, e)
 
