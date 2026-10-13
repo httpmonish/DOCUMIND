@@ -141,16 +141,44 @@ The frontend provides a single, high-fidelity entry point at `/app/auth.html`:
 
 ---
 
-## 7. Automated Test Verification
+## 7. Persistent User Workspace & Conversation History
 
-A dedicated end-to-end test suite validates all security invariants:
+Every registered user benefits from a fully persistent workspace backed by SQLite (`auth.db`) with WAL mode:
+
+### 1. Document Persistence & Recent Documents
+- **`GET /api/demo/documents`**: Returns user's uploaded documents with complete metadata (`display_name`, `file_type`, `file_size`, `mime_type`, `storage_key`, `chunk_count`, `last_accessed_at`).
+- **`GET /api/demo/documents/recent`**: Returns user's documents ordered by most recent access (`last_accessed_at DESC`), with creation timestamp fallback.
+- **`GET /api/demo/documents/{source}`**: Validates tenant ownership, updates `last_accessed_at`, and returns document metadata.
+- **`PATCH /api/demo/documents/{source}/rename`**: Renames document display name.
+- **`DELETE /api/demo/documents/{source}`**: Validates tenant ownership and soft-deletes the document.
+
+### 2. Multi-Device Conversation History & Continuation
+- **`POST /api/demo/conversations`**: Creates a new conversation thread with optional document attachment.
+- **`GET /api/demo/conversations`**: Lists all conversations owned by the authenticated user, ordered by recent activity.
+- **`GET /api/demo/conversations/{id}/messages`**: Restores full turn history and verified citation anchors (`[S1]`, `[S2]`).
+- **`PATCH /api/demo/conversations/{id}`**: Renames a conversation title.
+- **`DELETE /api/demo/conversations/{id}`**: Soft-deletes a conversation (strictly owner-scoped).
+- **`POST /api/demo/chat`** & **`POST /api/demo/chat/stream`**: Automatically attaches turns to conversation threads, persists assistant responses and citation anchors, and updates conversation activity timestamps.
+
+### 3. Glass Box UI History Drawer
+- **Drawer History Panel**: Accessible via the "History" button in the chat drawer header.
+- **Restoration & Continuation**: Selecting any past conversation seamlessly restores previous messages, interactive citation pills, and conversation context across re-logins and browser restarts.
+
+---
+
+## 8. Automated Test Verification
+
+A dedicated end-to-end test suite validates all security invariants and persistent workspace flows:
 
 ```bash
+# Run persistent workspace and conversation tests
+.venv/bin/pytest tests/test_persistent_workspace.py -v
+
 # Run complete authentication and isolation test suite
 .venv/bin/pytest tests/test_auth_complete.py -v
 
-# Run full auth test suite
-.venv/bin/pytest tests/test_auth.py tests/test_auth_complete.py -v
+# Run full regression test suite
+.venv/bin/pytest tests/test_auth.py tests/test_auth_complete.py tests/test_demo_e2e.py tests/test_persistent_workspace.py -v
 
 # Run code style and type safety quality gates
 .venv/bin/ruff check .

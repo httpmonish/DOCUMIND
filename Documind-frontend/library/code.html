@@ -554,17 +554,19 @@ Delete this document
           : "p-3 hover:bg-[#151518] cursor-pointer transition-colors border-l-2 border-l-transparent";
 
         const shaShort = doc.sha256 ? `${doc.sha256.substring(0, 6)}…${doc.sha256.substring(doc.sha256.length - 4)}` : "—";
+        const displayName = doc.display_name || doc.source;
+        const lastAccess = doc.last_accessed_at ? new Date(doc.last_accessed_at * 1000).toLocaleDateString() : "";
         row.innerHTML = `
           <div class="flex items-center justify-between gap-1 mb-1">
-            <span class="text-[#ECEAE6] text-[13px] font-medium truncate">${escapeHtml(doc.source)}</span>
+            <span class="text-[#ECEAE6] text-[13px] font-medium truncate" title="${escapeHtml(displayName)}">${escapeHtml(displayName)}</span>
             <div class="flex items-center gap-1">
               <span class="w-1.5 h-1.5 rounded-full bg-[#3DD6A0]"></span>
-              <span class="text-[10px] text-[#3DD6A0] uppercase font-semibold">Indexed</span>
+              <span class="text-[10px] text-[#3DD6A0] uppercase font-semibold">${escapeHtml(doc.status || "Indexed")}</span>
             </div>
           </div>
           <div class="text-[#8A8690] text-[11px] flex items-center justify-between">
-            <span>${doc.chunks || 0} chunks</span>
-            <span>${shaShort}</span>
+            <span>${doc.chunks || doc.chunk_count || 0} chunks</span>
+            <span>${lastAccess || shaShort}</span>
           </div>
           ${isSelected ? '<div class="mt-2 text-[10px] text-[#F05A24] font-semibold tracking-wider uppercase">ACTIVE FOCUS</div>' : ""}
         `;
@@ -577,7 +579,8 @@ Delete this document
     async function selectDocument(doc) {
       activeDoc = doc;
       renderDocumentList();
-      selectedDocName.textContent = doc.source;
+      selectedDocName.textContent = doc.display_name || doc.source;
+      DocuMindAPI.getDocument(doc.source).catch(() => {});
       const storedCard = document.getElementById("stored-chroma-card");
       if (storedCard) storedCard.classList.remove("hidden");
       chunkStreamViewport.innerHTML = '<div class="p-8 text-center text-[#8A8690] text-xs"><span class="animate-pulse">Loading chunks from ChromaDB…</span></div>';

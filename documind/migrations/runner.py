@@ -176,10 +176,19 @@ MIGRATIONS: list[tuple[int, str, list[str]]] = [
             "ALTER TABLE messages ADD COLUMN updated_at REAL;",
             "ALTER TABLE messages ADD COLUMN status TEXT DEFAULT 'completed';",
             "ALTER TABLE messages ADD COLUMN metadata TEXT;",
-            "CREATE INDEX IF NOT EXISTS idx_documents_owner_accessed ON documents(owner_id, last_accessed_at);",
-            "CREATE INDEX IF NOT EXISTS idx_conversations_owner_activity ON conversations(owner_id, last_message_at);",
+            (
+                "CREATE INDEX IF NOT EXISTS idx_documents_owner_accessed "
+                "ON documents(owner_id, last_accessed_at);"
+            ),
+            (
+                "CREATE INDEX IF NOT EXISTS idx_conversations_owner_activity "
+                "ON conversations(owner_id, last_message_at);"
+            ),
             "CREATE INDEX IF NOT EXISTS idx_conversations_session ON conversations(session_hash);",
-            "CREATE INDEX IF NOT EXISTS idx_messages_conv_created ON messages(conversation_id, created_at);",
+            (
+                "CREATE INDEX IF NOT EXISTS idx_messages_conv_created "
+                "ON messages(conversation_id, created_at);"
+            ),
         ],
     ),
 ]

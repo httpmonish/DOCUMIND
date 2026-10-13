@@ -54,6 +54,10 @@
             </div>
           </div>
           <div class="docu-drawer-actions">
+            <button class="docu-btn-text" id="docu-btn-history" title="View conversation history">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              <span>History</span>
+            </button>
             <button class="docu-btn-text" id="docu-btn-new-chat" title="Start a fresh conversation thread">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
               <span>New</span>
@@ -63,6 +67,19 @@
             </button>
           </div>
         </header>
+
+        <!-- History Overlay Panel -->
+        <div class="docu-history-drawer" id="docu-history-drawer" style="display: none;">
+          <div class="docu-history-header">
+            <span>SAVED CONVERSATIONS</span>
+            <button class="docu-btn-icon" id="docu-btn-close-history" aria-label="Close history">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+          </div>
+          <div class="docu-history-list" id="docu-history-list">
+            <span style="font-size: 11px; color: var(--docu-chat-muted);">Loading past conversations…</span>
+          </div>
+        </div>
 
         <!-- Document Tray -->
         <section class="docu-docs-tray">
@@ -143,6 +160,8 @@
     evidenceSnippetEl = document.getElementById("docu-evidence-snippet");
     evidenceSourceEl = document.getElementById("docu-evidence-source");
     fileInputEl = document.getElementById("docu-file-input");
+    historyDrawerEl = document.getElementById("docu-history-drawer");
+    historyListEl = document.getElementById("docu-history-list");
 
     // Event listeners
     backdropEl.addEventListener("click", closeDrawer);
@@ -150,6 +169,10 @@
     document.getElementById("docu-btn-close-evidence").addEventListener("click", closeEvidence);
 
     document.getElementById("docu-btn-new-chat").addEventListener("click", resetConversation);
+    const btnHistory = document.getElementById("docu-btn-history");
+    if (btnHistory) btnHistory.addEventListener("click", toggleHistory);
+    const btnCloseHist = document.getElementById("docu-btn-close-history");
+    if (btnCloseHist) btnCloseHist.addEventListener("click", closeHistory);
 
     // Attach actions
     const btnAttach = document.getElementById("docu-btn-attach");
@@ -249,6 +272,173 @@
   function closeEvidence() {
     if (evidenceDrawerEl) {
       evidenceDrawerEl.classList.remove("active");
+    }
+  }
+
+  function closeHistory() {
+    if (historyDrawerEl) {
+      historyDrawerEl.style.display = "none";
+    }
+  }
+
+  async function toggleHistory() {
+    if (!historyDrawerEl) return;
+    if (historyDrawerEl.style.display === "flex") {
+      closeHistory();
+      return;
+    }
+    closeEvidence();
+    historyDrawerEl.style.display = "flex";
+    historyListEl.innerHTML = `
+      <span style="font-size: 11px; color: var(--docu-chat-muted); padding: 8px;">Loading saved conversations…</span>
+    `;
+    try {
+      const convs = await DocuMindAPI.listConversations();
+      const list = Array.isArray(convs) ? convs : [];
+      if (list.length === 0) {
+        historyListEl.innerHTML = `
+          <div style="text-align: center; padding: 24px 12px; color: var(--docu-chat-muted); font-size: 12px;">
+            No saved conversations found. Ask a question to start one!
+          </div>
+        `;
+        return;
+      }
+      historyListEl.innerHTML = list.map(c => {
+        const title = c.title || "Untitled Conversation";
+        const dateStr = c.last_message_at ? new Date(c.last_message_at * 1000).toLocaleDateString(undefined, {
+          month: "short", day: "numeric", hour: "2-digit", minute: "2-digit"
+        }) : (c.created_at ? new Date(c.created_at * 1000).toLocaleDateString() : "");
+        const isActive = c.id === currentConversationId ? " active" : "";
+        return `
+          <div class="docu-history-item${isActive}" data-conv-id="${escapeHtml(c.id)}">
+            <div class="docu-history-item-info">
+              <span class="docu-history-item-title">${escapeHtml(title)}</span>
+              <span class="docu-history-item-date">${escapeHtml(dateStr)}</span>
+            </div>
+            <button class="docu-history-delete-btn" data-delete-id="${escapeHtml(c.id)}" title="Delete conversation">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            </button>
+          </div>
+        `;
+      }).join("");
+
+      historyListEl.querySelectorAll(".docu-history-item").forEach(item => {
+        item.addEventListener("click", (e) => {
+          if (e.target.closest(".docu-history-delete-btn")) return;
+          const cid = item.getAttribute("data-conv-id");
+          if (cid) loadConversation(cid);
+        });
+      });
+
+      historyListEl.querySelectorAll(".docu-history-delete-btn").forEach(btn => {
+        btn.addEventListener("click", async (e) => {
+          e.stopPropagation();
+          const cid = btn.getAttribute("data-delete-id");
+          if (!cid) return;
+          try {
+            await DocuMindAPI.deleteConversation(cid);
+            if (currentConversationId === cid) {
+              resetConversation();
+            }
+            toggleHistory();
+          } catch (delErr) {
+            console.error("Failed to delete conversation:", delErr);
+          }
+        });
+      });
+    } catch (err) {
+      console.error("Failed to load conversations:", err);
+      historyListEl.innerHTML = `
+        <div style="color: var(--docu-chat-red); font-size: 12px; padding: 12px;">
+          Failed to load history: ${escapeHtml(err.message)}
+        </div>
+      `;
+    }
+  }
+
+  async function loadConversation(convId) {
+    closeHistory();
+    closeEvidence();
+    currentConversationId = convId;
+    if (messagesListEl) {
+      messagesListEl.innerHTML = `
+        <div style="padding: 24px; text-align: center; color: var(--docu-chat-muted); font-size: 12.5px;">
+          Restoring conversation messages…
+        </div>
+      `;
+    }
+    try {
+      const msgs = await DocuMindAPI.getConversationMessages(convId);
+      const list = Array.isArray(msgs) ? msgs : [];
+      if (messagesListEl) {
+        messagesListEl.innerHTML = "";
+      }
+      if (list.length === 0) {
+        resetConversation();
+        return;
+      }
+      for (const m of list) {
+        if (m.role === "user") {
+          const userRow = document.createElement("div");
+          userRow.className = "docu-msg-row user";
+          userRow.innerHTML = `
+            <span class="docu-msg-role">YOU</span>
+            <div class="docu-user-bubble">${escapeHtml(m.content)}</div>
+          `;
+          messagesListEl.appendChild(userRow);
+        } else {
+          const assistantRow = document.createElement("div");
+          assistantRow.className = "docu-msg-row assistant";
+          const citations = Array.isArray(m.citations) ? m.citations : [];
+          let formatted = escapeHtml(m.content);
+          citations.forEach((c, idx) => {
+            const marker = c.marker || `[S${idx + 1}]`;
+            const pillHtml = `<button class="docu-citation-pill" data-cit-idx="${idx}">${escapeHtml(marker)}</button>`;
+            formatted = formatted.replaceAll(escapeHtml(marker), pillHtml);
+          });
+
+          const citationsHtml = citations.length > 0 ? `
+            <div class="docu-citations-tray" style="display: flex;">
+              ${citations.map((c, idx) => `
+                <button class="docu-citation-pill" data-cit-idx="${idx}">
+                  ${escapeHtml(c.marker || `[S${idx + 1}]`)} ${escapeHtml(c.source)} · c${c.chunk_index}
+                </button>
+              `).join("")}
+            </div>
+          ` : "";
+
+          assistantRow.innerHTML = `
+            <span class="docu-msg-role"><svg width="12" height="12" viewBox="0 0 32 32" fill="none" style="display:inline-block; vertical-align:-1px; margin-right:5px;"><polygon points="16,2 29,9.5 29,24.5 16,32 3,24.5 3,9.5" fill="#201f1f" stroke="#ff571d" stroke-width="2.5"/><circle cx="16" cy="17" r="4.5" fill="#ff571d"/><path d="M16 6v6.5M8.5 21.5l5.5-3M23.5 21.5l-5.5-3" stroke="#e5e2e1" stroke-width="1.8" stroke-linecap="round"/></svg>DOCUMIND</span>
+            <div class="docu-assistant-card">
+              <div class="docu-assistant-content"><span class="token-stream">${formatted}</span></div>
+              ${citationsHtml}
+              <div class="docu-assistant-meta">
+                <span class="status-label" style="color: var(--docu-chat-green);">${citations.length} Verified Citations</span>
+              </div>
+            </div>
+          `;
+          assistantRow.querySelectorAll(".docu-citation-pill").forEach(pill => {
+            pill.addEventListener("click", () => {
+              const idx = parseInt(pill.getAttribute("data-cit-idx"), 10);
+              if (citations[idx]) openEvidence(citations[idx]);
+            });
+          });
+          messagesListEl.appendChild(assistantRow);
+        }
+      }
+      messagesListEl.scrollTop = messagesListEl.scrollHeight;
+      if (composerTextarea) {
+        composerTextarea.focus();
+      }
+    } catch (err) {
+      console.error("Failed to restore conversation messages:", err);
+      if (messagesListEl) {
+        messagesListEl.innerHTML = `
+          <div class="docu-banner-error">
+            <span>Failed to restore messages: ${escapeHtml(err.message)}</span>
+          </div>
+        `;
+      }
     }
   }
 

@@ -22,7 +22,7 @@ import uuid
 from collections.abc import AsyncGenerator, Mapping
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from fastapi import (
     APIRouter,
@@ -863,8 +863,14 @@ def create_app(
                     try:
                         proc_env = os.environ.copy()
                         proc_env["DOCUMIND_MAX_PAGES"] = str(settings.max_pages)
+                        extract_cmd = [
+                            sys.executable,
+                            "-m",
+                            "documind.core._extract_worker",
+                            str(final_path),
+                        ]
                         proc = subprocess.run(  # noqa: S603
-                            [sys.executable, "-m", "documind.core._extract_worker", str(final_path)],
+                            extract_cmd,
                             timeout=60,
                             capture_output=True,
                             env=proc_env,
@@ -880,9 +886,8 @@ def create_app(
                             safe_name, f"PDF exceeds maximum page limit of {settings.max_pages}"
                         )
                     if proc.returncode != 0:
-                        err_msg = (
-                            proc.stderr.decode("utf-8", errors="replace").strip() or "PDF parse failed"
-                        )
+                        raw_err = proc.stderr.decode("utf-8", errors="replace").strip()
+                        err_msg = raw_err or "PDF parse failed"
                         raise DocumentUnreadable(safe_name, err_msg)
 
                     extracted_text = proc.stdout.decode("utf-8")
@@ -1130,7 +1135,7 @@ def create_app(
         if auth_mgr and not user.id.startswith("guest_"):
             db_docs = auth_mgr.list_user_documents(user.id)
             if db_docs:
-                return db_docs
+                return cast(list[dict[str, Any]], db_docs)
 
         docs = session_engine.documents()
         return [
@@ -1158,7 +1163,7 @@ def create_app(
         user, session_id = auth_info
         auth_mgr = getattr(request.app.state, "auth_manager", None)
         if auth_mgr and not user.id.startswith("guest_"):
-            return auth_mgr.list_recent_documents(user.id, limit=limit)
+            return cast(list[dict[str, Any]], auth_mgr.list_recent_documents(user.id, limit=limit))
 
         mgr: SessionManager = request.app.state.session_manager
         session_engine, _ = mgr.get_engine(session_id)
@@ -1263,12 +1268,15 @@ def create_app(
     ) -> JSONResponse:
         user, session_id = auth_info
         auth_mgr = getattr(request.app.state, "auth_manager", None)
-        if auth_mgr and not user.id.startswith("guest_"):
-            if not auth_mgr.verify_document_owner(user.id, source):
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail="Access denied to document chunks",
-                )
+        if (
+            auth_mgr
+            and not user.id.startswith("guest_")
+            and not auth_mgr.verify_document_owner(user.id, source)
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Document not found",
+            )
         mgr: SessionManager = request.app.state.session_manager
         session_engine, _ = mgr.get_engine(session_id)
         if source not in session_engine.documents():
@@ -1363,7 +1371,7 @@ def create_app(
                 )
             auth_mgr.touch_document_access(user.id, source)
             doc_meta["last_accessed_at"] = time.time()
-            return doc_meta
+            return cast(dict[str, Any], doc_meta)
 
         if source not in session_engine.documents():
             raise HTTPException(
@@ -1403,12 +1411,16 @@ def create_app(
             )
 
         auth_mgr = getattr(request.app.state, "auth_manager", None)
-        if auth_mgr and user and not user.id.startswith("guest_"):
-            if not auth_mgr.verify_document_owner(user.id, source):
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail="Access denied to document",
-                )
+        if (
+            auth_mgr
+            and user
+            and not user.id.startswith("guest_")
+            and not auth_mgr.verify_document_owner(user.id, source)
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access denied to document",
+            )
 
         with write_lock:
             session_engine.delete(source)
@@ -1552,35 +1564,190 @@ def create_app(
             },
         )
 
+    @demo_router.post("/conversations")
+    def demo_create_conversation(
+        payload: CreateConversationPayload,
+        request: Request,
+        auth_info: tuple[User, str] = Depends(require_authenticated_user),
+    ) -> JSONResponse:
+        user, session_id = auth_info
+        chat_mgr: ChatManager = request.app.state.chat_manager
+        auth_mgr = getattr(request.app.state, "auth_manager", None)
+        owner_id = user.id if not user.id.startswith("guest_") else None
+        doc_id = payload.document_id
+        if (
+            doc_id
+            and owner_id
+            and auth_mgr
+            and not auth_mgr.verify_document_owner(owner_id, doc_id)
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access denied to requested document",
+            )
+        title = (payload.title or "New Conversation").strip()[:100]
+        conv_id = chat_mgr.create_conversation(
+            session_hash=session_id,
+            title=title,
+            owner_id=owner_id,
+            document_id=doc_id,
+        )
+        return JSONResponse(
+            status_code=status.HTTP_201_CREATED,
+            content={
+                "id": conv_id,
+                "title": title,
+                "session_hash": session_id,
+                "owner_id": owner_id,
+                "document_id": doc_id,
+            },
+        )
+
     @demo_router.get("/conversations")
     def demo_list_conversations(
         request: Request,
-        session_id: str = Depends(require_session),
+        auth_info: tuple[User, str] = Depends(require_authenticated_user),
     ) -> JSONResponse:
+        user, session_id = auth_info
         chat_mgr: ChatManager = request.app.state.chat_manager
-        convs = chat_mgr.list_conversations(session_id)
+        owner_id = user.id if not user.id.startswith("guest_") else None
+        convs = chat_mgr.list_conversations(session_hash=session_id, owner_id=owner_id)
         return JSONResponse(status_code=status.HTTP_200_OK, content=convs)
+
+    @demo_router.get("/conversations/{conversation_id}")
+    def demo_get_conversation(
+        conversation_id: str,
+        request: Request,
+        auth_info: tuple[User, str] = Depends(require_authenticated_user),
+    ) -> JSONResponse:
+        user, session_id = auth_info
+        chat_mgr: ChatManager = request.app.state.chat_manager
+        conv = chat_mgr.get_conversation(conversation_id)
+        if not conv:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Conversation not found",
+            )
+        owner_id = conv.get("owner_id")
+        conv_hash = normalize_session_identifier(str(conv.get("session_hash", "")))
+        s_hash = normalize_session_identifier(session_id)
+        is_owner = bool(owner_id and not user.id.startswith("guest_") and owner_id == user.id)
+        is_session = bool(conv_hash and conv_hash == s_hash)
+        if not (is_owner or is_session):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access denied to conversation",
+            )
+        return JSONResponse(status_code=status.HTTP_200_OK, content=conv)
 
     @demo_router.get("/conversations/{conversation_id}/messages")
     def demo_get_conversation_messages(
         conversation_id: str,
         request: Request,
-        session_id: str = Depends(require_session),
+        auth_info: tuple[User, str] = Depends(require_authenticated_user),
     ) -> JSONResponse:
+        user, session_id = auth_info
         chat_mgr: ChatManager = request.app.state.chat_manager
+        conv = chat_mgr.get_conversation(conversation_id)
+        if not conv:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Conversation not found",
+            )
+        owner_id = conv.get("owner_id")
+        conv_hash = normalize_session_identifier(str(conv.get("session_hash", "")))
+        s_hash = normalize_session_identifier(session_id)
+        is_owner = bool(owner_id and not user.id.startswith("guest_") and owner_id == user.id)
+        is_session = bool(conv_hash and conv_hash == s_hash)
+        if not (is_owner or is_session):
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Conversation not found",
+            )
         msgs = chat_mgr.get_messages(conversation_id)
         return JSONResponse(status_code=status.HTTP_200_OK, content=msgs)
+
+    @demo_router.patch("/conversations/{conversation_id}")
+    def demo_rename_conversation(
+        conversation_id: str,
+        payload: RenameConversationPayload,
+        request: Request,
+        auth_info: tuple[User, str] = Depends(require_authenticated_user),
+    ) -> JSONResponse:
+        user, session_id = auth_info
+        chat_mgr: ChatManager = request.app.state.chat_manager
+        conv = chat_mgr.get_conversation(conversation_id)
+        if not conv:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Conversation not found",
+            )
+        owner_id = conv.get("owner_id")
+        conv_hash = normalize_session_identifier(str(conv.get("session_hash", "")))
+        s_hash = normalize_session_identifier(session_id)
+        is_owner = bool(owner_id and not user.id.startswith("guest_") and owner_id == user.id)
+        is_session = bool(conv_hash and conv_hash == s_hash)
+        if not (is_owner or is_session):
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Conversation not found",
+            )
+        chat_mgr.rename_conversation(conversation_id, payload.title)
+        return JSONResponse(
+            status_code=status.HTTP_200_OK,
+            content={"status": "updated", "id": conversation_id, "title": payload.title},
+        )
+
+    @demo_router.post("/conversations/{conversation_id}/archive")
+    def demo_archive_conversation(
+        conversation_id: str,
+        request: Request,
+        auth_info: tuple[User, str] = Depends(require_authenticated_user),
+    ) -> JSONResponse:
+        user, session_id = auth_info
+        chat_mgr: ChatManager = request.app.state.chat_manager
+        conv = chat_mgr.get_conversation(conversation_id)
+        if not conv:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Conversation not found",
+            )
+        owner_id = conv.get("owner_id")
+        conv_hash = normalize_session_identifier(str(conv.get("session_hash", "")))
+        s_hash = normalize_session_identifier(session_id)
+        is_owner = bool(owner_id and not user.id.startswith("guest_") and owner_id == user.id)
+        is_session = bool(conv_hash and conv_hash == s_hash)
+        if not (is_owner or is_session):
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Conversation not found",
+            )
+        chat_mgr.archive_conversation(conversation_id)
+        return JSONResponse(
+            status_code=status.HTTP_200_OK,
+            content={"status": "archived", "id": conversation_id},
+        )
 
     @demo_router.delete("/conversations/{conversation_id}")
     def demo_delete_conversation(
         conversation_id: str,
         request: Request,
-        session_id: str = Depends(require_session),
+        auth_info: tuple[User, str] = Depends(require_authenticated_user),
     ) -> JSONResponse:
+        user, session_id = auth_info
         chat_mgr: ChatManager = request.app.state.chat_manager
         conv = chat_mgr.get_conversation(conversation_id)
-        conv_hash = normalize_session_identifier(str(conv.get("session_hash", ""))) if conv else ""
-        if not conv or conv_hash != normalize_session_identifier(session_id):
+        if not conv:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Conversation not found",
+            )
+        owner_id = conv.get("owner_id")
+        conv_hash = normalize_session_identifier(str(conv.get("session_hash", "")))
+        s_hash = normalize_session_identifier(session_id)
+        is_owner = bool(owner_id and not user.id.startswith("guest_") and owner_id == user.id)
+        is_session = bool(conv_hash and conv_hash == s_hash)
+        if not (is_owner or is_session):
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Conversation not found",
@@ -1595,12 +1762,14 @@ def create_app(
     def demo_chat(
         body: ChatRequest,
         request: Request,
-        session_id: str = Depends(require_session),
+        auth_info: tuple[User, str] = Depends(require_authenticated_user),
     ) -> JSONResponse:
+        user, session_id = auth_info
         mgr: SessionManager = request.app.state.session_manager
         session_engine, _ = mgr.get_engine(session_id)
         req_id = _get_request_id(request)
         chat_mgr: ChatManager = request.app.state.chat_manager
+        auth_mgr = getattr(request.app.state, "auth_manager", None)
 
         if session_engine.store.count() == 0:
             raise HTTPException(
@@ -1608,9 +1777,55 @@ def create_app(
                 detail="index_empty",
             )
 
-        conv_id = body.conversation_id or chat_mgr.create_conversation(
-            session_id, title=body.question[:40]
-        )
+        owner_id = user.id if not user.id.startswith("guest_") else None
+        if body.conversation_id:
+            conv = chat_mgr.get_conversation(body.conversation_id)
+            if not conv:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Conversation not found",
+                )
+            c_owner = conv.get("owner_id")
+            c_hash = normalize_session_identifier(str(conv.get("session_hash", "")))
+            s_hash = normalize_session_identifier(session_id)
+            is_owner = bool(owner_id and c_owner == owner_id)
+            is_session = bool(c_hash and c_hash == s_hash)
+            if not (is_owner or is_session):
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Access denied to conversation",
+                )
+            doc_id = conv.get("document_id")
+            if (
+                doc_id
+                and owner_id
+                and auth_mgr
+                and not auth_mgr.verify_document_owner(owner_id, doc_id)
+            ):
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Access denied to conversation document",
+                )
+            conv_id = body.conversation_id
+        else:
+            doc_target = body.document_id or body.source
+            if (
+                doc_target
+                and owner_id
+                and auth_mgr
+                and not auth_mgr.verify_document_owner(owner_id, doc_target)
+            ):
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Access denied to requested document",
+                )
+            clean_title = (body.question.strip()[:45] if body.question else "New Conversation")
+            conv_id = chat_mgr.create_conversation(
+                session_hash=session_id,
+                title=clean_title,
+                owner_id=owner_id,
+                document_id=doc_target,
+            )
         history = chat_mgr.get_context_turns(conv_id, max_turns=6)
 
         # Condense follow-up query
@@ -1672,6 +1887,7 @@ def create_app(
             raise
 
         ans_dict = answer_to_dict(ans, include_retrieved=True)
+        ans_dict["answer"] = ans.text
         ans_dict["conversation_id"] = conv_id
         ans_dict["condensed_query"] = condensed_q
         ans_dict["usage"]["cost_usd"] = calculate_cost_usd(
@@ -1705,12 +1921,64 @@ def create_app(
     async def demo_chat_stream(
         body: ChatRequest,
         request: Request,
-        session_id: str = Depends(require_session),
+        auth_info: tuple[User, str] = Depends(require_authenticated_user),
     ) -> StreamingResponse:
+        user, session_id = auth_info
         mgr: SessionManager = request.app.state.session_manager
         session_engine, _ = mgr.get_engine(session_id)
         chat_mgr: ChatManager = request.app.state.chat_manager
+        auth_mgr = getattr(request.app.state, "auth_manager", None)
         req_id = _get_request_id(request)
+        owner_id = user.id if not user.id.startswith("guest_") else None
+
+        if body.conversation_id:
+            conv = chat_mgr.get_conversation(body.conversation_id)
+            if not conv:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Conversation not found",
+                )
+            c_owner = conv.get("owner_id")
+            c_hash = normalize_session_identifier(str(conv.get("session_hash", "")))
+            s_hash = normalize_session_identifier(session_id)
+            is_owner = bool(owner_id and c_owner == owner_id)
+            is_session = bool(c_hash and c_hash == s_hash)
+            if not (is_owner or is_session):
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Access denied to conversation",
+                )
+            doc_id = conv.get("document_id")
+            if (
+                doc_id
+                and owner_id
+                and auth_mgr
+                and not auth_mgr.verify_document_owner(owner_id, doc_id)
+            ):
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Access denied to conversation document",
+                )
+            stream_conv_id = body.conversation_id
+        else:
+            doc_target = body.document_id or body.source
+            if (
+                doc_target
+                and owner_id
+                and auth_mgr
+                and not auth_mgr.verify_document_owner(owner_id, doc_target)
+            ):
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Access denied to requested document",
+                )
+            clean_title = (body.question.strip()[:45] if body.question else "New Conversation")
+            stream_conv_id = chat_mgr.create_conversation(
+                session_hash=session_id,
+                title=clean_title,
+                owner_id=owner_id,
+                document_id=doc_target,
+            )
 
         async def event_generator() -> AsyncGenerator[str, None]:
             import json as json_lib
@@ -1725,9 +1993,7 @@ def create_app(
                 yield f"event: error\ndata: {err_data}\n\n"
                 return
 
-            conv_id = body.conversation_id or chat_mgr.create_conversation(
-                session_id, title=body.question[:40]
-            )
+            conv_id = stream_conv_id
             history = chat_mgr.get_context_turns(conv_id, max_turns=6)
             condensed_q = condense_query(body.question, history, llm=session_engine.llm)
 
@@ -2482,6 +2748,52 @@ def create_app(
                 }
 
         return {"authenticated": False, "user": None, "csrf_token": None}
+
+    @auth_router.get("/profile", status_code=status.HTTP_200_OK)
+    async def auth_profile(
+        request: Request,
+    ) -> dict[str, Any]:
+        auth_mgr: AuthManager = request.app.state.auth_manager
+        user_info = get_authenticated_user_opt(request)
+        if not user_info:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Authentication required",
+            )
+        user, _ = user_info
+        full_user = auth_mgr.get_user_by_id(user.id)
+        if not full_user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User profile not found",
+            )
+        return full_user.to_dict()
+
+    @auth_router.patch("/profile", status_code=status.HTTP_200_OK)
+    async def auth_update_profile(
+        payload: ProfileUpdatePayload,
+        request: Request,
+    ) -> dict[str, Any]:
+        auth_mgr: AuthManager = request.app.state.auth_manager
+        user_info = get_authenticated_user_opt(request)
+        if not user_info:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Authentication required",
+            )
+        user, _ = user_info
+        try:
+            updated_user = auth_mgr.update_user_profile(
+                user.id,
+                display_name=payload.display_name,
+                avatar_url=payload.avatar_url,
+            )
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=str(e),
+            ) from e
+        return updated_user.to_dict()
 
     app.include_router(auth_router)
     app.include_router(demo_router)

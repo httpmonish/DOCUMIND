@@ -90,9 +90,11 @@ class AuthManager:
         runner.run_migrations()
 
     def _get_connection(self) -> sqlite3.Connection:
-        conn = sqlite3.connect(str(self.db_path), timeout=15.0)
+        conn = sqlite3.connect(str(self.db_path), timeout=30.0)
         conn.row_factory = sqlite3.Row
         conn.execute("PRAGMA foreign_keys = ON;")
+        conn.execute("PRAGMA journal_mode = WAL;")
+        conn.execute("PRAGMA busy_timeout = 10000;")
         return conn
 
     @staticmethod
@@ -589,6 +591,7 @@ class AuthManager:
         chunk_count: int,
         content_hash: str | None = None,
         storage_ref: str | None = None,
+        storage_key: str | None = None,
         display_name: str | None = None,
         file_type: str | None = None,
         mime_type: str | None = None,
@@ -605,6 +608,7 @@ class AuthManager:
         f_type = file_type or (
             clean_source.split(".")[-1].lower() if "." in clean_source else "txt"
         )
+        s_key = storage_key or storage_ref
 
         with self._lock, self._get_connection() as conn:
             conn.execute(
@@ -647,7 +651,7 @@ class AuthManager:
                     chunk_count,
                     status,
                     storage_ref,
-                    storage_ref,
+                    s_key,
                     processing_error,
                     chromadb_collection,
                     now,

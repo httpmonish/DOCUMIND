@@ -223,6 +223,22 @@
       });
     },
 
+    async getRecentDocuments(limit = 10) {
+      return request(`/api/demo/documents/recent?limit=${encodeURIComponent(limit)}`);
+    },
+
+    async getDocument(source) {
+      return request(`/api/demo/documents/${encodeURIComponent(source)}`);
+    },
+
+    async renameDocument(source, displayName) {
+      return request(`/api/demo/documents/${encodeURIComponent(source)}/rename`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ display_name: displayName }),
+      });
+    },
+
     async getDocumentChunks(source) {
       return request(`/api/demo/documents/${encodeURIComponent(source)}/chunks`);
     },
@@ -268,6 +284,32 @@
 
     async listConversations() {
       return request("/api/demo/conversations");
+    },
+
+    async createConversation(title = "New Conversation", documentId = null) {
+      return request("/api/demo/conversations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title, document_id: documentId }),
+      });
+    },
+
+    async getConversation(conversationId) {
+      return request(`/api/demo/conversations/${encodeURIComponent(conversationId)}`);
+    },
+
+    async renameConversation(conversationId, title) {
+      return request(`/api/demo/conversations/${encodeURIComponent(conversationId)}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title }),
+      });
+    },
+
+    async archiveConversation(conversationId) {
+      return request(`/api/demo/conversations/${encodeURIComponent(conversationId)}/archive`, {
+        method: "POST",
+      });
     },
 
     async getConversationMessages(conversationId) {
@@ -421,6 +463,21 @@
     async logout() {
       return request("/api/auth/logout", {
         method: "POST",
+      });
+    },
+
+    async getProfile() {
+      return request("/api/auth/profile");
+    },
+
+    async updateProfile(data = {}) {
+      return request("/api/auth/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          display_name: data.displayName || data.display_name,
+          avatar_url: data.avatarUrl || data.avatar_url,
+        }),
       });
     },
 
