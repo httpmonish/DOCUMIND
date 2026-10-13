@@ -48,7 +48,7 @@
         return existing;
       }
     }
-    if (_sessionPromise) {
+    if (!forceNew && _sessionPromise) {
       return _sessionPromise;
     }
 

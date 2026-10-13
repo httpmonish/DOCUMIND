@@ -200,6 +200,31 @@ Standard error codes:
 
 ---
 
+### 3.3 User Authentication & Tenant Workspaces (`/api/auth/*`)
+
+#### 3.3.1 Register User
+- **Path:** `POST /api/auth/register`
+- **Auth:** None (Public)
+- **Body:** `{"email": "...", "password": "...", "display_name": "...", "claim_guest_session": "..."}`
+- **Security:** Passwords hashed with `hashlib.scrypt` (N=16384, r=8, p=1, 32-byte salt).
+- **Workspace Claiming:** When `claim_guest_session` is provided, all uploaded documents, vectors, and chunks from the temporary guest workspace are migrated into the user's isolated workspace (`sessions/user_workspace_{id}/`).
+- **Response `201 Created`:** Sets `documind_auth` HTTP-only session cookie and returns user metadata and CSRF token.
+
+#### 3.3.2 Login User
+- **Path:** `POST /api/auth/login`
+- **Body:** `{"email": "...", "password": "...", "claim_guest_session": "..."}`
+- **Response `200 OK`:** Sets `documind_auth` HTTP-only session cookie.
+
+#### 3.3.3 Current User Info
+- **Path:** `GET /api/auth/me`
+- **Response `200 OK`:** `{"authenticated": true, "user": {...}, "csrf_token": "..."}`
+
+#### 3.3.4 Logout User
+- **Path:** `POST /api/auth/logout`
+- **Response `200 OK`:** Clears `documind_auth` cookie.
+
+---
+
 ## 4. Administrative Core Endpoints (`/v1/*`)
 
 The `/v1` endpoints mirror core operations for administrative clients:
