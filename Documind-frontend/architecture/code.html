@@ -1,5 +1,5 @@
 <!DOCTYPE html><html class="dark" lang="en"><head><meta charset="utf-8"><title>DocuMind Architecture — System Pipeline</title><meta content="width=device-width, initial-scale=1.0" name="viewport"><meta content="web_standard" name="shell-type"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><link rel="icon" type="image/png" sizes="32x32" href="/favicon.png"><link rel="shortcut icon" href="/favicon.ico"><link rel="alternate icon" href="/favicon.ico"><link href="https://fonts.googleapis.com" rel="preconnect"><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"><link rel="stylesheet" href="../chat-drawer.css"><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"><link rel="stylesheet" href="../chat-drawer.css"><link rel="stylesheet" href="../pipeline-3d.css"><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}
 @media (prefers-reduced-motion: reduce) {
   *, ::before, ::after {
     animation-duration: 0.01ms !important;
@@ -8,7 +8,7 @@
     scroll-behavior: auto !important;
   }
 }
-</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = {
+</style><script src="../vendor/tailwindcss.js"></script><script id="tailwind-config">tailwind.config = {
     darkMode: "class",
     theme: {
       extend: {
@@ -183,26 +183,8 @@
         }
       },
     },
-  }</script></head><body class="bg-surface-container-lowest font-body-sm text-body-sm text-on-surface antialiased"><header class="fixed top-0 left-0 w-full z-50 bg-surface-container-lowest border-b border-surface-variant"><div class="h-14 w-full px-space-xl flex items-center justify-between"><div class="flex items-center gap-space-xl"><div class="flex items-center gap-space-md"><svg class="h-8 w-8 object-contain shrink-0" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><polygon points="16,2 29,9.5 29,24.5 16,32 3,24.5 3,9.5" fill="#201f1f" stroke="#ff571d" stroke-width="2"/><circle cx="16" cy="17" r="4.5" fill="#ff571d"/><path d="M16 6v6.5M8.5 21.5l5.5-3M23.5 21.5l-5.5-3" stroke="#e5e2e1" stroke-width="1.5" stroke-linecap="round"/></svg><span class="font-headline-sm text-headline-sm text-on-surface tracking-tight">DocuMind</span></div><nav class="hidden md:flex items-center gap-space-xl" data-active-classes="text-on-surface font-headline-sm text-headline-sm"><a aria-current="page" class="transition-colors text-on-surface font-headline-sm text-headline-sm" data-path="architecture" href="#">Architecture</a><a class="font-headline-sm text-headline-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="console" href="#">Console</a><a class="font-headline-sm text-headline-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="library" href="#">Library</a><a class="font-headline-sm text-headline-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="proof" href="#">Proof</a></nav></div><div class="flex items-center gap-space-lg"><div class="hidden sm:flex items-center gap-space-xs px-space-md py-space-xs bg-surface-container-low border border-surface-variant rounded-DEFAULT"><span class="w-1.5 h-1.5 rounded-full bg-tertiary inline-block"></span><span class="font-code-sm text-code-sm text-on-surface tracking-wider uppercase">LIVE · v1.0.0 · a1b2c3d</span></div><a class="inline-flex items-center justify-center px-space-lg py-space-xs bg-primary-container hover:bg-inverse-primary text-on-primary-container font-code-sm text-code-sm tracking-wider uppercase rounded-xl transition-colors font-medium" data-path="chat" href="../chat.html">LAUNCH CHAT ↗</a><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="w-full pt-14 bg-surface-container-lowest min-h-screen"><div class="flex flex-col w-full text-on-surface bg-background antialiased selection:bg-primary-container selection:text-on-primary-container">
-<!-- TOP RUNTIME BANNER TICKER -->
-<div class="w-full bg-surface-container-lowest border-b border-surface-variant px-space-lg py-1.5 flex items-center justify-between overflow-x-auto text-[11px] font-code-sm">
-<div class="flex items-center gap-space-lg shrink-0">
-<span class="flex items-center gap-1.5 text-tertiary">
-<span class="w-1.5 h-1.5 rounded-full bg-tertiary animate-pulse"></span>
-        GATEWAY: DETERMINISTIC PIPELINE ACTIVE
-      </span>
-<span class="text-surface-variant">/</span>
-<span class="text-on-surface-variant font-code-sm">EMBEDDINGS: BAAI/bge-small-en-v1.5 (384-d)</span>
-<span class="text-surface-variant">/</span>
-<span class="text-on-surface-variant font-code-sm">TAU CONFIDENCE: τ = 0.35</span>
-<span class="text-surface-variant">/</span>
-<span class="text-on-surface-variant font-code-sm">STORE: CHROMA LOCAL VECTOR STORE</span>
-</div>
-<div class="flex items-center gap-space-md shrink-0 text-on-surface-variant">
-<span id="ticker-session-status" class="font-code-sm uppercase tracking-widest text-[10px]">ISOLATED TENANT SESSIONS</span>
-<span class="text-tertiary text-[10px]">● DETERMINISTIC GATE</span>
-</div>
-</div>
+  }</script></head><body class="bg-surface-container-lowest font-body-sm text-body-sm text-on-surface antialiased"><header class="fixed top-0 left-0 w-full z-50 bg-surface-container-lowest border-b border-surface-variant"><div class="h-14 w-full px-space-xl flex items-center justify-between"><div class="flex items-center gap-space-xl"><div class="flex items-center gap-space-md"><svg class="h-8 w-8 object-contain shrink-0" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><polygon points="16,2 29,9.5 29,24.5 16,32 3,24.5 3,9.5" fill="#201f1f" stroke="#ff571d" stroke-width="2"/><circle cx="16" cy="17" r="4.5" fill="#ff571d"/><path d="M16 6v6.5M8.5 21.5l5.5-3M23.5 21.5l-5.5-3" stroke="#e5e2e1" stroke-width="1.5" stroke-linecap="round"/></svg><span class="font-headline-sm text-headline-sm text-on-surface tracking-tight">DocuMind</span></div><nav class="hidden md:flex items-center gap-space-xl" data-active-classes="text-on-surface font-headline-sm text-headline-sm"><a aria-current="page" class="transition-colors text-on-surface font-headline-sm text-headline-sm" data-path="architecture" href="#">Architecture</a><a class="font-headline-sm text-headline-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="console" href="#">Console</a><a class="font-headline-sm text-headline-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="library" href="#">Library</a><a class="font-headline-sm text-headline-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="proof" href="#">Proof</a></nav></div><div class="flex items-center gap-space-lg"><a class="inline-flex items-center justify-center px-space-lg py-space-xs bg-primary-container hover:bg-inverse-primary text-on-primary-container font-code-sm text-code-sm tracking-wider uppercase rounded-xl transition-colors font-medium" data-path="chat" href="../chat.html">LAUNCH CHAT ↗</a><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="w-full pt-14 bg-surface-container-lowest min-h-screen"><div class="flex flex-col w-full text-on-surface bg-background antialiased selection:bg-primary-container selection:text-on-primary-container">
+
 <!-- MAIN CANVAS CONTAINER -->
 <div class="w-full max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-12 flex flex-col gap-[120px]">
 <!-- ========================================================================= -->
@@ -218,12 +200,7 @@
 </div>
 <!-- Left Column: Copy & Command Telemetry -->
 <div class="lg:col-span-6 flex flex-col justify-center">
-<div class="flex items-center gap-2 mb-4">
-<span class="font-label-caps text-label-caps text-primary-container tracking-widest">01 / GLASS-BOX RAG</span>
-<span class="h-px w-10 bg-outline-variant"></span>
-<span class="font-code-sm text-code-sm text-on-surface-variant">FULL RETRIEVAL AUDIT</span>
-</div>
-<h1 class="text-[44px] sm:text-[56px] lg:text-[68px] leading-[1.04] font-headline-xl font-semibold tracking-[-0.035em] text-on-surface mb-6">
+<h1 class="text-[32px] sm:text-[52px] lg:text-[68px] leading-[1.06] font-headline-xl font-semibold tracking-[-0.035em] text-on-surface mb-6">
           Ask your documents.<br>
 <span class="text-on-surface-variant">Watch every step.</span>
 </h1>
@@ -267,7 +244,7 @@
 <div class="lg:col-span-6 bg-surface-container-low border border-surface-variant rounded-xl p-6 relative overflow-hidden flex items-center justify-center min-h-[460px]">
 <!-- Blueprint Grid Mesh -->
 <div class="absolute inset-0 opacity-15 pointer-events-none" style="background-image: radial-gradient(#ad897e 1px, transparent 1px); background-size: 16px 16px;"></div>
-<svg class="w-full h-auto max-w-[500px] select-none" fill="none" stroke="currentColor" viewBox="0 0 540 440">
+<svg class="w-full h-auto max-w-[540px] select-none" fill="none" stroke="currentColor" viewBox="0 0 620 440">
 <!-- Guide lines (Exploded axis) -->
 <line stroke="#5c4038" stroke-dasharray="3 3" stroke-width="1" x1="270" x2="270" y1="40" y2="390"></line>
 <line stroke="#353534" stroke-dasharray="2 2" stroke-width="0.8" x1="120" x2="120" y1="130" y2="350"></line>
@@ -351,7 +328,7 @@
 <!-- ========================================================================= -->
 <!-- SECTION 2: 02 / THE JOURNEY OF A DOCUMENT (INDEXING, 6 Keyframes) -->
 <!-- ========================================================================= -->
-<section class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 relative">
+<section class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 relative items-start">
 <!-- Section Pixel Motif -->
 <div class="absolute -top-6 left-0 flex gap-1 opacity-60 pointer-events-none">
 <div class="w-1.5 h-1.5 bg-primary-container"></div>
@@ -359,229 +336,349 @@
 <div class="w-1.5 h-1.5 bg-primary-container"></div>
 <div class="w-1.5 h-1.5 bg-primary-container opacity-20"></div>
 </div>
-<!-- Left Column: Pipeline Steps (5 cols) -->
-<div class="lg:col-span-5 flex flex-col justify-between">
-<div>
-<div class="flex items-center gap-2 mb-3">
-<span class="font-label-caps text-label-caps text-primary-container tracking-widest">02 / INGESTION &amp; PARSING</span>
-<span class="h-px w-8 bg-outline-variant"></span>
-<span class="font-code-sm text-code-sm text-on-surface-variant">TOTAL: 131.8 ms</span>
+<!-- Left Column: Pipeline Steps (5 cols) Sticky Controller -->
+<div class="lg:col-span-5 flex flex-col gap-5 lg:sticky lg:top-20 self-start z-10">
+  <div>
+    <div class="flex items-center justify-between mb-2">
+      <span class="font-code-sm text-[11px] text-primary-container tracking-wider uppercase font-semibold flex items-center gap-1.5">
+        <span class="w-1.5 h-1.5 rounded-full bg-primary-container animate-pulse"></span>
+        INTERACTIVE 3D PIPELINE
+      </span>
+      <span class="font-code-sm text-[11px] text-on-surface-variant">6 STAGES · 131.8 ms</span>
+    </div>
+    <h2 class="font-headline-lg text-[30px] sm:text-[36px] leading-tight text-on-surface font-semibold mb-3">
+      The Journey of a Document
+    </h2>
+    <p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed mb-4">
+      From raw filesystem drop to normalized 384-dimensional vector embedding. Ingestion enforces monotonic atomic chunk ordering to eliminate race states.
+    </p>
+
+    <!-- Walkthrough Controls Toolbar -->
+    <div class="flex items-center gap-2 mb-4 p-2 bg-surface-container-low border border-surface-variant rounded-lg">
+      <button id="btn-pipeline-walkthrough" type="button" class="walkthrough-btn px-3 py-1.5 bg-primary-container text-on-primary-container font-code-sm text-[11px] font-semibold rounded flex items-center gap-1.5 shadow-sm cursor-pointer">
+        <span class="material-symbols-outlined text-[15px]">play_arrow</span>
+        <span>AUTOPLAY TOUR</span>
+      </button>
+      <button id="btn-pipeline-reset" type="button" class="walkthrough-btn px-2.5 py-1.5 bg-surface-container border border-surface-variant text-on-surface hover:text-white font-code-sm text-[11px] rounded flex items-center gap-1 cursor-pointer">
+        <span class="material-symbols-outlined text-[14px]">restart_alt</span>
+        <span>RESET</span>
+      </button>
+      <div class="ml-auto font-code-sm text-[11px] text-on-surface-variant flex items-center gap-1">
+        <span id="pipeline-active-badge" class="px-2 py-0.5 rounded bg-surface-container border border-surface-variant text-primary-container font-medium">STAGE 01</span>
+      </div>
+    </div>
+
+    <!-- 6 Interactive Stage Rows -->
+    <div id="pipeline-stage-rows" class="flex flex-col gap-1 border-t border-b border-surface-variant py-2">
+      <div class="pipeline-stage-row group flex items-center justify-between px-3.5 py-2.5 rounded-lg is-active" data-step="1" tabindex="0" role="button" aria-label="Inspect Stage 1: Upload & Ingest">
+        <div class="flex items-center gap-3">
+          <span class="stage-active-indicator w-1.5 h-1.5 rounded-full bg-primary-container"></span>
+          <span class="stage-row-num font-label-caps text-primary-container text-xs">01</span>
+          <span class="stage-row-title font-headline-sm text-[14px] text-on-surface group-hover:text-white">Upload &amp; Ingest</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="font-code-sm text-[11px] text-on-surface-variant">14 ms</span>
+          <span class="material-symbols-outlined text-[14px] text-primary-container opacity-0 group-hover:opacity-100 transition-opacity">chevron_right</span>
+        </div>
+      </div>
+
+      <div class="pipeline-stage-row group flex items-center justify-between px-3.5 py-2.5 rounded-lg" data-step="2" tabindex="0" role="button" aria-label="Inspect Stage 2: Magic-Byte Validation">
+        <div class="flex items-center gap-3">
+          <span class="stage-active-indicator w-1.5 h-1.5 rounded-full bg-primary-container"></span>
+          <span class="stage-row-num font-label-caps text-primary-container text-xs">02</span>
+          <span class="stage-row-title font-headline-sm text-[14px] text-on-surface group-hover:text-white">Magic-Byte Validation</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="font-code-sm text-[11px] text-on-surface-variant">0.8 ms</span>
+          <span class="material-symbols-outlined text-[14px] text-primary-container opacity-0 group-hover:opacity-100 transition-opacity">chevron_right</span>
+        </div>
+      </div>
+
+      <div class="pipeline-stage-row group flex items-center justify-between px-3.5 py-2.5 rounded-lg" data-step="3" tabindex="0" role="button" aria-label="Inspect Stage 3: Layer Separation">
+        <div class="flex items-center gap-3">
+          <span class="stage-active-indicator w-1.5 h-1.5 rounded-full bg-primary-container"></span>
+          <span class="stage-row-num font-label-caps text-primary-container text-xs">03</span>
+          <span class="stage-row-title font-headline-sm text-[14px] text-on-surface group-hover:text-white">Layer Separation</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="font-code-sm text-[11px] text-on-surface-variant">14 ms</span>
+          <span class="material-symbols-outlined text-[14px] text-primary-container opacity-0 group-hover:opacity-100 transition-opacity">chevron_right</span>
+        </div>
+      </div>
+
+      <div class="pipeline-stage-row group flex items-center justify-between px-3.5 py-2.5 rounded-lg" data-step="4" tabindex="0" role="button" aria-label="Inspect Stage 4: Sliding Chunk Window">
+        <div class="flex items-center gap-3">
+          <span class="stage-active-indicator w-1.5 h-1.5 rounded-full bg-primary-container"></span>
+          <span class="stage-row-num font-label-caps text-primary-container text-xs">04</span>
+          <span class="stage-row-title font-headline-sm text-[14px] text-on-surface group-hover:text-white">Sliding Chunk Window</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="font-code-sm text-[11px] text-on-surface-variant">2 ms</span>
+          <span class="material-symbols-outlined text-[14px] text-primary-container opacity-0 group-hover:opacity-100 transition-opacity">chevron_right</span>
+        </div>
+      </div>
+
+      <div class="pipeline-stage-row group flex items-center justify-between px-3.5 py-2.5 rounded-lg" data-step="5" tabindex="0" role="button" aria-label="Inspect Stage 5: Dense Embedding">
+        <div class="flex items-center gap-3">
+          <span class="stage-active-indicator w-1.5 h-1.5 rounded-full bg-primary-container"></span>
+          <span class="stage-row-num font-label-caps text-primary-container text-xs">05</span>
+          <span class="stage-row-title font-headline-sm text-[14px] text-on-surface group-hover:text-white">Dense Embedding</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="font-code-sm text-[11px] text-on-surface-variant">92 ms</span>
+          <span class="material-symbols-outlined text-[14px] text-primary-container opacity-0 group-hover:opacity-100 transition-opacity">chevron_right</span>
+        </div>
+      </div>
+
+      <div class="pipeline-stage-row group flex items-center justify-between px-3.5 py-2.5 rounded-lg" data-step="6" tabindex="0" role="button" aria-label="Inspect Stage 6: Atomic Zero-Last Write">
+        <div class="flex items-center gap-3">
+          <span class="stage-active-indicator w-1.5 h-1.5 rounded-full bg-primary-container"></span>
+          <span class="stage-row-num font-label-caps text-primary-container text-xs">06</span>
+          <span class="stage-row-title font-headline-sm text-[14px] text-on-surface group-hover:text-white">Atomic Zero-Last Write</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="font-code-sm text-[11px] text-on-surface-variant">11 ms</span>
+          <span class="material-symbols-outlined text-[14px] text-primary-container opacity-0 group-hover:opacity-100 transition-opacity">chevron_right</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stage Telemetry & Invariants Inspector Card -->
+  <div id="pipeline-stage-inspector" class="p-4 bg-surface-container-low border border-surface-variant rounded-xl flex flex-col gap-2.5 shadow-lg">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <span class="w-2 h-2 rounded-full bg-primary-container animate-pulse"></span>
+        <span id="inspector-stage-label" class="font-label-caps text-xs text-primary-container font-semibold">STAGE 01 · UPLOAD DISPATCH</span>
+      </div>
+      <span id="inspector-stage-latency" class="font-code-sm text-[11px] text-on-surface-variant px-2 py-0.5 rounded bg-surface-container border border-surface-variant">14 ms</span>
+    </div>
+    <p id="inspector-stage-desc" class="font-body-sm text-xs text-on-surface leading-relaxed">
+      Direct multipart upload buffer stream into memory sandbox. Calculates SHA-256 fingerprint upfront for cryptographic deduplication and pipeline idempotency.
+    </p>
+    <div class="flex items-center justify-between pt-2 border-t border-surface-variant font-code-sm text-[10px] text-on-surface-variant">
+      <span id="inspector-stage-invariant" class="text-tertiary">INVARIANT: SHA-256 Idempotency</span>
+      <span id="inspector-stage-spec" class="text-on-surface">BUFFER: 50 MB MAX</span>
+    </div>
+  </div>
+
+  <!-- Compact Idempotency Guarantee Note -->
+  <div class="p-3 bg-surface-container/60 border border-surface-variant rounded-xl flex items-center gap-3">
+    <span class="material-symbols-outlined text-primary-container text-base shrink-0">lock_clock</span>
+    <p class="font-code-sm text-[11px] text-on-surface-variant leading-snug">
+      Guaranteed idempotency: SHA-256 fingerprint deduplicates exact files before chunking engine initiation.
+    </p>
+  </div>
 </div>
-<h2 class="font-headline-lg text-[32px] sm:text-[38px] leading-tight text-on-surface font-semibold mb-4">
-            The Journey of a Document
-          </h2>
-<p class="font-body-sm text-body-sm text-on-surface-variant mb-8 leading-relaxed">
-            From raw filesystem drop to normalized 384-dimensional vector embedding. Ingestion enforces monotonic atomic chunk ordering to eliminate race states.
-          </p>
-<!-- Monotonic Steps List -->
-<div class="flex flex-col border-t border-surface-variant divide-y divide-surface-variant">
-<div class="py-3.5 flex items-center justify-between">
-<div class="flex items-center gap-3">
-<span class="font-label-caps text-primary-container">01</span>
-<span class="font-headline-sm text-headline-sm text-on-surface">Upload &amp; Ingest</span>
-</div>
-<span class="font-code-sm text-code-sm text-on-surface-variant">14 ms</span>
-</div>
-<div class="py-3.5 flex items-center justify-between">
-<div class="flex items-center gap-3">
-<span class="font-label-caps text-primary-container">02</span>
-<span class="font-headline-sm text-headline-sm text-on-surface">Magic-Byte Validation</span>
-</div>
-<span class="font-code-sm text-code-sm text-on-surface-variant">0.8 ms</span>
-</div>
-<div class="py-3.5 flex items-center justify-between">
-<div class="flex items-center gap-3">
-<span class="font-label-caps text-primary-container">03</span>
-<span class="font-headline-sm text-headline-sm text-on-surface">Layer Separation</span>
-</div>
-<span class="font-code-sm text-code-sm text-on-surface-variant">14 ms</span>
-</div>
-<div class="py-3.5 flex items-center justify-between">
-<div class="flex items-center gap-3">
-<span class="font-label-caps text-primary-container">04</span>
-<span class="font-headline-sm text-headline-sm text-on-surface">Sliding Chunk Window</span>
-</div>
-<span class="font-code-sm text-code-sm text-on-surface-variant">2 ms</span>
-</div>
-<div class="py-3.5 flex items-center justify-between">
-<div class="flex items-center gap-3">
-<span class="font-label-caps text-primary-container">05</span>
-<span class="font-headline-sm text-headline-sm text-on-surface">Dense Embedding</span>
-</div>
-<span class="font-code-sm text-code-sm text-on-surface-variant">92 ms</span>
-</div>
-<div class="py-3.5 flex items-center justify-between">
-<div class="flex items-center gap-3">
-<span class="font-label-caps text-primary-container">06</span>
-<span class="font-headline-sm text-headline-sm text-on-surface">Atomic Zero-Last Write</span>
-</div>
-<span class="font-code-sm text-code-sm text-on-surface-variant">11 ms</span>
-</div>
-</div>
-</div>
-<div class="mt-8 p-4 bg-surface-container border border-surface-variant rounded-xl flex items-center gap-3">
-<span class="material-symbols-outlined text-primary-container text-lg">lock_clock</span>
-<p class="font-code-sm text-code-sm text-on-surface-variant">
-            Guaranteed idempotency: SHA-256 fingerprint deduplicates exact files before chunking engine initiation.
-          </p>
-</div>
-</div>
-<!-- Right Column: 6 Stacked Keyframe Technical Blueprints (7 cols) -->
-<div class="lg:col-span-7 flex flex-col gap-4">
-<!-- K1 UPLOAD -->
-<div class="p-4 bg-surface-container-low border border-surface-variant rounded-xl">
-<div class="flex items-center justify-between mb-2">
-<span class="font-label-caps text-label-caps text-primary-container">KEYFRAME 01 · UPLOAD DISPATCH</span>
-<span class="font-code-sm text-code-sm text-on-surface-variant">14 ms</span>
-</div>
-<svg class="w-full h-auto" fill="none" viewBox="0 0 600 110">
-<!-- Tray -->
-<path d="M 50,85 L 180,85 L 200,60 L 70,60 Z" fill="#131313" stroke="#353534" stroke-width="1.2"></path>
-<!-- Sliding Sheet -->
-<path d="M 100,55 L 230,55 L 210,20 L 80,20 Z" fill="#201f1f" stroke="#e5e2e1" stroke-width="1.2"></path>
-<line stroke="#8A8690" stroke-width="1" x1="120" x2="190" y1="35" y2="35"></line>
-<line stroke="#8A8690" stroke-width="1" x1="110" x2="180" y1="45" y2="45"></line>
-<!-- Slide motion vector -->
-<line stroke="#ff571d" stroke-dasharray="3 2" stroke-width="1.5" x1="215" x2="255" y1="40" y2="40"></line>
-<polygon fill="#ff571d" points="255,40 250,37 250,43"></polygon>
-<!-- Callouts -->
-<line stroke="#5c4038" stroke-width="0.8" x1="180" x2="280" y1="20" y2="15"></line>
-<text fill="#e5e2e1" font-family="JetBrains Mono" font-size="9" x="285" y="18">name: kernel_arch_v4.pdf</text>
-<line stroke="#5c4038" stroke-width="0.8" x1="145" x2="280" y1="55" y2="55"></line>
-<text fill="#8A8690" font-family="JetBrains Mono" font-size="9" x="285" y="58">size: 1.48 MB</text>
-<line stroke="#5c4038" stroke-width="0.8" x1="190" x2="280" y1="75" y2="85"></line>
-<text fill="#ff571d" font-family="JetBrains Mono" font-size="9" x="285" y="88">sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e</text>
-</svg>
-</div>
-<!-- K2 VALIDATE -->
-<div class="p-4 bg-surface-container-low border border-surface-variant rounded-xl">
-<div class="flex items-center justify-between mb-2">
-<span class="font-label-caps text-label-caps text-primary-container">KEYFRAME 02 · MAGIC BYTES VALIDATION</span>
-<span class="font-code-sm text-code-sm text-on-surface-variant">0.8 ms</span>
-</div>
-<svg class="w-full h-auto" fill="none" viewBox="0 0 600 110">
-<!-- Sheet entering -->
-<rect fill="#1c1b1b" height="60" stroke="#e5e2e1" stroke-width="1" width="160" x="60" y="25"></rect>
-<line stroke="#8A8690" stroke-width="1" x1="75" x2="160" y1="40" y2="40"></line>
-<line stroke="#8A8690" stroke-width="1" x1="75" x2="190" y1="55" y2="55"></line>
-<!-- Laser scan bar (Orange Highlight) -->
-<line stroke="#ff571d" stroke-width="2" x1="140" x2="140" y1="12" y2="98"></line>
-<rect fill="#ff571d" height="4" width="8" x="136" y="8"></rect>
-<rect fill="#ff571d" height="4" width="8" x="136" y="98"></rect>
-<!-- Check badges -->
-<circle cx="280" cy="40" fill="#131313" r="8" stroke="#3dd6a0" stroke-width="1"></circle>
-<text fill="#3dd6a0" font-family="JetBrains Mono" font-size="10" x="277" y="44">✓</text>
-<text fill="#3dd6a0" font-family="JetBrains Mono" font-size="9" x="296" y="43">%PDF- 1.7 MAGIC BYTES</text>
-<circle cx="280" cy="72" fill="#131313" r="8" stroke="#3dd6a0" stroke-width="1"></circle>
-<text fill="#3dd6a0" font-family="JetBrains Mono" font-size="10" x="277" y="76">✓</text>
-<text fill="#3dd6a0" font-family="JetBrains Mono" font-size="9" x="296" y="75">ext .pdf SANITY MATCH</text>
-</svg>
-</div>
-<!-- K3 EXTRACT -->
-<div class="p-4 bg-surface-container-low border border-surface-variant rounded-xl">
-<div class="flex items-center justify-between mb-2">
-<span class="font-label-caps text-label-caps text-primary-container">KEYFRAME 03 · LAYER SEPARATION</span>
-<span class="font-code-sm text-code-sm text-on-surface-variant">14 ms</span>
-</div>
-<svg class="w-full h-auto" fill="none" viewBox="0 0 600 110">
-<!-- Stacked PDF page layers -->
-<polygon fill="#131313" points="50,75 140,90 190,50 100,35" stroke="#353534" stroke-width="1"></polygon>
-<polygon fill="#1c1b1b" points="60,65 150,80 200,40 110,25" stroke="#8A8690" stroke-width="1"></polygon>
-<!-- Floating orange text lines lifting off layer -->
-<line stroke="#ff571d" stroke-width="1.8" x1="90" x2="150" y1="35" y2="45"></line>
-<line stroke="#ff571d" stroke-width="1.8" x1="85" x2="165" y1="45" y2="58"></line>
-<line stroke="#ff571d" stroke-width="1.8" x1="100" x2="140" y1="55" y2="62"></line>
-<!-- Extraction callout -->
-<path d="M 160,50 L 260,35" stroke="#ff571d" stroke-dasharray="2 2" stroke-width="0.8"></path>
-<text fill="#ff571d" font-family="JetBrains Mono" font-size="9" x="268" y="38">pypdf · raw text stream extracted</text>
-<text fill="#8A8690" font-family="JetBrains Mono" font-size="9" x="268" y="58">non-text raster glyphs discarded</text>
-</svg>
-</div>
-<!-- K4 CHUNK -->
-<div class="p-4 bg-surface-container-low border border-surface-variant rounded-xl">
-<div class="flex items-center justify-between mb-2">
-<span class="font-label-caps text-label-caps text-primary-container">KEYFRAME 04 · SLIDING CHUNK WINDOW</span>
-<span class="font-code-sm text-code-sm text-on-surface-variant">2 ms</span>
-</div>
-<svg class="w-full h-auto" fill="none" viewBox="0 0 600 110">
-<!-- Chunk tiles -->
-<!-- C0 -->
-<rect fill="#1c1b1b" height="50" stroke="#e5e2e1" stroke-width="1" width="100" x="40" y="30"></rect>
-<text fill="#e5e2e1" font-family="JetBrains Mono" font-size="11" x="50" y="58">CHUNK C_0</text>
-<!-- Overlap zone 1 (Hatched Rust Orange) -->
-<rect fill="#ff571d" fill-opacity="0.25" height="50" stroke="#ff571d" stroke-width="1" width="20" x="120" y="30"></rect>
-<!-- C1 -->
-<rect fill="none" height="50" stroke="#e5e2e1" stroke-width="1" width="100" x="120" y="30"></rect>
-<text fill="#e5e2e1" font-family="JetBrains Mono" font-size="11" x="145" y="58">CHUNK C_1</text>
-<!-- Overlap zone 2 -->
-<rect fill="#ff571d" fill-opacity="0.25" height="50" stroke="#ff571d" stroke-width="1" width="20" x="200" y="30"></rect>
-<!-- C2 -->
-<rect fill="none" height="50" stroke="#e5e2e1" stroke-width="1" width="100" x="200" y="30"></rect>
-<text fill="#e5e2e1" font-family="JetBrains Mono" font-size="11" x="225" y="58">CHUNK C_2</text>
-<!-- Specifications -->
-<line stroke="#ff571d" stroke-width="0.8" x1="130" x2="130" y1="30" y2="12"></line>
-<text fill="#ff571d" font-family="JetBrains Mono" font-size="9" x="135" y="15">30-WORD OVERLAP ZONE</text>
-<text fill="#8A8690" font-family="JetBrains Mono" font-size="9" x="340" y="50">CONFIG: 200 WORDS / TILE</text>
-<text fill="#8A8690" font-family="JetBrains Mono" font-size="9" x="340" y="68">SENTENCE-BOUNDARY AWARE</text>
-</svg>
-</div>
-<!-- K5 EMBED -->
-<div class="p-4 bg-surface-container-low border border-surface-variant rounded-xl">
-<div class="flex items-center justify-between mb-2">
-<span class="font-label-caps text-label-caps text-primary-container">KEYFRAME 05 · VECTOR EMBEDDING GENERATION</span>
-<span class="font-code-sm text-code-sm text-on-surface-variant">92 ms</span>
-</div>
-<svg class="w-full h-auto" fill="none" viewBox="0 0 600 110">
-<!-- Tiles sending vectors -->
-<rect fill="#131313" height="40" stroke="#353534" stroke-width="1" width="55" x="40" y="35"></rect>
-<text fill="#8A8690" font-family="JetBrains Mono" font-size="9" x="52" y="60">c_0</text>
-<rect fill="#131313" height="40" stroke="#353534" stroke-width="1" width="55" x="110" y="35"></rect>
-<text fill="#8A8690" font-family="JetBrains Mono" font-size="9" x="122" y="60">c_1</text>
-<rect fill="#131313" height="40" stroke="#353534" stroke-width="1" width="55" x="180" y="35"></rect>
-<text fill="#8A8690" font-family="JetBrains Mono" font-size="9" x="192" y="60">c_2</text>
-<!-- Vertical Vector Bar Array (Orange highlighted) -->
-<g transform="translate(260, 20)">
-<rect fill="#131313" height="70" stroke="#5c4038" stroke-width="0.8" width="130" x="10" y="10"></rect>
-<!-- Bars -->
-<line stroke="#ff571d" stroke-width="2" x1="25" x2="25" y1="70" y2="35"></line>
-<line stroke="#ff571d" stroke-width="2" x1="35" x2="35" y1="70" y2="20"></line>
-<line stroke="#ff571d" stroke-width="2" x1="45" x2="45" y1="70" y2="48"></line>
-<line stroke="#ff571d" stroke-width="2" x1="55" x2="55" y1="70" y2="28"></line>
-<line stroke="#ff571d" stroke-width="2" x1="65" x2="65" y1="70" y2="55"></line>
-<line stroke="#ff571d" stroke-width="2.5" x1="75" x2="75" y1="70" y2="15"></line>
-<line stroke="#ff571d" stroke-width="2" x1="85" x2="85" y1="70" y2="40"></line>
-<line stroke="#ff571d" stroke-width="2" x1="95" x2="95" y1="70" y2="60"></line>
-<line stroke="#ff571d" stroke-width="2" x1="105" x2="105" y1="70" y2="25"></line>
-<line stroke="#ff571d" stroke-width="2" x1="115" x2="115" y1="70" y2="45"></line>
-</g>
-<text fill="#ff571d" font-family="JetBrains Mono" font-size="9" x="420" y="50">384 DIMENSIONS</text>
-<text fill="#8A8690" font-family="JetBrains Mono" font-size="9" x="420" y="68">L2 NORMALIZED (||v|| = 1.0)</text>
-</svg>
-</div>
-<!-- K6 STORE -->
-<div class="p-4 bg-surface-container-low border border-surface-variant rounded-xl">
-<div class="flex items-center justify-between mb-2">
-<span class="font-label-caps text-label-caps text-primary-container">KEYFRAME 06 · PERSISTENCE (CHUNK 0 LAST)</span>
-<span class="font-code-sm text-code-sm text-on-surface-variant">11 ms</span>
-</div>
-<svg class="w-full h-auto" fill="none" viewBox="0 0 600 110">
-<!-- Cylinder Stack -->
-<ellipse cx="140" cy="25" fill="#201f1f" rx="60" ry="14" stroke="#353534" stroke-width="1"></ellipse>
-<path d="M 80,25 v 60 a 60,14 0 0,0 120,0 v -60" fill="#131313" stroke="#353534" stroke-width="1"></path>
-<!-- Stored tiles inside -->
-<rect fill="#201f1f" height="12" stroke="#5c4038" stroke-width="0.8" width="90" x="95" y="65"></rect>
-<text fill="#8A8690" font-family="JetBrains Mono" font-size="8" x="125" y="74">chunk N-1</text>
-<rect fill="#201f1f" height="12" stroke="#5c4038" stroke-width="0.8" width="90" x="95" y="48"></rect>
-<text fill="#8A8690" font-family="JetBrains Mono" font-size="8" x="128" y="57">chunk 1</text>
-<!-- Chunk 0 Outlined in Orange hovering on top -->
-<rect fill="#1c1b1b" height="14" stroke="#ff571d" stroke-width="1.8" width="90" x="95" y="18"></rect>
-<text fill="#ff571d" font-family="JetBrains Mono" font-size="9" font-weight="600" x="115" y="29">CHUNK 0 [LAST]</text>
-<!-- Callout -->
-<line stroke="#ff571d" stroke-width="0.8" x1="185" x2="280" y1="25" y2="25"></line>
-<text fill="#ff571d" font-family="JetBrains Mono" font-size="9" x="285" y="28">COMMIT MARKER: written last</text>
-<text fill="#8A8690" font-family="JetBrains Mono" font-size="9" x="285" y="46">Partial ingestion never leaks to retrieval index</text>
-</svg>
-</div>
+<!-- Right Column: 6 Stacked Keyframe Technical Blueprints (7 cols) with 3D Depth -->
+<div id="pipeline-3d-stage" class="lg:col-span-7 flex flex-col gap-3 relative" role="region" aria-label="Interactive Document Ingestion Pipeline" aria-roledescription="Interactive engineering 3D visualization">
+  <div id="pipeline-3d-container" class="flex flex-col gap-3">
+    <!-- K1 UPLOAD DISPATCH -->
+    <div class="pipeline-card p-4 bg-surface-container-low border border-surface-variant rounded-xl" data-step="1" tabindex="0" role="article" aria-label="Upload Dispatch">
+      <div class="flex items-center justify-between mb-2">
+        <span class="font-label-caps text-label-caps text-primary-container">UPLOAD DISPATCH</span>
+        <span class="card-step-status font-code-sm text-code-sm text-on-surface-variant">14 ms</span>
+      </div>
+      <svg class="w-full h-auto" fill="none" viewBox="0 0 600 110">
+        <!-- Tray -->
+        <path d="M 50,85 L 180,85 L 200,60 L 70,60 Z" fill="#131313" stroke="#353534" stroke-width="1.2"></path>
+        <!-- Sliding Sheet with 3D layer group -->
+        <g class="k1-sheet-group k-layer-3d">
+          <path class="k1-sheet-body" d="M 100,55 L 230,55 L 210,20 L 80,20 Z" fill="#201f1f" stroke="#e5e2e1" stroke-width="1.2"></path>
+          <line stroke="#8A8690" stroke-width="1" x1="120" x2="190" y1="35" y2="35"></line>
+          <line stroke="#8A8690" stroke-width="1" x1="110" x2="180" y1="45" y2="45"></line>
+        </g>
+        <!-- Slide motion vector -->
+        <line stroke="#ff571d" stroke-dasharray="3 2" stroke-width="1.5" x1="215" x2="255" y1="40" y2="40"></line>
+        <polygon fill="#ff571d" points="255,40 250,37 250,43"></polygon>
+        <circle class="k1-packet" cx="215" cy="40" r="3" fill="#ff571d" opacity="0"></circle>
+        <!-- Callouts -->
+        <line stroke="#5c4038" stroke-width="0.8" x1="180" x2="280" y1="20" y2="15"></line>
+        <text fill="#e5e2e1" font-family="JetBrains Mono" font-size="9" x="285" y="18">name: kernel_arch_v4.pdf</text>
+        <line stroke="#5c4038" stroke-width="0.8" x1="145" x2="280" y1="55" y2="55"></line>
+        <text fill="#8A8690" font-family="JetBrains Mono" font-size="9" x="285" y="58">size: 1.48 MB</text>
+        <line stroke="#5c4038" stroke-width="0.8" x1="190" x2="280" y1="75" y2="85"></line>
+        <text fill="#ff571d" font-family="JetBrains Mono" font-size="9" x="285" y="88">sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e</text>
+      </svg>
+    </div>
+
+    <!-- Conduit 1 -> 2 -->
+    <div class="pipeline-connector-track" data-from="1" data-to="2">
+      <div class="connector-glow-line"></div>
+      <div class="connector-pulse-dot"></div>
+    </div>
+
+    <!-- K2 VALIDATE -->
+    <div class="pipeline-card p-4 bg-surface-container-low border border-surface-variant rounded-xl" data-step="2" tabindex="0" role="article" aria-label="Magic Bytes Validation">
+      <div class="flex items-center justify-between mb-2">
+        <span class="font-label-caps text-label-caps text-primary-container">MAGIC BYTES VALIDATION</span>
+        <span class="card-step-status font-code-sm text-code-sm text-on-surface-variant">0.8 ms</span>
+      </div>
+      <svg class="w-full h-auto" fill="none" viewBox="0 0 600 110">
+        <defs>
+          <filter id="k2-laser-glow" x="-20%" y="-20%" width="140%" height="140%">
+            <feDropShadow dx="0" dy="0" stdDeviation="2" flood-color="#ff571d" flood-opacity="0.8"/>
+          </filter>
+        </defs>
+        <!-- Sheet entering -->
+        <rect fill="#1c1b1b" height="60" stroke="#e5e2e1" stroke-width="1" width="160" x="60" y="25"></rect>
+        <line stroke="#8A8690" stroke-width="1" x1="75" x2="160" y1="40" y2="40"></line>
+        <line stroke="#8A8690" stroke-width="1" x1="75" x2="190" y1="55" y2="55"></line>
+        <!-- Laser scan bar (Orange Highlight with scanning animation) -->
+        <g class="k2-laser-group k-layer-3d">
+          <line stroke="#ff571d" stroke-width="2.5" x1="140" x2="140" y1="12" y2="98" filter="url(#k2-laser-glow)"></line>
+          <rect fill="#ff571d" height="4" width="8" x="136" y="8" rx="1"></rect>
+          <rect fill="#ff571d" height="4" width="8" x="136" y="98" rx="1"></rect>
+        </g>
+        <!-- Check badges -->
+        <circle class="k2-badge-circle" cx="280" cy="40" fill="#131313" r="8" stroke="#3dd6a0" stroke-width="1"></circle>
+        <text class="k2-badge-text" fill="#3dd6a0" font-family="JetBrains Mono" font-size="10" x="277" y="44">✓</text>
+        <text fill="#3dd6a0" font-family="JetBrains Mono" font-size="9" x="296" y="43">%PDF- 1.7 MAGIC BYTES</text>
+        <circle class="k2-badge-circle" cx="280" cy="72" fill="#131313" r="8" stroke="#3dd6a0" stroke-width="1"></circle>
+        <text class="k2-badge-text" fill="#3dd6a0" font-family="JetBrains Mono" font-size="10" x="277" y="76">✓</text>
+        <text fill="#3dd6a0" font-family="JetBrains Mono" font-size="9" x="296" y="75">ext .pdf SANITY MATCH</text>
+      </svg>
+    </div>
+
+    <!-- Conduit 2 -> 3 -->
+    <div class="pipeline-connector-track" data-from="2" data-to="3">
+      <div class="connector-glow-line"></div>
+      <div class="connector-pulse-dot"></div>
+    </div>
+
+    <!-- K3 EXTRACT -->
+    <div class="pipeline-card p-4 bg-surface-container-low border border-surface-variant rounded-xl" data-step="3" tabindex="0" role="article" aria-label="Layer Separation">
+      <div class="flex items-center justify-between mb-2">
+        <span class="font-label-caps text-label-caps text-primary-container">LAYER SEPARATION</span>
+        <span class="card-step-status font-code-sm text-code-sm text-on-surface-variant">14 ms</span>
+      </div>
+      <svg class="w-full h-auto" fill="none" viewBox="0 0 600 110">
+        <!-- Stacked PDF page layers -->
+        <polygon class="k3-plane-base k-layer-3d" fill="#131313" points="50,75 140,90 190,50 100,35" stroke="#353534" stroke-width="1"></polygon>
+        <polygon class="k3-plane-top k-layer-3d" fill="#1c1b1b" points="60,65 150,80 200,40 110,25" stroke="#8A8690" stroke-width="1"></polygon>
+        <!-- Floating orange text lines lifting off layer -->
+        <g class="k3-text-layer k-layer-3d">
+          <line stroke="#ff571d" stroke-width="2" x1="90" x2="150" y1="35" y2="45"></line>
+          <line stroke="#ff571d" stroke-width="2" x1="85" x2="165" y1="45" y2="58"></line>
+          <line stroke="#ff571d" stroke-width="2" x1="100" x2="140" y1="55" y2="62"></line>
+        </g>
+        <!-- Extraction callout -->
+        <path d="M 160,50 L 260,35" stroke="#ff571d" stroke-dasharray="2 2" stroke-width="0.8"></path>
+        <text fill="#ff571d" font-family="JetBrains Mono" font-size="9" x="268" y="38">pypdf · raw text stream extracted</text>
+        <text fill="#8A8690" font-family="JetBrains Mono" font-size="9" x="268" y="58">non-text raster glyphs discarded</text>
+      </svg>
+    </div>
+
+    <!-- Conduit 3 -> 4 -->
+    <div class="pipeline-connector-track" data-from="3" data-to="4">
+      <div class="connector-glow-line"></div>
+      <div class="connector-pulse-dot"></div>
+    </div>
+
+    <!-- K4 CHUNK -->
+    <div class="pipeline-card p-4 bg-surface-container-low border border-surface-variant rounded-xl" data-step="4" tabindex="0" role="article" aria-label="Sliding Chunk Window">
+      <div class="flex items-center justify-between mb-2">
+        <span class="font-label-caps text-label-caps text-primary-container">SLIDING CHUNK WINDOW</span>
+        <span class="card-step-status font-code-sm text-code-sm text-on-surface-variant">2 ms</span>
+      </div>
+      <svg class="w-full h-auto" fill="none" viewBox="0 0 600 110">
+        <!-- Chunk tiles -->
+        <!-- C0 -->
+        <rect fill="#1c1b1b" height="50" stroke="#e5e2e1" stroke-width="1" width="100" x="40" y="30"></rect>
+        <text fill="#e5e2e1" font-family="JetBrains Mono" font-size="11" x="50" y="58">CHUNK C_0</text>
+        <!-- Overlap zone 1 (Hatched Rust Orange) -->
+        <rect class="k4-overlap-1" fill="#ff571d" fill-opacity="0.25" height="50" stroke="#ff571d" stroke-width="1" width="20" x="120" y="30"></rect>
+        <!-- C1 -->
+        <rect fill="none" height="50" stroke="#e5e2e1" stroke-width="1" width="100" x="120" y="30"></rect>
+        <text fill="#e5e2e1" font-family="JetBrains Mono" font-size="11" x="145" y="58">CHUNK C_1</text>
+        <!-- Overlap zone 2 -->
+        <rect class="k4-overlap-2" fill="#ff571d" fill-opacity="0.25" height="50" stroke="#ff571d" stroke-width="1" width="20" x="200" y="30"></rect>
+        <!-- C2 -->
+        <rect fill="none" height="50" stroke="#e5e2e1" stroke-width="1" width="100" x="200" y="30"></rect>
+        <text fill="#e5e2e1" font-family="JetBrains Mono" font-size="11" x="225" y="58">CHUNK C_2</text>
+        <!-- Sliding inspection bracket -->
+        <rect class="k4-sliding-bracket k-layer-3d" x="38" y="27" width="104" height="56" fill="none" stroke="#ff571d" stroke-width="1.8" rx="2" stroke-dasharray="4 2" opacity="0"></rect>
+        <!-- Specifications -->
+        <line stroke="#ff571d" stroke-width="0.8" x1="130" x2="130" y1="30" y2="12"></line>
+        <text fill="#ff571d" font-family="JetBrains Mono" font-size="9" x="135" y="15">30-WORD OVERLAP ZONE</text>
+        <text fill="#8A8690" font-family="JetBrains Mono" font-size="9" x="340" y="50">CONFIG: 200 WORDS / TILE</text>
+        <text fill="#8A8690" font-family="JetBrains Mono" font-size="9" x="340" y="68">SENTENCE-BOUNDARY AWARE</text>
+      </svg>
+    </div>
+
+    <!-- Conduit 4 -> 5 -->
+    <div class="pipeline-connector-track" data-from="4" data-to="5">
+      <div class="connector-glow-line"></div>
+      <div class="connector-pulse-dot"></div>
+    </div>
+
+    <!-- K5 EMBED -->
+    <div class="pipeline-card p-4 bg-surface-container-low border border-surface-variant rounded-xl" data-step="5" tabindex="0" role="article" aria-label="Vector Embedding Generation">
+      <div class="flex items-center justify-between mb-2">
+        <span class="font-label-caps text-label-caps text-primary-container">VECTOR EMBEDDING GENERATION</span>
+        <span class="card-step-status font-code-sm text-code-sm text-on-surface-variant">92 ms</span>
+      </div>
+      <svg class="w-full h-auto" fill="none" viewBox="0 0 600 110">
+        <!-- Tiles sending vectors -->
+        <rect fill="#131313" height="40" stroke="#353534" stroke-width="1" width="55" x="40" y="35"></rect>
+        <text fill="#8A8690" font-family="JetBrains Mono" font-size="9" x="52" y="60">c_0</text>
+        <rect fill="#131313" height="40" stroke="#353534" stroke-width="1" width="55" x="110" y="35"></rect>
+        <text fill="#8A8690" font-family="JetBrains Mono" font-size="9" x="122" y="60">c_1</text>
+        <rect fill="#131313" height="40" stroke="#353534" stroke-width="1" width="55" x="180" y="35"></rect>
+        <text fill="#8A8690" font-family="JetBrains Mono" font-size="9" x="192" y="60">c_2</text>
+        <!-- Vertical Vector Bar Array (Orange highlighted) -->
+        <g class="k-layer-3d" transform="translate(260, 20)">
+          <rect fill="#131313" height="70" stroke="#5c4038" stroke-width="0.8" width="130" x="10" y="10"></rect>
+          <!-- 10 Responsive Animated Bars -->
+          <line class="k5-bar k5-bar-0" stroke="#ff571d" stroke-width="2" x1="25" x2="25" y1="70" y2="35"></line>
+          <line class="k5-bar k5-bar-1" stroke="#ff571d" stroke-width="2" x1="35" x2="35" y1="70" y2="20"></line>
+          <line class="k5-bar k5-bar-2" stroke="#ff571d" stroke-width="2" x1="45" x2="45" y1="70" y2="48"></line>
+          <line class="k5-bar k5-bar-3" stroke="#ff571d" stroke-width="2" x1="55" x2="55" y1="70" y2="28"></line>
+          <line class="k5-bar k5-bar-4" stroke="#ff571d" stroke-width="2" x1="65" x2="65" y1="70" y2="55"></line>
+          <line class="k5-bar k5-bar-5" stroke="#ff571d" stroke-width="2.5" x1="75" x2="75" y1="70" y2="15"></line>
+          <line class="k5-bar k5-bar-6" stroke="#ff571d" stroke-width="2" x1="85" x2="85" y1="70" y2="40"></line>
+          <line class="k5-bar k5-bar-7" stroke="#ff571d" stroke-width="2" x1="95" x2="95" y1="70" y2="60"></line>
+          <line class="k5-bar k5-bar-8" stroke="#ff571d" stroke-width="2" x1="105" x2="105" y1="70" y2="25"></line>
+          <line class="k5-bar k5-bar-9" stroke="#ff571d" stroke-width="2" x1="115" x2="115" y1="70" y2="45"></line>
+        </g>
+        <text fill="#ff571d" font-family="JetBrains Mono" font-size="9" x="420" y="50">384 DIMENSIONS</text>
+        <text fill="#8A8690" font-family="JetBrains Mono" font-size="9" x="420" y="68">L2 NORMALIZED (||v|| = 1.0)</text>
+      </svg>
+    </div>
+
+    <!-- Conduit 5 -> 6 -->
+    <div class="pipeline-connector-track" data-from="5" data-to="6">
+      <div class="connector-glow-line"></div>
+      <div class="connector-pulse-dot"></div>
+    </div>
+
+    <!-- K6 STORE -->
+    <div class="pipeline-card p-4 bg-surface-container-low border border-surface-variant rounded-xl" data-step="6" tabindex="0" role="article" aria-label="Atomic Persistence">
+      <div class="flex items-center justify-between mb-2">
+        <span class="font-label-caps text-label-caps text-primary-container">PERSISTENCE (CHUNK 0 LAST)</span>
+        <span class="card-step-status font-code-sm text-code-sm text-on-surface-variant">11 ms</span>
+      </div>
+      <svg class="w-full h-auto" fill="none" viewBox="0 0 600 110">
+        <!-- Cylinder Stack -->
+        <g class="k-layer-3d">
+          <ellipse cx="140" cy="25" fill="#201f1f" rx="60" ry="14" stroke="#353534" stroke-width="1"></ellipse>
+          <path class="k6-cylinder-base" d="M 80,25 v 60 a 60,14 0 0,0 120,0 v -60" fill="#131313" stroke="#353534" stroke-width="1"></path>
+          <!-- Stored tiles inside -->
+          <rect fill="#201f1f" height="12" stroke="#5c4038" stroke-width="0.8" width="90" x="95" y="65"></rect>
+          <text fill="#8A8690" font-family="JetBrains Mono" font-size="8" x="125" y="74">chunk N-1</text>
+          <rect fill="#201f1f" height="12" stroke="#5c4038" stroke-width="0.8" width="90" x="95" y="48"></rect>
+          <text fill="#8A8690" font-family="JetBrains Mono" font-size="8" x="128" y="57">chunk 1</text>
+          <!-- Chunk 0 Outlined in Orange hovering on top with atomic drop -->
+          <rect class="k6-chunk-last" fill="#1c1b1b" height="14" stroke="#ff571d" stroke-width="1.8" width="90" x="95" y="18"></rect>
+          <text fill="#ff571d" font-family="JetBrains Mono" font-size="9" font-weight="600" x="115" y="29">CHUNK 0 [LAST]</text>
+        </g>
+        <!-- Callout -->
+        <line stroke="#ff571d" stroke-width="0.8" x1="185" x2="280" y1="25" y2="25"></line>
+        <text fill="#ff571d" font-family="JetBrains Mono" font-size="9" x="285" y="28">COMMIT MARKER: written last</text>
+        <text fill="#8A8690" font-family="JetBrains Mono" font-size="9" x="285" y="46">Partial ingestion never leaks to retrieval index</text>
+      </svg>
+    </div>
+  </div>
 </div>
 </section>
 <!-- ========================================================================= -->
@@ -595,20 +692,30 @@
 <div class="w-1.5 h-1.5 bg-primary-container"></div>
 <div class="w-1.5 h-1.5 bg-primary-container opacity-20"></div>
 </div>
-<div class="flex flex-col md:flex-row md:items-end justify-between mb-10 pb-4 border-b border-surface-variant">
+<div class="flex flex-col md:flex-row md:items-end justify-between mb-6 pb-4 border-b border-surface-variant gap-4">
 <div>
-<div class="flex items-center gap-2 mb-2">
-<span class="font-label-caps text-label-caps text-primary-container tracking-widest">03 / REAL-TIME QUERY LIFECYCLE</span>
-<span class="h-px w-8 bg-outline-variant"></span>
-<span class="font-code-sm text-code-sm text-on-surface-variant">END-TO-END AUDIT</span>
+  <div class="flex items-center gap-2 mb-1.5">
+    <span class="font-code-sm text-[11px] text-tertiary tracking-wider uppercase font-semibold flex items-center gap-1.5">
+      <span class="w-1.5 h-1.5 rounded-full bg-tertiary animate-pulse"></span>
+      RAG RETRIEVAL &amp; RELEVANCE GATEWAY
+    </span>
+    <span class="font-code-sm text-[10px] text-on-surface-variant px-2 py-0.5 rounded bg-surface-container border border-surface-variant">ILLUSTRATIVE ARCHITECTURE TRACE</span>
+  </div>
+  <h2 class="font-headline-lg text-[32px] sm:text-[38px] leading-tight text-on-surface font-semibold">
+    The Journey of a Question
+  </h2>
 </div>
-<h2 class="font-headline-lg text-[32px] sm:text-[38px] leading-tight text-on-surface font-semibold">
-            The Journey of a Question
-          </h2>
-</div>
-<div class="mt-4 md:mt-0 px-4 py-2 bg-surface-container border border-surface-variant rounded-xl flex items-center gap-3">
-<span class="font-label-caps text-label-caps text-on-surface-variant">TOTAL PIPELINE:</span>
-<span class="font-metric-display text-[20px] text-tertiary">— ms</span>
+
+<!-- Scenario Switcher Toolbar -->
+<div class="flex flex-wrap items-center gap-2">
+  <button id="btn-scenario-pass" type="button" class="scenario-pill is-active px-3 py-1.5 rounded-lg border border-primary-container bg-primary-container text-on-primary-container font-code-sm text-[11px] font-semibold flex items-center gap-1.5 shadow-sm cursor-pointer">
+    <span class="material-symbols-outlined text-[15px]">verified</span>
+    <span>BRANCH A: SUFFICIENT EVIDENCE (τ ≥ 0.35)</span>
+  </button>
+  <button id="btn-scenario-abstain" type="button" class="scenario-pill scenario-pill-abstain px-3 py-1.5 rounded-lg border border-surface-variant bg-surface-container-low text-on-surface font-code-sm text-[11px] flex items-center gap-1.5 hover:border-error/50 cursor-pointer">
+    <span class="material-symbols-outlined text-[15px]">block</span>
+    <span>BRANCH B: LOW RELEVANCE (ABSTAIN)</span>
+  </button>
 </div>
 </div>
 <!-- Linear Blueprint Track -->
@@ -620,13 +727,13 @@
 <span class="font-label-caps text-label-caps text-primary-container">Q1 · QUESTION INTAKE</span>
 <span class="font-code-sm text-code-sm text-on-surface-variant">0 ms</span>
 </div>
-<div class="p-3 bg-surface-container-lowest border border-surface-variant rounded font-code-sm text-on-surface mb-3">
-<span class="text-primary-container">›</span> Explain process scheduling in the OS kernel
-            </div>
+<div id="q1-input-text" class="p-3 bg-surface-container-lowest border border-surface-variant rounded font-code-sm text-on-surface mb-3">
+  <span class="text-primary-container">›</span> Explain process scheduling in the OS kernel
+</div>
 </div>
 <div class="flex items-center justify-between text-[11px] font-code-sm text-on-surface-variant border-t border-surface-variant pt-2">
 <span>INPUT BUFFER</span>
-<span class="text-on-surface">47 / 2000 CHARACTERS</span>
+<span id="q1-char-count" class="text-on-surface">47 / 2000 CHARACTERS</span>
 </div>
 </div>
 <!-- Q2: EMBED QUERY -->
@@ -659,24 +766,24 @@
 <span class="font-label-caps text-label-caps text-primary-container">Q3 · COSINE RETRIEVAL</span>
 <span class="font-code-sm text-code-sm text-on-surface-variant">6 ms</span>
 </div>
-<div class="flex flex-col gap-1.5 bg-surface-container-lowest border border-surface-variant p-2 rounded mb-3 font-code-sm text-[11px]">
-<div class="flex justify-between items-center text-primary-container">
+<div id="q3-retrieval-list" class="flex flex-col gap-1.5 bg-surface-container-lowest border border-surface-variant p-2 rounded mb-3 font-code-sm text-[11px]">
+<div class="retrieval-tile-card flex justify-between items-center text-primary-container p-1 rounded">
 <span>c_102 (kernel_cpu.pdf)</span>
 <span class="font-semibold">0.71</span>
 </div>
-<div class="flex justify-between items-center text-primary-container">
+<div class="retrieval-tile-card flex justify-between items-center text-primary-container p-1 rounded">
 <span>c_104 (process_pcb.pdf)</span>
 <span class="font-semibold">0.58</span>
 </div>
-<div class="flex justify-between items-center text-primary-container">
+<div class="retrieval-tile-card flex justify-between items-center text-primary-container p-1 rounded">
 <span>c_108 (sched_algo.pdf)</span>
 <span class="font-semibold">0.49</span>
 </div>
-<div class="flex justify-between items-center text-on-surface-variant opacity-60">
+<div class="retrieval-tile-card flex justify-between items-center text-on-surface-variant opacity-60 p-1 rounded">
 <span>c_210 (io_devices.pdf)</span>
 <span>0.32</span>
 </div>
-<div class="flex justify-between items-center text-on-surface-variant opacity-60">
+<div class="retrieval-tile-card flex justify-between items-center text-on-surface-variant opacity-60 p-1 rounded">
 <span>c_055 (memory_swap.pdf)</span>
 <span>0.24</span>
 </div>
@@ -684,14 +791,14 @@
 </div>
 <div class="flex items-center justify-between text-[11px] font-code-sm text-on-surface-variant border-t border-surface-variant pt-2">
 <span>CANDIDATES POLLED</span>
-<span class="text-on-surface">5 TILES RANKED</span>
+<span id="q3-candidates-badge" class="text-on-surface">5 TILES RANKED</span>
 </div>
 </div>
 </div>
 <!-- Q4: CONFIDENCE GATE & Q4B ABSTAIN BRANCH -->
 <div class="mt-6 grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
 <!-- Q4 GATE PASS -->
-<div class="lg:col-span-5 p-5 bg-surface-container-low border border-surface-variant rounded-xl flex flex-col justify-between">
+<div id="q4-gate-card" class="lg:col-span-5 p-5 bg-surface-container-low border border-surface-variant rounded-xl flex flex-col justify-between transition-all">
 <div>
 <div class="flex items-center justify-between mb-3">
 <span class="font-label-caps text-label-caps text-primary-container">Q4 · CONFIDENCE GATE</span>
@@ -700,15 +807,15 @@
 <div class="p-4 bg-surface-container-lowest border border-surface-variant rounded flex flex-col gap-3 mb-3">
 <div class="flex items-center justify-between">
 <span class="font-code-sm text-[12px] text-on-surface">TOP COSINE SCORE</span>
-<span class="font-metric-display text-[20px] text-tertiary">0.71</span>
+<span id="q4-score-display" class="font-metric-display text-[20px] text-tertiary">0.71</span>
 </div>
 <!-- Gate visual line -->
 <div class="relative w-full h-4 bg-surface-container rounded-sm overflow-hidden flex items-center">
-<div class="absolute left-0 top-0 bottom-0 bg-tertiary/20 w-[71%]"></div>
+<div id="q4-score-bar" class="absolute left-0 top-0 bottom-0 bg-tertiary/20 w-[71%] transition-all"></div>
 <!-- Threshold Marker τ = 0.35 -->
-<div class="absolute left-[45%] top-0 bottom-0 w-0.5 bg-primary-container z-10"></div>
+<div class="absolute left-[35%] top-0 bottom-0 w-0.5 bg-primary-container z-10"></div>
 <!-- Top Score Indicator -->
-<div class="absolute left-[71%] top-0 bottom-0 w-1 bg-tertiary z-20"></div>
+<div id="q4-score-indicator" class="absolute left-[71%] top-0 bottom-0 w-1 bg-tertiary z-20 transition-all"></div>
 </div>
 <div class="flex justify-between font-code-sm text-[10px] text-on-surface-variant">
 <span>0.0</span>
@@ -717,13 +824,13 @@
 </div>
 </div>
 </div>
-<div class="flex items-center gap-2 p-2 bg-tertiary/10 border border-tertiary/30 rounded font-code-sm text-tertiary text-[11px]">
+<div id="q4-decision-badge" class="flex items-center gap-2 p-2 bg-tertiary/10 border border-tertiary/30 rounded font-code-sm text-tertiary text-[11px] transition-all">
 <span class="material-symbols-outlined text-sm">verified</span>
-            DECISION: 0.71 ≥ 0.35 (GATE PASS)
-          </div>
+<span>DECISION: 0.71 ≥ 0.35 (GATE PASS)</span>
+</div>
 </div>
 <!-- Q4B ABSTAIN BRANCH (DETERMINISTIC FALLBACK) -->
-<div class="lg:col-span-7 p-5 bg-surface-container-lowest border border-error/30 rounded-xl flex flex-col justify-between relative overflow-hidden">
+<div id="q4b-abstain-card" class="lg:col-span-7 p-5 bg-surface-container-lowest border border-error/30 rounded-xl flex flex-col justify-between relative overflow-hidden transition-all opacity-40">
 <div class="absolute top-0 right-0 w-32 h-32 bg-error/5 rounded-full pointer-events-none blur-2xl"></div>
 <div>
 <div class="flex items-center justify-between mb-3">
@@ -733,19 +840,19 @@
 <div class="p-3 bg-surface-container-low border border-surface-variant rounded flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-3">
 <div class="flex flex-col">
 <span class="font-headline-sm text-headline-sm text-on-surface">LLM Call Suppressed</span>
-<span class="font-body-sm text-on-surface-variant text-[12px]">If maximum candidate similarity fails threshold τ 0.35, zero tokens are dispatched.</span>
+<span id="q4b-suppress-subtext" class="font-body-sm text-on-surface-variant text-[12px]">If maximum candidate similarity fails threshold τ 0.35, zero tokens are dispatched.</span>
 </div>
-<div class="px-3 py-1.5 bg-error/10 border border-error/40 rounded text-error font-code-sm text-[12px] font-semibold shrink-0">
-                ₹0.00 SPENT
-              </div>
+<div id="q4b-cost-badge" class="px-3 py-1.5 bg-error/10 border border-error/40 rounded text-error font-code-sm text-[12px] font-semibold shrink-0">
+  ₹0.00 SPENT
+</div>
 </div>
 <div class="font-code-sm text-[11px] text-on-surface-variant p-2 bg-surface-container-low rounded border border-surface-variant">
-<code>&gt; ABSTAIN_SIGNAL: "No indexed passages provide sufficient verifiable evidence."</code>
+<code id="q4b-signal-text">&gt; ABSTAIN_SIGNAL: "No indexed passages provide sufficient verifiable evidence."</code>
 </div>
 </div>
 <div class="mt-4 flex items-center justify-between text-[11px] font-code-sm text-error/80 border-t border-surface-variant pt-2">
-<span>HALLUCINATION PREVENTION GUARANTEE</span>
-<span>0 TOKEN DISSIPATION</span>
+<span>RELEVANCE GATING &amp; HARD ABSTENTION GATEWAY</span>
+<span id="q4b-dissipation-text">0 TOKEN DISSIPATION</span>
 </div>
 </div>
 </div>
@@ -758,7 +865,7 @@
 <span class="font-label-caps text-label-caps text-primary-container">Q5 · CONTEXT SYNTHESIS</span>
 <span class="font-code-sm text-code-sm text-on-surface-variant">1 ms</span>
 </div>
-<div class="p-3 bg-surface-container-lowest border border-surface-variant rounded flex flex-col gap-2 mb-3 font-code-sm text-[11px]">
+<div id="q5-context-envelope" class="p-3 bg-surface-container-lowest border border-surface-variant rounded flex flex-col gap-2 mb-3 font-code-sm text-[11px]">
 <div class="text-tertiary"># SYSTEM: Ground truth extraction</div>
 <div class="text-on-surface-variant">&lt;context&gt;</div>
 <div class="text-on-surface pl-2 border-l border-surface-variant">[1] c_102 ... [2] c_104 ... [3] c_108</div>
@@ -768,7 +875,7 @@
 </div>
 <div class="flex items-center justify-between text-[11px] font-code-sm text-on-surface-variant border-t border-surface-variant pt-2">
 <span>PROMPT ENVELOPE</span>
-<span class="text-on-surface">1,712 TOKENS</span>
+<span id="q5-tokens-badge" class="text-on-surface">1,712 TOKENS</span>
 </div>
 </div>
 <!-- Q6: LLM -->
@@ -776,24 +883,24 @@
 <div>
 <div class="flex items-center justify-between mb-3">
 <span class="font-label-caps text-label-caps text-primary-container">Q6 · INFERENCE STREAM</span>
-<span class="font-code-sm text-code-sm text-on-surface-variant">2,950 ms</span>
+<span id="q6-latency-badge" class="font-code-sm text-code-sm text-on-surface-variant">2,950 ms</span>
 </div>
-<div class="p-3 bg-surface-container-lowest border border-surface-variant rounded mb-3 flex flex-col justify-center h-28">
+<div class="p-3 bg-surface-container-lowest border border-surface-variant rounded mb-3 flex flex-col justify-center min-h-[7rem]">
 <div class="flex items-center justify-between font-code-sm text-[11px] text-on-surface-variant mb-2">
 <span>HAIKU 3.5 EXECUTION</span>
-<span class="text-tertiary">STREAMING</span>
+<span id="q6-stream-status" class="text-tertiary">STREAMING</span>
 </div>
-<div class="w-full bg-surface-container h-1 rounded overflow-hidden">
+<div id="q6-progress-bar" class="w-full bg-surface-container h-1 rounded overflow-hidden">
 <div class="bg-primary-container h-full w-full animate-pulse"></div>
 </div>
-<div class="mt-3 font-code-sm text-[11px] text-on-surface leading-tight">
-                "Process scheduling coordinates CPU execution quantum across active PCBs..."
-              </div>
+<div id="q6-stream-text" class="mt-3 font-code-sm text-[11px] text-on-surface leading-tight">
+  "Process scheduling coordinates CPU execution quantum across active PCBs..."
+</div>
 </div>
 </div>
 <div class="flex items-center justify-between text-[11px] font-code-sm text-on-surface-variant border-t border-surface-variant pt-2">
 <span>STREAM VELOCITY</span>
-<span class="text-on-surface">88 TOKENS / SEC</span>
+<span id="q6-velocity-badge" class="text-on-surface">88 TOKENS / SEC</span>
 </div>
 </div>
 <!-- Q7: CITATIONS AUDIT -->
@@ -803,20 +910,20 @@
 <span class="font-label-caps text-label-caps text-primary-container">Q7 · CITATION RECONCILER</span>
 <span class="font-code-sm text-code-sm text-on-surface-variant">11 ms</span>
 </div>
-<div class="p-3 bg-surface-container-lowest border border-surface-variant rounded flex flex-col gap-1.5 mb-3 font-code-sm text-[11px]">
-<div class="flex items-center justify-between text-tertiary">
+<div id="q7-citations-list" class="p-3 bg-surface-container-lowest border border-surface-variant rounded flex flex-col gap-1.5 mb-3 font-code-sm text-[11px]">
+<div class="citation-chip flex items-center justify-between text-tertiary p-1 rounded border border-transparent" data-cite="1">
 <span>[1] matched source tile c_102</span>
 <span>✓ VALID</span>
 </div>
-<div class="flex items-center justify-between text-tertiary">
+<div class="citation-chip flex items-center justify-between text-tertiary p-1 rounded border border-transparent" data-cite="2">
 <span>[2] matched source tile c_104</span>
 <span>✓ VALID</span>
 </div>
-<div class="flex items-center justify-between text-tertiary">
+<div class="citation-chip flex items-center justify-between text-tertiary p-1 rounded border border-transparent" data-cite="3">
 <span>[3] matched source tile c_108</span>
 <span>✓ VALID</span>
 </div>
-<div class="flex items-center justify-between text-error line-through opacity-70">
+<div class="citation-chip flex items-center justify-between text-error line-through opacity-70 p-1 rounded border border-transparent" data-cite="4">
 <span>[4] hallucinated ghost citation</span>
 <span>✕ DROPPED</span>
 </div>
@@ -824,7 +931,27 @@
 </div>
 <div class="flex items-center justify-between text-[11px] font-code-sm text-on-surface-variant border-t border-surface-variant pt-2">
 <span>STRICT SANITIZATION</span>
-<span class="text-tertiary font-semibold">3 VALID · 1 PURGED</span>
+<span id="q7-sanitized-badge" class="text-tertiary font-semibold">3 VALID · 1 PURGED</span>
+</div>
+</div>
+</div>
+
+<!-- Interactive Citation Evidence Preview Box -->
+<div id="citation-evidence-box" class="mt-6 p-4 bg-surface-container-low border border-surface-variant rounded-xl flex flex-col gap-2.5 transition-all shadow-md">
+  <div class="flex items-center justify-between">
+    <div class="flex items-center gap-2 font-code-sm text-xs text-primary-container font-medium">
+      <span class="material-symbols-outlined text-base">menu_book</span>
+      <span id="evidence-citation-title">GROUNDED SOURCE PASSAGE · CITATION [1] (c_102)</span>
+    </div>
+    <span id="evidence-source-doc" class="font-code-sm text-[10px] text-on-surface-variant px-2 py-0.5 rounded bg-surface-container border border-surface-variant">DOC: kernel_cpu.pdf · Page 4</span>
+  </div>
+  <p id="evidence-quote-text" class="font-code-sm text-xs text-on-surface bg-surface-container-lowest p-3 rounded border border-surface-variant leading-relaxed">
+    "The Completely Fair Scheduler (CFS) implements process execution multiplexing using red-black trees indexed by vruntime. CPU execution time is allocated inversely proportional to task priority (nice value)."
+  </p>
+  <div class="flex items-center justify-between text-[10px] font-code-sm text-on-surface-variant">
+    <span id="evidence-match-status" class="text-tertiary font-medium">✓ VERIFIED GROUND TRUTH MATCH</span>
+    <span id="evidence-score-stat">COSINE SIMILARITY: 0.71 (CONFIDENCE: HIGH)</span>
+  </div>
 </div>
 </div>
 </div>
@@ -857,11 +984,6 @@
 <div class="w-1.5 h-1.5 bg-primary-container"></div>
 <div class="w-1.5 h-1.5 bg-primary-container opacity-20"></div>
 <div class="w-1.5 h-1.5 bg-primary-container"></div>
-</div>
-<div class="flex items-center gap-2 mb-3">
-<span class="font-label-caps text-label-caps text-primary-container tracking-widest">04 / HARD EMPIRICAL PROOF</span>
-<span class="h-px w-8 bg-outline-variant"></span>
-<span class="font-code-sm text-code-sm text-on-surface-variant">REPRODUCIBLE TELEMETRY</span>
 </div>
 <h2 class="font-headline-lg text-[32px] sm:text-[38px] leading-tight text-on-surface font-semibold mb-8">
         Evidence Over Assumptions
@@ -954,7 +1076,7 @@
 </div>
 </div>
 <div class="font-code-sm text-[11px] text-on-surface-variant border-t border-surface-variant pt-3">
-            ZERO UNVERIFIED STATEMENTS
+            GROUNDED EVIDENCE &amp; CITATION GATING
           </div>
 </div>
 <!-- 3. Medium: Abstains Instead of Guessing -->
@@ -962,7 +1084,7 @@
 <div>
 <div class="flex items-center justify-between mb-4">
 <span class="font-label-caps text-label-caps text-on-surface-variant uppercase">EVIDENCE 03</span>
-<span class="font-code-sm text-[11px] text-tertiary">SAFETY</span>
+<span class="font-code-sm text-code-sm text-tertiary">SAFETY</span>
 </div>
 <h3 class="font-headline-sm text-headline-sm text-on-surface mb-2">Abstains instead of guessing</h3>
 <p class="font-body-sm text-on-surface-variant mb-4">
@@ -974,17 +1096,20 @@
             </div>
 </div>
 <div class="font-code-sm text-[11px] text-on-surface-variant border-t border-surface-variant pt-3">
-            FALSE POSITIVE RATE: &lt; 0.01%
+            EVALUATION: SQuAD 2.0 Tested (τ = 0.35 Gate)
           </div>
 </div>
 <!-- 4. Small: Cost Efficiency (₹0.31) -->
 <div class="p-6 bg-[#111113] border border-surface-variant rounded-xl flex flex-col justify-between">
 <div>
+<div class="flex items-center justify-between">
 <span class="font-label-caps text-label-caps text-on-surface-variant uppercase">EFFICIENCY</span>
-<div class="mt-4 flex items-baseline gap-1">
-<span id="bento-cost" class="text-[44px] font-metric-display font-semibold text-primary-container">₹0.31</span>
+<span class="font-code-sm text-[10px] text-on-surface-variant px-1.5 py-0.5 rounded bg-surface-container">ESTIMATE</span>
 </div>
-<span class="font-code-sm text-code-sm text-on-surface tracking-wider uppercase">PER QUERY AVERAGE</span>
+<div class="mt-4 flex flex-col gap-1">
+<span id="bento-cost" class="text-[40px] leading-none font-metric-display font-semibold text-primary-container">₹0.31</span>
+<span class="font-code-sm text-code-sm text-on-surface tracking-wider uppercase mt-1">PER QUERY AVERAGE</span>
+</div>
 </div>
 <p class="font-body-sm text-on-surface-variant text-[12px] mt-4 border-t border-surface-variant pt-3">
             Calculated across Haiku 3.5 prompt token packing and zero-cost local Chroma vectors.
@@ -1038,11 +1163,6 @@
 <div class="w-1.5 h-1.5 bg-primary-container"></div>
 <div class="w-1.5 h-1.5 bg-primary-container"></div>
 <div class="w-1.5 h-1.5 bg-primary-container"></div>
-</div>
-<div class="flex items-center gap-2 mb-3">
-<span class="font-label-caps text-label-caps text-primary-container tracking-widest">05 / SYSTEM TOPOLOGY</span>
-<span class="h-px w-8 bg-outline-variant"></span>
-<span class="font-code-sm text-code-sm text-on-surface-variant">HEXAGONAL ISOLATION</span>
 </div>
 <h2 class="font-headline-lg text-[32px] sm:text-[38px] leading-tight text-on-surface font-semibold mb-3">
         Architecture at a Glance
@@ -1343,4 +1463,5 @@
   loadHomeStats();
 </script>
 <script src="../chat-drawer.js"></script>
+<script src="../pipeline-3d.js"></script>
 </body></html>
