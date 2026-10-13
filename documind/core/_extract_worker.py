@@ -11,9 +11,13 @@ from pathlib import Path
 
 
 def _apply_memory_limit() -> None:
-    """Apply best-effort memory limit on POSIX systems (1.5 GB)."""
+    """Apply best-effort memory limit on Linux POSIX systems (1.5 GB)."""
     try:
+        import platform
         import resource
+
+        if platform.system() == "Darwin":
+            return  # RLIMIT_AS has different virtual address semantics on macOS
 
         # 1.5 GB in bytes
         limit_bytes = 1536 * 1024 * 1024
@@ -40,7 +44,11 @@ def main() -> None:
     try:
         from pypdf import PdfReader
         from pypdf.errors import FileNotDecryptedError, PdfReadError, PdfStreamError
+    except ImportError as imp_err:
+        print(f"PDF_PARSER_UNAVAILABLE: {imp_err}", file=sys.stderr)
+        sys.exit(1)
 
+    try:
         reader = PdfReader(str(pdf_path))
         if getattr(reader, "is_encrypted", False):
             try:
