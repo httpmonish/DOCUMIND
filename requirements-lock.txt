@@ -107,7 +107,7 @@ playwright==1.63.0
 pluggy==1.6.0
 pre_commit==4.6.2
 propcache==0.5.4
-protobuf==6.33.6
+protobuf==7.36.2
 py-serializable==2.1.0
 pybase64==1.5.1
 pycparser==3.1
