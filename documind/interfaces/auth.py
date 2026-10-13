@@ -420,10 +420,22 @@ class AuthManager:
                 """
                 INSERT INTO users
                 (id, email, display_name, avatar_url, account_status,
+                 salt, password_hash,
                  email_verified, email_verified_at, last_login_at, created_at, updated_at)
-                VALUES (?, ?, ?, ?, 'active', 1, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, 'active', ?, ?, 1, ?, ?, ?, ?)
                 """,
-                (new_user_id, clean_email, resolved_name, avatar_url, now, now, now, now),
+                (
+                    new_user_id,
+                    clean_email,
+                    resolved_name,
+                    avatar_url,
+                    b"",
+                    b"",
+                    now,
+                    now,
+                    now,
+                    now,
+                ),
             )
             conn.execute(
                 """
@@ -577,53 +589,158 @@ class AuthManager:
         chunk_count: int,
         content_hash: str | None = None,
         storage_ref: str | None = None,
-    ) -> None:
-        """Register ownership of an indexed document for the authenticated user."""
+        display_name: str | None = None,
+        file_type: str | None = None,
+        mime_type: str | None = None,
+        file_size: int = 0,
+        status: str = "indexed",
+        processing_error: str | None = None,
+        chromadb_collection: str | None = None,
+    ) -> str:
+        """Register ownership and metadata of an indexed document for the authenticated user."""
         doc_id = "doc_" + uuid.uuid4().hex[:16]
         now = time.time()
         clean_source = source.strip()
+        disp_name = display_name or clean_source
+        f_type = file_type or (
+            clean_source.split(".")[-1].lower() if "." in clean_source else "txt"
+        )
 
         with self._lock, self._get_connection() as conn:
             conn.execute(
                 """
                 INSERT INTO documents
-                (id, owner_id, source, content_hash, chunk_count, status,
-                 storage_ref, created_at, updated_at)
-                VALUES (?, ?, ?, ?, ?, 'indexed', ?, ?, ?)
+                (id, owner_id, source, display_name, file_type, mime_type, file_size,
+                 content_hash, chunk_count, status, storage_ref, storage_key,
+                 processing_error, chromadb_collection, last_accessed_at, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(owner_id, source) DO UPDATE SET
+                    display_name = COALESCE(excluded.display_name, documents.display_name),
+                    file_type = COALESCE(excluded.file_type, documents.file_type),
+                    mime_type = COALESCE(excluded.mime_type, documents.mime_type),
+                    file_size = CASE
+                        WHEN excluded.file_size > 0 THEN excluded.file_size
+                        ELSE documents.file_size
+                    END,
                     content_hash = excluded.content_hash,
                     chunk_count = excluded.chunk_count,
-                    status = 'indexed',
-                    storage_ref = excluded.storage_ref,
+                    status = excluded.status,
+                    storage_ref = COALESCE(excluded.storage_ref, documents.storage_ref),
+                    storage_key = COALESCE(excluded.storage_key, documents.storage_key),
+                    processing_error = excluded.processing_error,
+                    chromadb_collection = COALESCE(
+                        excluded.chromadb_collection, documents.chromadb_collection
+                    ),
+                    last_accessed_at = excluded.last_accessed_at,
+                    deleted_at = NULL,
                     updated_at = excluded.updated_at
                 """,
-                (doc_id, user_id, clean_source, content_hash, chunk_count, storage_ref, now, now),
+                (
+                    doc_id,
+                    user_id,
+                    clean_source,
+                    disp_name,
+                    f_type,
+                    mime_type,
+                    file_size,
+                    content_hash,
+                    chunk_count,
+                    status,
+                    storage_ref,
+                    storage_ref,
+                    processing_error,
+                    chromadb_collection,
+                    now,
+                    now,
+                    now,
+                ),
             )
             conn.commit()
 
         self.log_event(
             user_id,
             "document_indexed",
-            {"source": clean_source, "chunk_count": chunk_count},
+            {"source": clean_source, "chunk_count": chunk_count, "display_name": disp_name},
         )
+        return doc_id
+
+    def touch_document_access(self, user_id: str, source: str) -> None:
+        """Update last_accessed_at timestamp when document is accessed."""
+        clean_source = source.strip()
+        now = time.time()
+        with self._lock, self._get_connection() as conn:
+            conn.execute(
+                """
+                UPDATE documents
+                SET last_accessed_at = ?, updated_at = ?
+                WHERE owner_id = ? AND (source = ? OR id = ?) AND deleted_at IS NULL
+                """,
+                (now, now, user_id, clean_source, clean_source),
+            )
+            conn.commit()
+
+    def get_document_metadata(self, user_id: str, source: str) -> dict[str, Any] | None:
+        """Fetch metadata for a single document owned by user_id."""
+        clean_source = source.strip()
+        with self._lock, self._get_connection() as conn:
+            row = conn.execute(
+                """
+                SELECT id, owner_id, source, display_name, file_type, mime_type,
+                       file_size, content_hash, chunk_count, status, storage_ref,
+                       processing_error, chromadb_collection, last_accessed_at,
+                       created_at, updated_at
+                FROM documents
+                WHERE owner_id = ? AND (source = ? OR id = ?) AND deleted_at IS NULL
+                """,
+                (user_id, clean_source, clean_source),
+            ).fetchone()
+            if not row:
+                return None
+            return {
+                "id": row["id"],
+                "owner_id": row["owner_id"],
+                "source": row["source"],
+                "display_name": row["display_name"] or row["source"],
+                "file_type": row["file_type"] or "txt",
+                "mime_type": row["mime_type"],
+                "file_size": row["file_size"] or 0,
+                "content_hash": row["content_hash"],
+                "chunk_count": row["chunk_count"],
+                "chunks": row["chunk_count"],
+                "status": row["status"],
+                "storage_ref": row["storage_ref"],
+                "processing_error": row["processing_error"],
+                "chromadb_collection": row["chromadb_collection"],
+                "last_accessed_at": row["last_accessed_at"] or row["created_at"],
+                "created_at": row["created_at"],
+                "updated_at": row["updated_at"],
+            }
 
     def verify_document_owner(self, user_id: str, source: str) -> bool:
         """Check whether user_id is the legitimate owner of source."""
         clean_source = source.strip()
         with self._lock, self._get_connection() as conn:
             row = conn.execute(
-                "SELECT id FROM documents WHERE owner_id = ? AND source = ?",
-                (user_id, clean_source),
+                """
+                SELECT id FROM documents
+                WHERE owner_id = ? AND (source = ? OR id = ?) AND deleted_at IS NULL
+                """,
+                (user_id, clean_source, clean_source),
             ).fetchone()
             return row is not None
 
     def delete_document_record(self, user_id: str, source: str) -> bool:
-        """Delete document record owned by user_id."""
+        """Soft-delete or delete document record owned by user_id."""
         clean_source = source.strip()
+        now = time.time()
         with self._lock, self._get_connection() as conn:
             cursor = conn.execute(
-                "DELETE FROM documents WHERE owner_id = ? AND source = ?",
-                (user_id, clean_source),
+                """
+                UPDATE documents
+                SET deleted_at = ?, updated_at = ?
+                WHERE owner_id = ? AND (source = ? OR id = ?) AND deleted_at IS NULL
+                """,
+                (now, now, user_id, clean_source, clean_source),
             )
             conn.commit()
             deleted = cursor.rowcount > 0
@@ -632,15 +749,17 @@ class AuthManager:
             self.log_event(user_id, "document_deleted", {"source": clean_source})
         return deleted
 
-    def get_user_documents(self, user_id: str) -> list[dict[str, Any]]:
-        """List all documents owned by user_id."""
+    def list_user_documents(self, user_id: str) -> list[dict[str, Any]]:
+        """List all active documents owned by user_id."""
         with self._lock, self._get_connection() as conn:
             rows = conn.execute(
                 """
-                SELECT id, source, content_hash, chunk_count, status,
-                       storage_ref, created_at, updated_at
+                SELECT id, owner_id, source, display_name, file_type, mime_type,
+                       file_size, content_hash, chunk_count, status, storage_ref,
+                       processing_error, chromadb_collection, last_accessed_at,
+                       created_at, updated_at
                 FROM documents
-                WHERE owner_id = ?
+                WHERE owner_id = ? AND deleted_at IS NULL
                 ORDER BY created_at DESC
                 """,
                 (user_id,),
@@ -648,15 +767,139 @@ class AuthManager:
             return [
                 {
                     "id": r["id"],
+                    "owner_id": r["owner_id"],
                     "source": r["source"],
+                    "display_name": r["display_name"] or r["source"],
+                    "file_type": r["file_type"] or "txt",
+                    "mime_type": r["mime_type"],
+                    "file_size": r["file_size"] or 0,
                     "content_hash": r["content_hash"],
                     "chunk_count": r["chunk_count"],
+                    "chunks": r["chunk_count"],
                     "status": r["status"],
+                    "storage_ref": r["storage_ref"],
+                    "processing_error": r["processing_error"],
+                    "chromadb_collection": r["chromadb_collection"],
+                    "last_accessed_at": r["last_accessed_at"] or r["created_at"],
                     "created_at": r["created_at"],
                     "updated_at": r["updated_at"],
                 }
                 for r in rows
             ]
+
+    # Backward compatibility alias
+    get_user_documents = list_user_documents
+
+    def list_recent_documents(self, user_id: str, limit: int = 10) -> list[dict[str, Any]]:
+        """List recently accessed documents owned by user_id."""
+        with self._lock, self._get_connection() as conn:
+            rows = conn.execute(
+                """
+                SELECT id, owner_id, source, display_name, file_type, mime_type,
+                       file_size, content_hash, chunk_count, status, storage_ref,
+                       processing_error, chromadb_collection, last_accessed_at,
+                       created_at, updated_at
+                FROM documents
+                WHERE owner_id = ? AND deleted_at IS NULL
+                ORDER BY COALESCE(last_accessed_at, created_at) DESC
+                LIMIT ?
+                """,
+                (user_id, limit),
+            ).fetchall()
+            return [
+                {
+                    "id": r["id"],
+                    "owner_id": r["owner_id"],
+                    "source": r["source"],
+                    "display_name": r["display_name"] or r["source"],
+                    "file_type": r["file_type"] or "txt",
+                    "mime_type": r["mime_type"],
+                    "file_size": r["file_size"] or 0,
+                    "content_hash": r["content_hash"],
+                    "chunk_count": r["chunk_count"],
+                    "chunks": r["chunk_count"],
+                    "status": r["status"],
+                    "storage_ref": r["storage_ref"],
+                    "processing_error": r["processing_error"],
+                    "chromadb_collection": r["chromadb_collection"],
+                    "last_accessed_at": r["last_accessed_at"] or r["created_at"],
+                    "created_at": r["created_at"],
+                    "updated_at": r["updated_at"],
+                }
+                for r in rows
+            ]
+
+    def rename_user_document(self, user_id: str, source: str, new_display_name: str) -> bool:
+        """Rename user's document display name."""
+        clean_source = source.strip()
+        clean_name = new_display_name.strip()
+        now = time.time()
+        with self._lock, self._get_connection() as conn:
+            cursor = conn.execute(
+                """
+                UPDATE documents
+                SET display_name = ?, updated_at = ?
+                WHERE owner_id = ? AND (source = ? OR id = ?) AND deleted_at IS NULL
+                """,
+                (clean_name, now, user_id, clean_source, clean_source),
+            )
+            conn.commit()
+            return cursor.rowcount > 0
+
+    def get_user_by_id(self, user_id: str) -> User | None:
+        """Fetch active user profile by ID."""
+        with self._lock, self._get_connection() as conn:
+            row = conn.execute(
+                """
+                SELECT id, email, display_name, avatar_url, account_status,
+                       email_verified, email_verified_at, last_login_at,
+                       created_at, updated_at
+                FROM users
+                WHERE id = ?
+                """,
+                (user_id,),
+            ).fetchone()
+            if not row:
+                return None
+            return User(
+                id=row["id"],
+                email=row["email"],
+                display_name=row["display_name"],
+                avatar_url=row["avatar_url"],
+                account_status=row["account_status"],
+                email_verified=bool(row["email_verified"]),
+                email_verified_at=row["email_verified_at"],
+                last_login_at=row["last_login_at"],
+                created_at=row["created_at"],
+                updated_at=row["updated_at"],
+            )
+
+    def update_user_profile(
+        self,
+        user_id: str,
+        display_name: str | None = None,
+        avatar_url: str | None = None,
+    ) -> User:
+        """Update authenticated user profile fields."""
+        now = time.time()
+        clean_name = display_name.strip() if display_name else None
+        with self._lock, self._get_connection() as conn:
+            conn.execute(
+                """
+                UPDATE users
+                SET display_name = COALESCE(?, display_name),
+                    avatar_url = COALESCE(?, avatar_url),
+                    updated_at = ?
+                WHERE id = ?
+                """,
+                (clean_name, avatar_url, now, user_id),
+            )
+            conn.commit()
+
+        user_info = self.get_user_by_id(user_id)
+        if not user_info:
+            raise AuthError("User not found", status_code=404)
+        return user_info
 
     # --- Workspace & Guest Migration ---
 

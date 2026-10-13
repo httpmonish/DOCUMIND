@@ -5,6 +5,7 @@ Persists chat trajectories per session hash, maintaining context windows.
 
 from __future__ import annotations
 
+import contextlib
 import json
 import logging
 import sqlite3
@@ -18,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 
 class ChatManager:
-    """Manages conversations and messages isolated by session hash."""
+    """Manages conversations and messages isolated by session hash and user ownership."""
 
     def __init__(self, db_path: Path) -> None:
         self.db_path = Path(db_path).resolve()
@@ -38,9 +39,14 @@ class ChatManager:
                 CREATE TABLE IF NOT EXISTS conversations (
                     id TEXT PRIMARY KEY,
                     session_hash TEXT NOT NULL,
+                    owner_id TEXT,
+                    document_id TEXT,
                     title TEXT NOT NULL,
                     created_at REAL NOT NULL,
-                    updated_at REAL NOT NULL
+                    updated_at REAL NOT NULL,
+                    last_message_at REAL,
+                    archived_at REAL,
+                    deleted_at REAL
                 )
                 """
             )
@@ -52,15 +58,36 @@ class ChatManager:
                     role TEXT NOT NULL,
                     content TEXT NOT NULL,
                     created_at REAL NOT NULL,
+                    updated_at REAL,
+                    status TEXT DEFAULT 'completed',
                     citations_json TEXT,
                     retrieved_json TEXT,
                     usage_json TEXT,
+                    metadata_json TEXT,
                     FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE
                 )
                 """
             )
+
+            # Idempotently ensure new columns exist for existing databases
+            for table, col, col_type in [
+                ("conversations", "owner_id", "TEXT"),
+                ("conversations", "document_id", "TEXT"),
+                ("conversations", "last_message_at", "REAL"),
+                ("conversations", "archived_at", "REAL"),
+                ("conversations", "deleted_at", "REAL"),
+                ("messages", "updated_at", "REAL"),
+                ("messages", "status", "TEXT DEFAULT 'completed'"),
+                ("messages", "metadata_json", "TEXT"),
+            ]:
+                with contextlib.suppress(sqlite3.OperationalError):
+                    conn.execute(f"ALTER TABLE {table} ADD COLUMN {col} {col_type};")
+
             conn.execute(
                 "CREATE INDEX IF NOT EXISTS idx_conv_session ON conversations(session_hash)"
+            )
+            conn.execute(
+                "CREATE INDEX IF NOT EXISTS idx_conv_owner ON conversations(owner_id)"
             )
             conn.execute(
                 "CREATE INDEX IF NOT EXISTS idx_msg_conv ON messages(conversation_id, created_at)"
@@ -71,17 +98,21 @@ class ChatManager:
         self,
         session_hash: str,
         title: str = "New Conversation",
+        owner_id: str | None = None,
+        document_id: str | None = None,
     ) -> str:
-        """Create a new conversation thread for the given session."""
+        """Create a new conversation thread for the given session or owner."""
         conv_id = str(uuid.uuid4())
         now = time.time()
         with self._lock, self._get_connection() as conn:
             conn.execute(
                 """
-                INSERT INTO conversations (id, session_hash, title, created_at, updated_at)
-                VALUES (?, ?, ?, ?, ?)
+                INSERT INTO conversations
+                (id, session_hash, owner_id, document_id, title,
+                 created_at, updated_at, last_message_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 """,
-                (conv_id, session_hash, title, now, now),
+                (conv_id, session_hash, owner_id, document_id, title, now, now, now),
             )
             conn.commit()
         return conv_id
@@ -91,11 +122,12 @@ class ChatManager:
         with self._lock, self._get_connection() as conn:
             cur = conn.execute(
                 """
-                SELECT c.id, c.session_hash, c.title, c.created_at, c.updated_at,
-                       COUNT(m.id) as message_count
+                SELECT c.id, c.session_hash, c.owner_id, c.document_id, c.title,
+                       c.created_at, c.updated_at, c.last_message_at, c.archived_at,
+                       c.deleted_at, COUNT(m.id) as message_count
                 FROM conversations c
                 LEFT JOIN messages m ON c.id = m.conversation_id
-                WHERE c.id = ?
+                WHERE c.id = ? AND c.deleted_at IS NULL
                 GROUP BY c.id
                 """,
                 (conversation_id,),
@@ -108,27 +140,72 @@ class ChatManager:
         now = time.time()
         with self._lock, self._get_connection() as conn:
             cur = conn.execute(
-                "UPDATE conversations SET title = ?, updated_at = ? WHERE id = ?",
+                """
+                UPDATE conversations
+                SET title = ?, updated_at = ?
+                WHERE id = ? AND deleted_at IS NULL
+                """,
                 (title, now, conversation_id),
             )
             conn.commit()
             return cur.rowcount > 0
 
-    def list_conversations(self, session_hash: str) -> list[dict[str, Any]]:
-        """List all conversation threads for a session, ordered by recent activity."""
+    def rename_conversation(self, conversation_id: str, title: str) -> bool:
+        """Alias for update_conversation_title."""
+        return self.update_conversation_title(conversation_id, title)
+
+    def archive_conversation(self, conversation_id: str) -> bool:
+        """Archive a conversation thread."""
+        now = time.time()
         with self._lock, self._get_connection() as conn:
             cur = conn.execute(
-                """
-                SELECT c.id, c.session_hash, c.title, c.created_at, c.updated_at,
-                       COUNT(m.id) as message_count
-                FROM conversations c
-                LEFT JOIN messages m ON c.id = m.conversation_id
-                WHERE c.session_hash = ?
-                GROUP BY c.id
-                ORDER BY c.updated_at DESC
-                """,
-                (session_hash,),
+                "UPDATE conversations SET archived_at = ?, updated_at = ? WHERE id = ?",
+                (now, now, conversation_id),
             )
+            conn.commit()
+            return cur.rowcount > 0
+
+    def list_conversations(
+        self,
+        session_hash: str,
+        owner_id: str | None = None,
+        include_archived: bool = False,
+    ) -> list[dict[str, Any]]:
+        """List all conversation threads for a session or owner, ordered by recent activity."""
+        archived_filter = 1 if include_archived else 0
+        with self._lock, self._get_connection() as conn:
+            if owner_id:
+                cur = conn.execute(
+                    """
+                    SELECT c.id, c.session_hash, c.owner_id, c.document_id, c.title,
+                           c.created_at, c.updated_at, c.last_message_at, c.archived_at,
+                           COUNT(m.id) as message_count
+                    FROM conversations c
+                    LEFT JOIN messages m ON c.id = m.conversation_id
+                    WHERE (c.owner_id = ? OR c.session_hash = ?)
+                      AND c.deleted_at IS NULL
+                      AND (? = 1 OR c.archived_at IS NULL)
+                    GROUP BY c.id
+                    ORDER BY COALESCE(c.last_message_at, c.updated_at) DESC
+                    """,
+                    (owner_id, session_hash, archived_filter),
+                )
+            else:
+                cur = conn.execute(
+                    """
+                    SELECT c.id, c.session_hash, c.owner_id, c.document_id, c.title,
+                           c.created_at, c.updated_at, c.last_message_at, c.archived_at,
+                           COUNT(m.id) as message_count
+                    FROM conversations c
+                    LEFT JOIN messages m ON c.id = m.conversation_id
+                    WHERE c.session_hash = ?
+                      AND c.deleted_at IS NULL
+                      AND (? = 1 OR c.archived_at IS NULL)
+                    GROUP BY c.id
+                    ORDER BY COALESCE(c.last_message_at, c.updated_at) DESC
+                    """,
+                    (session_hash, archived_filter),
+                )
             return [dict(row) for row in cur.fetchall()]
 
     def add_message(
@@ -139,6 +216,8 @@ class ChatManager:
         citations: list[dict[str, Any]] | None = None,
         retrieved: list[dict[str, Any]] | None = None,
         usage: dict[str, Any] | None = None,
+        status: str = "completed",
+        metadata: dict[str, Any] | None = None,
     ) -> str:
         """Add a turn (user or assistant) to the conversation thread."""
         msg_id = str(uuid.uuid4())
@@ -146,20 +225,37 @@ class ChatManager:
         c_json = json.dumps(citations) if citations else None
         r_json = json.dumps(retrieved) if retrieved else None
         u_json = json.dumps(usage) if usage else None
+        m_json = json.dumps(metadata) if metadata else None
 
         with self._lock, self._get_connection() as conn:
             conn.execute(
                 """
                 INSERT INTO messages (
-                    id, conversation_id, role, content, created_at,
-                    citations_json, retrieved_json, usage_json
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    id, conversation_id, role, content, created_at, updated_at,
+                    status, citations_json, retrieved_json, usage_json, metadata_json
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
-                (msg_id, conversation_id, role, content, now, c_json, r_json, u_json),
+                (
+                    msg_id,
+                    conversation_id,
+                    role,
+                    content,
+                    now,
+                    now,
+                    status,
+                    c_json,
+                    r_json,
+                    u_json,
+                    m_json,
+                ),
             )
             conn.execute(
-                "UPDATE conversations SET updated_at = ? WHERE id = ?",
-                (now, conversation_id),
+                """
+                UPDATE conversations
+                SET updated_at = ?, last_message_at = ?
+                WHERE id = ?
+                """,
+                (now, now, conversation_id),
             )
             conn.commit()
         return msg_id
@@ -167,13 +263,14 @@ class ChatManager:
     def get_messages(
         self,
         conversation_id: str,
-        limit: int = 20,
+        limit: int = 50,
     ) -> list[dict[str, Any]]:
-        """Retrieve recent messages for a conversation."""
+        """Retrieve messages for a conversation in chronological order."""
         with self._lock, self._get_connection() as conn:
             cur = conn.execute(
                 """
-                SELECT id, role, content, created_at, citations_json, retrieved_json, usage_json
+                SELECT id, role, content, created_at, updated_at, status,
+                       citations_json, retrieved_json, usage_json, metadata_json
                 FROM messages
                 WHERE conversation_id = ?
                 ORDER BY created_at ASC
@@ -185,12 +282,16 @@ class ChatManager:
             for row in cur.fetchall():
                 item = {
                     "id": row["id"],
+                    "conversation_id": conversation_id,
                     "role": row["role"],
                     "content": row["content"],
                     "created_at": row["created_at"],
+                    "updated_at": row["updated_at"] or row["created_at"],
+                    "status": row["status"] or "completed",
                     "citations": json.loads(row["citations_json"]) if row["citations_json"] else [],
                     "retrieved": json.loads(row["retrieved_json"]) if row["retrieved_json"] else [],
                     "usage": json.loads(row["usage_json"]) if row["usage_json"] else None,
+                    "metadata": json.loads(row["metadata_json"]) if row["metadata_json"] else {},
                 }
                 messages.append(item)
             return messages
@@ -205,9 +306,14 @@ class ChatManager:
         return [{"role": m["role"], "content": m["content"]} for m in msgs]
 
     def delete_conversation(self, conversation_id: str) -> bool:
-        """Purge conversation and all its messages."""
+        """Delete conversation and all its messages."""
+        now = time.time()
         with self._lock, self._get_connection() as conn:
-            conn.execute("DELETE FROM messages WHERE conversation_id = ?", (conversation_id,))
-            cur = conn.execute("DELETE FROM conversations WHERE id = ?", (conversation_id,))
+            # Soft delete in conversations table to preserve auditability while
+            # removing from user view
+            cur = conn.execute(
+                "UPDATE conversations SET deleted_at = ?, updated_at = ? WHERE id = ?",
+                (now, now, conversation_id),
+            )
             conn.commit()
             return cur.rowcount > 0

@@ -259,8 +259,17 @@
       "use strict";
 
       let currentMode = "login"; // 'login' | 'register' | 'recovery' | 'reset_confirm'
-      const urlParams = new URLSearchParams(window.location.search);
-      const redirectUrl = urlParams.get("redirect") || "/app/console/code.html";
+      let rawRedirect = urlParams.get("redirect") || "/app/console/code.html";
+      if (
+        (!rawRedirect.startsWith("/") &&
+          !rawRedirect.startsWith("http://") &&
+          !rawRedirect.startsWith("https://")) ||
+        rawRedirect === "http" ||
+        rawRedirect === "https"
+      ) {
+        rawRedirect = "/app/console/code.html";
+      }
+      const redirectUrl = rawRedirect;
 
       // Elements
       const authTitle = document.getElementById("auth-title");

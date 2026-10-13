@@ -5,6 +5,7 @@ Strictly decoupled: delegates all search, retrieval, and indexing to DocuMind co
 
 from __future__ import annotations
 
+import base64
 import contextlib
 import hashlib
 import hmac
@@ -114,6 +115,8 @@ class AskRequest(BaseModel):
 class ChatRequest(BaseModel):
     question: str
     conversation_id: str | None = None
+    document_id: str | None = None
+    source: str | None = None
     top_k: int = 5
     debug: bool = False
 
@@ -164,6 +167,40 @@ class PasswordResetRequestPayload(BaseModel):
 class PasswordResetConfirmPayload(BaseModel):
     token: str
     new_password: str
+
+
+class RenameDocumentPayload(BaseModel):
+    display_name: str
+
+    @field_validator("display_name")
+    @classmethod
+    def validate_display_name(cls, v: str) -> str:
+        stripped = v.strip()
+        if not (1 <= len(stripped) <= 120):
+            raise ValueError("display_name must be between 1 and 120 characters")
+        return stripped
+
+
+class CreateConversationPayload(BaseModel):
+    title: str | None = "New Conversation"
+    document_id: str | None = None
+
+
+class RenameConversationPayload(BaseModel):
+    title: str
+
+    @field_validator("title")
+    @classmethod
+    def validate_title(cls, v: str) -> str:
+        stripped = v.strip()
+        if not (1 <= len(stripped) <= 120):
+            raise ValueError("title must be between 1 and 120 characters")
+        return stripped
+
+
+class ProfileUpdatePayload(BaseModel):
+    display_name: str | None = None
+    avatar_url: str | None = None
 
 
 def get_authenticated_user_opt(request: Request) -> tuple[User, str] | None:
@@ -769,22 +806,40 @@ def create_app(
             temp_path.unlink(missing_ok=True)
             raise
 
+        mime = (
+            "application/pdf"
+            if ext == ".pdf"
+            else "text/markdown"
+            if ext == ".md"
+            else "text/plain"
+        )
+
         # Check existing document with safe_name
         existing_sha = engine.doc_sha(safe_name)
         if existing_sha is not None:
             if existing_sha == file_sha:
                 if auth_mgr and user and not user.id.startswith("guest_"):
                     auth_mgr.record_document_owner(
-                        user.id,
-                        safe_name,
+                        user_id=user.id,
+                        source=safe_name,
                         chunk_count=engine.chunk_count(safe_name),
                         content_hash=file_sha,
+                        storage_ref=str(final_path),
+                        storage_key=final_name,
+                        display_name=filename,
+                        file_type=ext.lstrip("."),
+                        mime_type=mime,
+                        file_size=total_bytes,
+                        status="indexed",
                     )
                 return JSONResponse(
                     status_code=status.HTTP_200_OK,
                     content={
                         "status": "unchanged",
                         "source": safe_name,
+                        "display_name": filename,
+                        "file_type": ext.lstrip("."),
+                        "file_size": total_bytes,
                         "chunks": engine.chunk_count(safe_name),
                         "chunk_count": engine.chunk_count(safe_name),
                         "sha256": file_sha,
@@ -802,51 +857,80 @@ def create_app(
                 )
 
         # 5. Text extraction & Indexing with write lock
-        with write_lock:
-            if ext == ".pdf":
-                try:
-                    proc_env = os.environ.copy()
-                    proc_env["DOCUMIND_MAX_PAGES"] = str(settings.max_pages)
-                    proc = subprocess.run(  # noqa: S603
-                        [sys.executable, "-m", "documind.core._extract_worker", str(final_path)],
-                        timeout=60,
-                        capture_output=True,
-                        env=proc_env,
-                        check=False,
-                    )
-                except subprocess.TimeoutExpired as timeout_err:
-                    raise DocumentUnreadable(
-                        safe_name, "Extraction timed out after 60s"
-                    ) from timeout_err
+        try:
+            with write_lock:
+                if ext == ".pdf":
+                    try:
+                        proc_env = os.environ.copy()
+                        proc_env["DOCUMIND_MAX_PAGES"] = str(settings.max_pages)
+                        proc = subprocess.run(  # noqa: S603
+                            [sys.executable, "-m", "documind.core._extract_worker", str(final_path)],
+                            timeout=60,
+                            capture_output=True,
+                            env=proc_env,
+                            check=False,
+                        )
+                    except subprocess.TimeoutExpired as timeout_err:
+                        raise DocumentUnreadable(
+                            safe_name, "Extraction timed out after 60s"
+                        ) from timeout_err
 
-                if proc.returncode == 2:
-                    raise DocumentTooLarge(
-                        safe_name, f"PDF exceeds maximum page limit of {settings.max_pages}"
-                    )
-                if proc.returncode != 0:
-                    err_msg = (
-                        proc.stderr.decode("utf-8", errors="replace").strip() or "PDF parse failed"
-                    )
-                    raise DocumentUnreadable(safe_name, err_msg)
+                    if proc.returncode == 2:
+                        raise DocumentTooLarge(
+                            safe_name, f"PDF exceeds maximum page limit of {settings.max_pages}"
+                        )
+                    if proc.returncode != 0:
+                        err_msg = (
+                            proc.stderr.decode("utf-8", errors="replace").strip() or "PDF parse failed"
+                        )
+                        raise DocumentUnreadable(safe_name, err_msg)
 
-                extracted_text = proc.stdout.decode("utf-8")
-            else:
-                extracted_text = final_path.read_text(encoding="utf-8")
+                    extracted_text = proc.stdout.decode("utf-8")
+                else:
+                    extracted_text = final_path.read_text(encoding="utf-8")
 
-            num_chunks = engine.index_text(extracted_text, safe_name, file_sha)
+                num_chunks = engine.index_text(extracted_text, safe_name, file_sha)
+                if auth_mgr and user and not user.id.startswith("guest_"):
+                    auth_mgr.record_document_owner(
+                        user_id=user.id,
+                        source=safe_name,
+                        chunk_count=num_chunks,
+                        content_hash=file_sha,
+                        storage_ref=str(final_path),
+                        storage_key=final_name,
+                        display_name=filename,
+                        file_type=ext.lstrip("."),
+                        mime_type=mime,
+                        file_size=total_bytes,
+                        status="indexed",
+                    )
+        except Exception as proc_err:
             if auth_mgr and user and not user.id.startswith("guest_"):
-                auth_mgr.record_document_owner(
-                    user.id,
-                    safe_name,
-                    chunk_count=num_chunks,
-                    content_hash=file_sha,
-                )
+                with contextlib.suppress(Exception):
+                    auth_mgr.record_document_owner(
+                        user_id=user.id,
+                        source=safe_name,
+                        chunk_count=0,
+                        content_hash=file_sha,
+                        storage_ref=str(final_path),
+                        storage_key=final_name,
+                        display_name=filename,
+                        file_type=ext.lstrip("."),
+                        mime_type=mime,
+                        file_size=total_bytes,
+                        status="failed",
+                        processing_error=str(proc_err)[:250],
+                    )
+            raise
 
         return JSONResponse(
             status_code=status.HTTP_201_CREATED,
             content={
                 "status": "indexed",
                 "source": safe_name,
+                "display_name": filename,
+                "file_type": ext.lstrip("."),
+                "file_size": total_bytes,
                 "chunks": num_chunks,
                 "chunk_count": num_chunks,
                 "sha256": file_sha,
@@ -1035,19 +1119,64 @@ def create_app(
 
     @demo_router.get("/documents")
     def demo_list_documents(
-        request: Request, session_id: str = Depends(require_session)
+        request: Request,
+        auth_info: tuple[User, str] = Depends(require_authenticated_user),
     ) -> list[dict[str, Any]]:
+        user, session_id = auth_info
+        auth_mgr = getattr(request.app.state, "auth_manager", None)
+        mgr: SessionManager = request.app.state.session_manager
+        session_engine, _ = mgr.get_engine(session_id)
+
+        if auth_mgr and not user.id.startswith("guest_"):
+            db_docs = auth_mgr.list_user_documents(user.id)
+            if db_docs:
+                return db_docs
+
+        docs = session_engine.documents()
+        return [
+            {
+                "id": f"doc_{hashlib.sha256(doc.encode()).hexdigest()[:16]}",
+                "source": doc,
+                "display_name": doc,
+                "file_type": doc.split(".")[-1].lower() if "." in doc else "txt",
+                "chunks": session_engine.chunk_count(doc),
+                "chunk_count": session_engine.chunk_count(doc),
+                "sha256": session_engine.doc_sha(doc) or "",
+                "status": "indexed",
+                "created_at": time.time(),
+                "last_accessed_at": time.time(),
+            }
+            for doc in docs
+        ]
+
+    @demo_router.get("/documents/recent")
+    def demo_list_recent_documents(
+        request: Request,
+        limit: int = Query(default=10, ge=1, le=50),
+        auth_info: tuple[User, str] = Depends(require_authenticated_user),
+    ) -> list[dict[str, Any]]:
+        user, session_id = auth_info
+        auth_mgr = getattr(request.app.state, "auth_manager", None)
+        if auth_mgr and not user.id.startswith("guest_"):
+            return auth_mgr.list_recent_documents(user.id, limit=limit)
+
         mgr: SessionManager = request.app.state.session_manager
         session_engine, _ = mgr.get_engine(session_id)
         docs = session_engine.documents()
         return [
             {
+                "id": f"doc_{hashlib.sha256(doc.encode()).hexdigest()[:16]}",
                 "source": doc,
+                "display_name": doc,
+                "file_type": doc.split(".")[-1].lower() if "." in doc else "txt",
                 "chunks": session_engine.chunk_count(doc),
                 "chunk_count": session_engine.chunk_count(doc),
                 "sha256": session_engine.doc_sha(doc) or "",
+                "status": "indexed",
+                "created_at": time.time(),
+                "last_accessed_at": time.time(),
             }
-            for doc in docs
+            for doc in docs[:limit]
         ]
 
     @demo_router.post("/documents")
@@ -1130,8 +1259,16 @@ def create_app(
     def demo_list_chunks(
         source: str,
         request: Request,
-        session_id: str = Depends(require_session),
+        auth_info: tuple[User, str] = Depends(require_authenticated_user),
     ) -> JSONResponse:
+        user, session_id = auth_info
+        auth_mgr = getattr(request.app.state, "auth_manager", None)
+        if auth_mgr and not user.id.startswith("guest_"):
+            if not auth_mgr.verify_document_owner(user.id, source):
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Access denied to document chunks",
+                )
         mgr: SessionManager = request.app.state.session_manager
         session_engine, _ = mgr.get_engine(session_id)
         if source not in session_engine.documents():
@@ -1177,6 +1314,74 @@ def create_app(
             )
         return JSONResponse(status_code=status.HTTP_200_OK, content=data)
 
+    @demo_router.patch("/documents/{source:path}/rename")
+    def demo_rename_document(
+        source: str,
+        payload: RenameDocumentPayload,
+        request: Request,
+        auth_info: tuple[User, str] = Depends(require_authenticated_user),
+    ) -> dict[str, Any]:
+        user, _ = auth_info
+        auth_mgr = getattr(request.app.state, "auth_manager", None)
+        if not auth_mgr or user.id.startswith("guest_"):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Authentication required to rename document",
+            )
+        renamed = auth_mgr.rename_user_document(user.id, source, payload.display_name)
+        if not renamed:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Document not found or access denied",
+            )
+        return {
+            "status": "renamed",
+            "source": source,
+            "display_name": payload.display_name,
+        }
+
+    @demo_router.get("/documents/{source:path}")
+    def demo_get_document(
+        source: str,
+        request: Request,
+        auth_info: tuple[User, str] = Depends(require_authenticated_user),
+    ) -> dict[str, Any]:
+        user, session_id = auth_info
+        auth_mgr = getattr(request.app.state, "auth_manager", None)
+        mgr: SessionManager = request.app.state.session_manager
+        session_engine, _ = mgr.get_engine(session_id)
+
+        if ".." in source or source.startswith("/") or "\\" in source or "\x00" in source:
+            raise HTTPException(status_code=422, detail="Invalid source path")
+
+        if auth_mgr and not user.id.startswith("guest_"):
+            doc_meta = auth_mgr.get_document_metadata(user.id, source)
+            if not doc_meta:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Document not found or access denied",
+                )
+            auth_mgr.touch_document_access(user.id, source)
+            doc_meta["last_accessed_at"] = time.time()
+            return doc_meta
+
+        if source not in session_engine.documents():
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Document not found in session.",
+            )
+        return {
+            "id": f"doc_{hashlib.sha256(source.encode()).hexdigest()[:16]}",
+            "source": source,
+            "display_name": source,
+            "file_type": source.split(".")[-1].lower() if "." in source else "txt",
+            "chunks": session_engine.chunk_count(source),
+            "chunk_count": session_engine.chunk_count(source),
+            "sha256": session_engine.doc_sha(source) or "",
+            "status": "indexed",
+            "last_accessed_at": time.time(),
+        }
+
     @demo_router.delete("/documents/{source:path}")
     def demo_delete_document(
         source: str,
@@ -1197,6 +1402,14 @@ def create_app(
                 detail="Document not found in session.",
             )
 
+        auth_mgr = getattr(request.app.state, "auth_manager", None)
+        if auth_mgr and user and not user.id.startswith("guest_"):
+            if not auth_mgr.verify_document_owner(user.id, source):
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Access denied to document",
+                )
+
         with write_lock:
             session_engine.delete(source)
             mgr.record_delete(session_id)
@@ -1205,7 +1418,6 @@ def create_app(
                 with contextlib.suppress(OSError):
                     f.unlink(missing_ok=True)
 
-        auth_mgr = getattr(request.app.state, "auth_manager", None)
         if auth_mgr and user and not user.id.startswith("guest_"):
             auth_mgr.delete_document_record(user.id, source)
 
@@ -2055,10 +2267,21 @@ def create_app(
             )
 
         state_nonce = secrets.token_urlsafe(32)
-        base_redirect = settings.google_redirect_uri or (
-            str(request.base_url).rstrip("/") + "/api/auth/google/callback"
-        )
-        state_cookie_val = f"{state_nonce}:{redirect}"
+        req_origin = str(request.base_url).rstrip("/")
+        if req_origin in ("http://localhost:8000", "http://127.0.0.1:8000"):
+            base_redirect = f"{req_origin}/api/auth/google/callback"
+        else:
+            base_redirect = settings.google_redirect_uri or (
+                f"{req_origin}/api/auth/google/callback"
+            )
+        state_dict = {
+            "nonce": state_nonce,
+            "redirect": redirect,
+            "base_redirect": base_redirect,
+        }
+        state_cookie_val = base64.urlsafe_b64encode(
+            json.dumps(state_dict).encode("utf-8")
+        ).decode("ascii")
 
         params = {
             "client_id": settings.google_client_id,
@@ -2107,10 +2330,32 @@ def create_app(
         state_cookie = request.cookies.get("documind_oauth_state")
         cookie_nonce = ""
         target_redirect = "/app/console/code.html"
-        if state_cookie and ":" in state_cookie:
-            parts = state_cookie.split(":", 1)
-            cookie_nonce = parts[0]
-            target_redirect = parts[1] or target_redirect
+        stored_redirect = ""
+        if state_cookie:
+            try:
+                decoded = base64.urlsafe_b64decode(state_cookie.encode("ascii")).decode("utf-8")
+                payload = json.loads(decoded)
+                cookie_nonce = payload.get("nonce", "")
+                target_redirect = payload.get("redirect") or target_redirect
+                stored_redirect = payload.get("base_redirect") or stored_redirect
+            except Exception:
+                if ":" in state_cookie:
+                    parts = state_cookie.split(":", 2)
+                    cookie_nonce = parts[0]
+                    target_redirect = parts[1] or target_redirect
+                    if len(parts) > 2:
+                        stored_redirect = parts[2]
+
+        # Sanitize target_redirect to prevent invalid values like "http" causing 404s
+        if (
+            not (
+                target_redirect.startswith("/")
+                or target_redirect.startswith("http://")
+                or target_redirect.startswith("https://")
+            )
+            or target_redirect in ("http", "https")
+        ):
+            target_redirect = "/app/console/code.html"
 
         if error:
             logger.warning("Google OAuth error in callback: %s", error)
@@ -2131,9 +2376,13 @@ def create_app(
             resp.delete_cookie("documind_oauth_state", path="/")
             return resp
 
-        base_redirect = settings.google_redirect_uri or (
-            str(request.base_url).rstrip("/") + "/api/auth/google/callback"
+        req_origin = str(request.base_url).rstrip("/")
+        fallback_redirect = (
+            f"{req_origin}/api/auth/google/callback"
+            if req_origin in ("http://localhost:8000", "http://127.0.0.1:8000")
+            else (settings.google_redirect_uri or f"{req_origin}/api/auth/google/callback")
         )
+        base_redirect = stored_redirect or fallback_redirect
 
         try:
             user_info = await exchange_google_code_for_user(

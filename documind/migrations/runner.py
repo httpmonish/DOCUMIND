@@ -155,6 +155,33 @@ MIGRATIONS: list[tuple[int, str, list[str]]] = [
             "ALTER TABLE users ADD COLUMN updated_at REAL;",
         ],
     ),
+    (
+        4,
+        "0004_document_and_conversation_persistence",
+        [
+            "ALTER TABLE documents ADD COLUMN display_name TEXT;",
+            "ALTER TABLE documents ADD COLUMN file_type TEXT;",
+            "ALTER TABLE documents ADD COLUMN mime_type TEXT;",
+            "ALTER TABLE documents ADD COLUMN file_size INTEGER DEFAULT 0;",
+            "ALTER TABLE documents ADD COLUMN storage_key TEXT;",
+            "ALTER TABLE documents ADD COLUMN processing_error TEXT;",
+            "ALTER TABLE documents ADD COLUMN chromadb_collection TEXT;",
+            "ALTER TABLE documents ADD COLUMN last_accessed_at REAL;",
+            "ALTER TABLE documents ADD COLUMN deleted_at REAL;",
+            "ALTER TABLE conversations ADD COLUMN session_hash TEXT;",
+            "ALTER TABLE conversations ADD COLUMN document_id TEXT;",
+            "ALTER TABLE conversations ADD COLUMN last_message_at REAL;",
+            "ALTER TABLE conversations ADD COLUMN archived_at REAL;",
+            "ALTER TABLE conversations ADD COLUMN deleted_at REAL;",
+            "ALTER TABLE messages ADD COLUMN updated_at REAL;",
+            "ALTER TABLE messages ADD COLUMN status TEXT DEFAULT 'completed';",
+            "ALTER TABLE messages ADD COLUMN metadata TEXT;",
+            "CREATE INDEX IF NOT EXISTS idx_documents_owner_accessed ON documents(owner_id, last_accessed_at);",
+            "CREATE INDEX IF NOT EXISTS idx_conversations_owner_activity ON conversations(owner_id, last_message_at);",
+            "CREATE INDEX IF NOT EXISTS idx_conversations_session ON conversations(session_hash);",
+            "CREATE INDEX IF NOT EXISTS idx_messages_conv_created ON messages(conversation_id, created_at);",
+        ],
+    ),
 ]
 
 
