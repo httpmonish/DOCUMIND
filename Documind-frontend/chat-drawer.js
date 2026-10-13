@@ -19,11 +19,66 @@
   let evidenceSnippetEl = null;
   let evidenceSourceEl = null;
   let fileInputEl = null;
+  let historyDrawerEl = null;
+  let historyListEl = null;
 
   let currentConversationId = null;
   let isStreaming = false;
   let loadedDocs = [];
   let lastFailedQuestion = null;
+
+  function renderCitationFormattedText(container, text, citations, onCitationClick) {
+    container.textContent = "";
+    if (!text) return;
+    if (!citations || citations.length === 0) {
+      container.textContent = text;
+      return;
+    }
+    const markerRegex = /\[S(\d+)\]/g;
+    let lastIndex = 0;
+    let match;
+    while ((match = markerRegex.exec(text)) !== null) {
+      const matchIndex = match.index;
+      if (matchIndex > lastIndex) {
+        container.appendChild(document.createTextNode(text.substring(lastIndex, matchIndex)));
+      }
+      const markerText = match[0];
+      const citNum = parseInt(match[1], 10);
+      const citIndex = citNum - 1;
+      const citation = citations[citIndex] || citations.find(c => c.marker === markerText);
+
+      const pill = document.createElement("button");
+      pill.className = "docu-citation-pill";
+      pill.textContent = markerText;
+      if (citation && onCitationClick) {
+        pill.addEventListener("click", () => onCitationClick(citation));
+      }
+      container.appendChild(pill);
+      lastIndex = markerRegex.lastIndex;
+    }
+    if (lastIndex < text.length) {
+      container.appendChild(document.createTextNode(text.substring(lastIndex)));
+    }
+  }
+
+  function renderCitationsTray(container, citations, onCitationClick) {
+    container.textContent = "";
+    if (!citations || citations.length === 0) {
+      container.style.display = "none";
+      return;
+    }
+    container.style.display = "flex";
+    citations.forEach((c, idx) => {
+      const pill = document.createElement("button");
+      pill.className = "docu-citation-pill";
+      const marker = c.marker || `[S${idx + 1}]`;
+      pill.textContent = `${marker} ${c.source || "doc"} · c${c.chunk_index ?? 0}`;
+      if (onCitationClick) {
+        pill.addEventListener("click", () => onCitationClick(c));
+      }
+      container.appendChild(pill);
+    });
+  }
 
   function initChatDrawer() {
     if (document.getElementById("documind-chat-drawer-root")) {
@@ -212,6 +267,14 @@
 
     // Wire all page buttons that trigger chat
     wireChatTriggers();
+
+    // Auto-restore active conversation if present in session storage
+    try {
+      const savedConvId = sessionStorage.getItem("documind_active_conv_id");
+      if (savedConvId) {
+        loadConversation(savedConvId);
+      }
+    } catch (_) {}
   }
 
   function wireChatTriggers() {
@@ -360,6 +423,9 @@
     closeHistory();
     closeEvidence();
     currentConversationId = convId;
+    try {
+      sessionStorage.setItem("documind_active_conv_id", convId);
+    } catch (_) {}
     if (messagesListEl) {
       messagesListEl.innerHTML = `
         <div style="padding: 24px; text-align: center; color: var(--docu-chat-muted); font-size: 12.5px;">
@@ -389,40 +455,38 @@
         } else {
           const assistantRow = document.createElement("div");
           assistantRow.className = "docu-msg-row assistant";
+          const roleSpan = document.createElement("span");
+          roleSpan.className = "docu-msg-role";
+          roleSpan.innerHTML = `<svg width="12" height="12" viewBox="0 0 32 32" fill="none" style="display:inline-block; vertical-align:-1px; margin-right:5px;"><polygon points="16,2 29,9.5 29,24.5 16,32 3,24.5 3,9.5" fill="#201f1f" stroke="#ff571d" stroke-width="2.5"/><circle cx="16" cy="17" r="4.5" fill="#ff571d"/><path d="M16 6v6.5M8.5 21.5l5.5-3M23.5 21.5l-5.5-3" stroke="#e5e2e1" stroke-width="1.8" stroke-linecap="round"/></svg>DOCUMIND`;
+
+          const card = document.createElement("div");
+          card.className = "docu-assistant-card";
+
+          const contentDiv = document.createElement("div");
+          contentDiv.className = "docu-assistant-content";
+          const tokenSpan = document.createElement("span");
+          tokenSpan.className = "token-stream";
           const citations = Array.isArray(m.citations) ? m.citations : [];
-          let formatted = escapeHtml(m.content);
-          citations.forEach((c, idx) => {
-            const marker = c.marker || `[S${idx + 1}]`;
-            const pillHtml = `<button class="docu-citation-pill" data-cit-idx="${idx}">${escapeHtml(marker)}</button>`;
-            formatted = formatted.replaceAll(escapeHtml(marker), pillHtml);
-          });
+          renderCitationFormattedText(tokenSpan, m.content || "", citations, openEvidence);
+          contentDiv.appendChild(tokenSpan);
+          card.appendChild(contentDiv);
 
-          const citationsHtml = citations.length > 0 ? `
-            <div class="docu-citations-tray" style="display: flex;">
-              ${citations.map((c, idx) => `
-                <button class="docu-citation-pill" data-cit-idx="${idx}">
-                  ${escapeHtml(c.marker || `[S${idx + 1}]`)} ${escapeHtml(c.source)} · c${c.chunk_index}
-                </button>
-              `).join("")}
-            </div>
-          ` : "";
+          const tray = document.createElement("div");
+          tray.className = "docu-citations-tray";
+          renderCitationsTray(tray, citations, openEvidence);
+          card.appendChild(tray);
 
-          assistantRow.innerHTML = `
-            <span class="docu-msg-role"><svg width="12" height="12" viewBox="0 0 32 32" fill="none" style="display:inline-block; vertical-align:-1px; margin-right:5px;"><polygon points="16,2 29,9.5 29,24.5 16,32 3,24.5 3,9.5" fill="#201f1f" stroke="#ff571d" stroke-width="2.5"/><circle cx="16" cy="17" r="4.5" fill="#ff571d"/><path d="M16 6v6.5M8.5 21.5l5.5-3M23.5 21.5l-5.5-3" stroke="#e5e2e1" stroke-width="1.8" stroke-linecap="round"/></svg>DOCUMIND</span>
-            <div class="docu-assistant-card">
-              <div class="docu-assistant-content"><span class="token-stream">${formatted}</span></div>
-              ${citationsHtml}
-              <div class="docu-assistant-meta">
-                <span class="status-label" style="color: var(--docu-chat-green);">${citations.length} Verified Citations</span>
-              </div>
-            </div>
-          `;
-          assistantRow.querySelectorAll(".docu-citation-pill").forEach(pill => {
-            pill.addEventListener("click", () => {
-              const idx = parseInt(pill.getAttribute("data-cit-idx"), 10);
-              if (citations[idx]) openEvidence(citations[idx]);
-            });
-          });
+          const metaDiv = document.createElement("div");
+          metaDiv.className = "docu-assistant-meta";
+          const statusSpan = document.createElement("span");
+          statusSpan.className = "status-label";
+          statusSpan.style.color = "var(--docu-chat-green)";
+          statusSpan.textContent = `${citations.length} Verified Citations`;
+          metaDiv.appendChild(statusSpan);
+          card.appendChild(metaDiv);
+
+          assistantRow.appendChild(roleSpan);
+          assistantRow.appendChild(card);
           messagesListEl.appendChild(assistantRow);
         }
       }
@@ -445,6 +509,9 @@
   function resetConversation() {
     currentConversationId = null;
     lastFailedQuestion = null;
+    try {
+      sessionStorage.removeItem("documind_active_conv_id");
+    } catch (_) {}
     if (messagesListEl) {
       messagesListEl.innerHTML = `
         <div class="docu-welcome-card" id="docu-welcome-card">
@@ -622,6 +689,8 @@
     let citations = [];
     let outcome = "answered";
     let reportedLatency = null;
+    let streamDone = null;
+    let streamError = null;
 
     try {
       await DocuMindAPI.chatStream(
@@ -631,6 +700,9 @@
           if (ev === "meta") {
             if (data && data.conversation_id) {
               currentConversationId = data.conversation_id;
+              try {
+                sessionStorage.setItem("documind_active_conv_id", currentConversationId);
+              } catch (_) {}
             }
             statusLabel.textContent = "Searching vector space…";
           } else if (ev === "retrieval") {
@@ -645,20 +717,13 @@
           } else if (ev === "citations") {
             citations = (data && data.citations) || [];
           } else if (ev === "done") {
+            streamDone = data;
             outcome = (data && data.outcome) || "answered";
             if (data && data.latency_ms) {
               reportedLatency = data.latency_ms;
             }
           } else if (ev === "error") {
-            const errMsg = (data && data.message) || "An error occurred during response generation.";
-            if (statusLabel) {
-              statusLabel.textContent = "Failed";
-              statusLabel.style.color = "var(--docu-chat-red)";
-            }
-            if (!accumulatedText) {
-              accumulatedText = `⚠️ ${errMsg}`;
-              tokenSpan.textContent = accumulatedText;
-            }
+            streamError = typeof data === "object" && data !== null ? data : { message: String(data) };
           }
         }
       );
@@ -672,6 +737,35 @@
       if (workedLabel) {
         workedLabel.textContent = `Worked for ${(elapsed / 1000).toFixed(1)}s`;
         workedLabel.style.display = "inline-flex";
+      }
+
+      // Handle backend error
+      if (streamError) {
+        const errCode = streamError.code || "error";
+        const errMsg = streamError.message || "An error occurred during response generation.";
+        statusLabel.textContent = errCode === "index_empty" ? "Workspace Index Empty" : "Request Failed";
+        statusLabel.style.color = "var(--docu-chat-red)";
+        if (errCode === "index_empty") {
+          tokenSpan.textContent = "No documents are currently indexed in this workspace.";
+          assistantRow.querySelector(".docu-assistant-card").insertAdjacentHTML("afterbegin", `
+            <div class="docu-banner-abstain" style="background:#fee2e2; border-color:#fca5a5; color:#991b1b; padding:8px 12px; margin-bottom:8px; border-radius:6px; font-size:12px;">
+              <div><strong>Workspace index is empty.</strong> Please upload a document in the Library before asking questions.</div>
+            </div>
+          `);
+        } else {
+          tokenSpan.textContent = `⚠️ ${errMsg}`;
+        }
+        return;
+      }
+
+      // Handle interrupted stream without completion event
+      if (!streamDone) {
+        statusLabel.textContent = "Stream Interrupted";
+        statusLabel.style.color = "var(--docu-chat-red)";
+        if (!accumulatedText) {
+          tokenSpan.textContent = "⚠️ Response stream was interrupted before completion.";
+        }
+        return;
       }
 
       // Handle outcomes
@@ -702,39 +796,13 @@
         statusLabel.textContent = `${citations.length} Verified Citations`;
         statusLabel.style.color = "var(--docu-chat-green)";
 
-        // Format text with interactive citation pills
-        let formatted = escapeHtml(accumulatedText);
-        citations.forEach((c, idx) => {
-          const marker = c.marker || `[S${idx + 1}]`;
-          const pillHtml = `<button class="docu-citation-pill" data-cit-idx="${idx}">${escapeHtml(marker)}</button>`;
-          formatted = formatted.replaceAll(escapeHtml(marker), pillHtml);
-        });
-        tokenSpan.innerHTML = formatted;
-
-        // Wire click handlers for inline citations
-        tokenSpan.querySelectorAll(".docu-citation-pill").forEach(pill => {
-          pill.addEventListener("click", () => {
-            const idx = parseInt(pill.getAttribute("data-cit-idx"), 10);
-            if (citations[idx]) openEvidence(citations[idx]);
-          });
-        });
+        // Format text with interactive citation pills safely
+        renderCitationFormattedText(tokenSpan, accumulatedText, citations, openEvidence);
       }
 
-      // Populate citations footer tray
+      // Populate citations footer tray safely
       if (citations.length > 0) {
-        citationsTray.style.display = "flex";
-        citationsTray.innerHTML = citations.map((c, idx) => `
-          <button class="docu-citation-pill" data-cit-idx="${idx}">
-            ${escapeHtml(c.marker || `[S${idx + 1}]`)} ${escapeHtml(c.source)} · c${c.chunk_index}
-          </button>
-        `).join("");
-
-        citationsTray.querySelectorAll(".docu-citation-pill").forEach(pill => {
-          pill.addEventListener("click", () => {
-            const idx = parseInt(pill.getAttribute("data-cit-idx"), 10);
-            if (citations[idx]) openEvidence(citations[idx]);
-          });
-        });
+        renderCitationsTray(citationsTray, citations, openEvidence);
       }
 
     } catch (err) {
@@ -789,7 +857,7 @@
   function checkAutoOpen() {
     const params = new URLSearchParams(window.location.search);
     if (params.get("chat") === "open") {
-      setTimeout(openDrawer, 100);
+      openDrawer();
     }
   }
 
