@@ -195,8 +195,15 @@ def require_authenticated_user(request: Request) -> tuple[User, str]:
     if auth_user:
         return auth_user
 
-    # Fallback to validated guest session token (raises 400 if missing/invalid, 401 if unregistered)
+    # Fallback to validated guest session token (raises 401 if missing, 400 if malformed)
     raw = request.headers.get("X-Session-ID") or request.cookies.get("documind_session")
+    if not raw:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required. Please sign in or initialize a guest session.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
     clean_token = validate_session_id_format(raw)
     mgr: SessionManager | None = getattr(request.app.state, "session_manager", None)
     if mgr:
@@ -1898,7 +1905,9 @@ def create_app(
         auth_mgr: AuthManager = request.app.state.auth_manager
         session_mgr: SessionManager = request.app.state.session_manager
         try:
-            user, session_token, csrf_token = auth_mgr.register(body.email, body.password)
+            user, session_token, csrf_token = auth_mgr.register(
+                body.email, body.password, display_name=body.display_name
+            )
         except AuthError as e:
             raise HTTPException(status_code=e.status_code, detail=e.message) from e
 

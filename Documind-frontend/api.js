@@ -391,7 +391,7 @@
       return initSession(true);
     },
 
-    async register(email, password, claimGuest = true) {
+    async register(email, password, claimGuest = true, displayName = null) {
       const guestSid = claimGuest ? getSessionId() : null;
       return request("/api/auth/register", {
         method: "POST",
@@ -399,6 +399,7 @@
         body: JSON.stringify({
           email,
           password,
+          display_name: displayName,
           claim_guest_session: guestSid,
         }),
       });
@@ -421,6 +422,27 @@
       return request("/api/auth/logout", {
         method: "POST",
       });
+    },
+
+    async requestPasswordReset(email) {
+      return request("/api/auth/password-reset/request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+    },
+
+    async confirmPasswordReset(token, newPassword) {
+      return request("/api/auth/password-reset/confirm", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token, new_password: newPassword }),
+      });
+    },
+
+    getGoogleAuthUrl(redirect = null) {
+      const target = redirect || (typeof window !== "undefined" ? window.location.href : "/app/console/code.html");
+      return `${getBaseUrl()}/api/auth/google/authorize?redirect=${encodeURIComponent(target)}`;
     },
 
     async getEvals() {
@@ -653,7 +675,8 @@
         avatarBtns.forEach((btn) => {
           btn.setAttribute("title", `Signed in as ${res.user.email}`);
           btn.classList.add("cursor-pointer", "ring-2", "ring-primary");
-          btn.innerHTML = `<span class="font-code-sm text-[12px] font-bold text-on-primary uppercase">${res.user.email.slice(0, 2)}</span>`;
+          const initials = (res.user.display_name || res.user.email).slice(0, 2).toUpperCase();
+          btn.innerHTML = `<span class="font-code-sm text-[12px] font-bold text-on-primary uppercase">${initials}</span>`;
         });
       } else {
         avatarBtns.forEach((btn) => {
@@ -666,7 +689,11 @@
     avatarBtns.forEach((btn) => {
       btn.addEventListener("click", (e) => {
         e.preventDefault();
-        openAuthModal(currentUser);
+        if (currentUser) {
+          openAuthModal(currentUser);
+        } else {
+          window.location.href = `/app/auth.html?redirect=${encodeURIComponent(window.location.href)}`;
+        }
       });
     });
   }

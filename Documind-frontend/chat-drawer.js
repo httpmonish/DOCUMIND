@@ -314,6 +314,27 @@
     const file = e.target.files && e.target.files[0];
     if (!file) return;
 
+    // Check authentication
+    try {
+      const authState = await DocuMindAPI.getAuthUser();
+      if (!authState || !authState.authenticated) {
+        const authCard = document.createElement("div");
+        authCard.className = "docu-msg-row assistant";
+        authCard.innerHTML = `
+          <div class="docu-banner-error" style="display: flex; flex-direction: column; gap: 8px;">
+            <span><strong>Authentication Required:</strong> Anonymous users cannot upload or index documents. Please sign in to access your secure vault.</span>
+            <a href="/app/auth.html?reason=auth_required&redirect=${encodeURIComponent(window.location.href)}" class="docu-btn-primary" style="align-self: flex-start; text-decoration: none; padding: 4px 12px; font-size: 11px;">Sign in / Register ›</a>
+          </div>
+        `;
+        messagesListEl.appendChild(authCard);
+        messagesListEl.scrollTop = messagesListEl.scrollHeight;
+        fileInputEl.value = "";
+        return;
+      }
+    } catch (authErr) {
+      // Continue to try upload
+    }
+
     // Show temporary banner in message area
     const uploadingCard = document.createElement("div");
     uploadingCard.className = "docu-msg-row assistant";
@@ -340,11 +361,20 @@
       `;
       refreshDocuments();
     } catch (err) {
-      uploadingCard.innerHTML = `
-        <div class="docu-banner-error">
-          <span>Failed to index ${escapeHtml(file.name)}: ${escapeHtml(err.message)}</span>
-        </div>
-      `;
+      if (err.status === 401 || err.code === "UNAUTHORIZED" || (err.message && err.message.includes("Authentication required"))) {
+        uploadingCard.innerHTML = `
+          <div class="docu-banner-error" style="display: flex; flex-direction: column; gap: 6px;">
+            <span><strong>Authentication Required:</strong> Please sign in to index and query documents.</span>
+            <a href="/app/auth.html?reason=auth_required&redirect=${encodeURIComponent(window.location.href)}" class="docu-btn-primary" style="align-self: flex-start; text-decoration: none; padding: 4px 10px; font-size: 11px;">Sign in to Continue ›</a>
+          </div>
+        `;
+      } else {
+        uploadingCard.innerHTML = `
+          <div class="docu-banner-error">
+            <span>Failed to index ${escapeHtml(file.name)}: ${escapeHtml(err.message)}</span>
+          </div>
+        `;
+      }
     } finally {
       fileInputEl.value = "";
     }

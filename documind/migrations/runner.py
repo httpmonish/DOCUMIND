@@ -142,6 +142,19 @@ MIGRATIONS: list[tuple[int, str, list[str]]] = [
             """
         ],
     ),
+    (
+        3,
+        "0003_add_user_display_name_and_status",
+        [
+            "ALTER TABLE users ADD COLUMN display_name TEXT;",
+            "ALTER TABLE users ADD COLUMN avatar_url TEXT;",
+            "ALTER TABLE users ADD COLUMN account_status TEXT NOT NULL DEFAULT 'active';",
+            "ALTER TABLE users ADD COLUMN email_verified INTEGER NOT NULL DEFAULT 0;",
+            "ALTER TABLE users ADD COLUMN email_verified_at REAL;",
+            "ALTER TABLE users ADD COLUMN last_login_at REAL;",
+            "ALTER TABLE users ADD COLUMN updated_at REAL;",
+        ],
+    ),
 ]
 
 
