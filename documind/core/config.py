@@ -270,6 +270,9 @@ def load_settings() -> Settings:
     razorpay_webhook_secret = os.getenv(
         "RAZORPAY_WEBHOOK_SECRET", os.getenv("DOCUMIND_RAZORPAY_WEBHOOK_SECRET", "")
     ).strip()
+    allow_guest_upload = _parse_bool(
+        "DOCUMIND_ALLOW_GUEST_UPLOAD", os.getenv("DOCUMIND_ALLOW_GUEST_UPLOAD"), False
+    )
 
     return Settings(
         home=home,
@@ -305,4 +308,5 @@ def load_settings() -> Settings:
         razorpay_key_id=razorpay_key_id,
         razorpay_key_secret=razorpay_key_secret,
         razorpay_webhook_secret=razorpay_webhook_secret,
+        allow_guest_upload=allow_guest_upload,
     )
