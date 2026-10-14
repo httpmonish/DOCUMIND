@@ -328,7 +328,7 @@
 <!-- ========================================================================= -->
 <!-- SECTION 2: 02 / THE JOURNEY OF A DOCUMENT (INDEXING, 6 Keyframes) -->
 <!-- ========================================================================= -->
-<section class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 relative items-start">
+<section id="sec-journey-of-document" class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 relative items-start">
 <!-- Section Pixel Motif -->
 <div class="absolute -top-6 left-0 flex gap-1 opacity-60 pointer-events-none">
 <div class="w-1.5 h-1.5 bg-primary-container"></div>
@@ -337,7 +337,7 @@
 <div class="w-1.5 h-1.5 bg-primary-container opacity-20"></div>
 </div>
 <!-- Left Column: Pipeline Steps (5 cols) Sticky Controller -->
-<div class="lg:col-span-5 flex flex-col gap-5 lg:sticky lg:top-20 self-start z-10">
+<div class="lg:col-span-6 flex flex-col gap-5 lg:sticky lg:top-20 self-start z-10">
   <div>
     <div class="flex items-center justify-between mb-2">
       <span class="font-code-sm text-[11px] text-primary-container tracking-wider uppercase font-semibold flex items-center gap-1.5">
@@ -353,92 +353,149 @@
       From raw filesystem drop to normalized 384-dimensional vector embedding. Ingestion enforces monotonic atomic chunk ordering to eliminate race states.
     </p>
 
-    <!-- Walkthrough Controls Toolbar -->
-    <div class="flex items-center gap-2 mb-4 p-2 bg-surface-container-low border border-surface-variant rounded-lg">
-      <button id="btn-pipeline-walkthrough" type="button" class="walkthrough-btn px-3 py-1.5 bg-primary-container text-on-primary-container font-code-sm text-[11px] font-semibold rounded flex items-center gap-1.5 shadow-sm cursor-pointer">
-        <span class="material-symbols-outlined text-[15px]">play_arrow</span>
-        <span>AUTOPLAY TOUR</span>
-      </button>
-      <button id="btn-pipeline-reset" type="button" class="walkthrough-btn px-2.5 py-1.5 bg-surface-container border border-surface-variant text-on-surface hover:text-white font-code-sm text-[11px] rounded flex items-center gap-1 cursor-pointer">
-        <span class="material-symbols-outlined text-[14px]">restart_alt</span>
-        <span>RESET</span>
-      </button>
-      <div class="ml-auto font-code-sm text-[11px] text-on-surface-variant flex items-center gap-1">
-        <span id="pipeline-active-badge" class="px-2 py-0.5 rounded bg-surface-container border border-surface-variant text-primary-container font-medium">STAGE 01</span>
-      </div>
-    </div>
-
-    <!-- 6 Interactive Stage Rows -->
-    <div id="pipeline-stage-rows" class="flex flex-col gap-1 border-t border-b border-surface-variant py-2">
-      <div class="pipeline-stage-row group flex items-center justify-between px-3.5 py-2.5 rounded-lg is-active" data-step="1" tabindex="0" role="button" aria-label="Inspect Stage 1: Upload & Ingest">
-        <div class="flex items-center gap-3">
-          <span class="stage-active-indicator w-1.5 h-1.5 rounded-full bg-primary-container"></span>
-          <span class="stage-row-num font-label-caps text-primary-container text-xs">01</span>
-          <span class="stage-row-title font-headline-sm text-[14px] text-on-surface group-hover:text-white">Upload &amp; Ingest</span>
-        </div>
+    <!-- Interactive 3D Document Simulation Centerpiece -->
+    <div id="doc-simulation-viewport" class="p-4 sm:p-5 bg-[#141416] border border-surface-variant rounded-xl flex flex-col gap-4 relative overflow-hidden shadow-2xl">
+      <!-- Viewport Telemetry Header -->
+      <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-surface-variant">
         <div class="flex items-center gap-2">
-          <span class="font-code-sm text-[11px] text-on-surface-variant">14 ms</span>
-          <span class="material-symbols-outlined text-[14px] text-primary-container opacity-0 group-hover:opacity-100 transition-opacity">chevron_right</span>
+          <span class="w-2 h-2 rounded-full bg-primary-container animate-pulse"></span>
+          <span id="sim-stage-badge" class="font-code-sm text-xs font-semibold text-primary-container tracking-wider uppercase">SIMULATION · STAGE 01: UPLOAD DISPATCH</span>
+        </div>
+        <div class="flex items-center gap-3 font-code-sm text-[11px] text-on-surface-variant">
+          <span id="sim-status-pill" class="px-2 py-0.5 rounded bg-surface-container border border-surface-variant text-tertiary font-medium">STATUS: READY</span>
+          <span id="sim-latency-pill" class="text-on-surface font-semibold">14 ms</span>
         </div>
       </div>
 
-      <div class="pipeline-stage-row group flex items-center justify-between px-3.5 py-2.5 rounded-lg" data-step="2" tabindex="0" role="button" aria-label="Inspect Stage 2: Magic-Byte Validation">
-        <div class="flex items-center gap-3">
-          <span class="stage-active-indicator w-1.5 h-1.5 rounded-full bg-primary-container"></span>
-          <span class="stage-row-num font-label-caps text-primary-container text-xs">02</span>
-          <span class="stage-row-title font-headline-sm text-[14px] text-on-surface group-hover:text-white">Magic-Byte Validation</span>
-        </div>
-        <div class="flex items-center gap-2">
-          <span class="font-code-sm text-[11px] text-on-surface-variant">0.8 ms</span>
-          <span class="material-symbols-outlined text-[14px] text-primary-container opacity-0 group-hover:opacity-100 transition-opacity">chevron_right</span>
+      <!-- 3D Interactive Stage Canvas Area -->
+      <div id="doc-3d-canvas-wrap" class="relative w-full h-[300px] bg-surface-container-lowest border border-surface-variant/80 rounded-lg overflow-hidden flex items-center justify-center select-none" style="perspective: 1000px;">
+        <!-- Technical Blueprint Grid Background -->
+        <div class="absolute inset-0 opacity-15 pointer-events-none" style="background-image: radial-gradient(#ff571d 1px, transparent 1px); background-size: 20px 20px;"></div>
+        
+        <!-- 3D Interactive Document Scene -->
+        <div id="doc-3d-scene" class="doc-3d-scene flex items-center justify-center relative">
+          <!-- Dimensional Paper Stack with physical thickness -->
+          <div class="doc-3d-stack">
+            <!-- Deepest Page (Page 3) -->
+            <div class="doc-page doc-page-3"></div>
+            <!-- Middle Page (Page 2) -->
+            <div class="doc-page doc-page-2"></div>
+            <!-- Top Front Page (Page 1) -->
+            <div class="doc-page doc-page-1 p-4 flex flex-col justify-between overflow-hidden relative">
+              <!-- Document Header Bar -->
+              <div class="flex items-center justify-between border-b border-surface-variant/60 pb-2">
+                <div class="flex items-center gap-2">
+                  <span class="material-symbols-outlined text-primary-container text-base">description</span>
+                  <span class="font-code-sm text-[11px] font-semibold text-on-surface">kernel_cpu.pdf</span>
+                </div>
+                <span class="font-code-sm text-[9px] text-tertiary px-1.5 py-0.5 rounded bg-surface-container border border-surface-variant">1.48 MB</span>
+              </div>
+
+              <!-- Document Content / Text Stream Lines -->
+              <div class="flex flex-col gap-2 my-auto">
+                <div class="h-1.5 w-4/5 bg-surface-variant/80 rounded"></div>
+                <div class="h-1.5 w-full bg-surface-variant/60 rounded"></div>
+                <div class="h-1.5 w-3/4 bg-surface-variant/60 rounded"></div>
+                <div class="h-1.5 w-5/6 bg-surface-variant/70 rounded"></div>
+              </div>
+
+              <!-- Document Cryptographic Footer Seal -->
+              <div class="flex items-center justify-between pt-2 border-t border-surface-variant/60 font-code-sm text-[9px] text-on-surface-variant">
+                <span class="text-primary-container">SHA-256: e3b0c442...</span>
+                <span class="text-tertiary">L2-NORM</span>
+              </div>
+
+              <!-- Stage 2 Sweeping Laser Scan Line -->
+              <div class="doc-scan-laser-line"></div>
+
+              <!-- Stage 3 Floating Text Layer (Extracted text stream) -->
+              <div class="doc-floating-text-layer flex flex-col gap-1.5 bg-[#141416]/95 p-3 rounded border border-primary-container/60 shadow-xl">
+                <div class="font-code-sm text-[9px] text-primary-container font-semibold uppercase flex items-center justify-between">
+                  <span>RAW TEXT STREAM EXTRACTED</span>
+                  <span class="text-tertiary">pypdf sandbox</span>
+                </div>
+                <div class="font-code-sm text-[10px] text-on-surface leading-snug">
+                  "Process scheduling coordinates CPU execution quantum across active PCBs..."
+                </div>
+              </div>
+
+              <!-- Stage 4 Dimensional Chunks Overlay -->
+              <div id="sim-chunks-overlay" class="absolute inset-2 flex items-center justify-center gap-1.5 pointer-events-none opacity-0 transition-opacity">
+                <div class="doc-chunk-slice doc-chunk-0 p-2 rounded bg-surface-container border border-primary-container/70 shadow-lg text-center flex-1">
+                  <span class="font-code-sm text-[10px] font-bold text-primary-container block">C_0</span>
+                  <span class="font-code-sm text-[8px] text-on-surface-variant">200w</span>
+                </div>
+                <div class="doc-chunk-slice doc-chunk-1 p-2 rounded bg-surface-container border border-primary-container shadow-xl text-center flex-1">
+                  <span class="font-code-sm text-[10px] font-bold text-primary-container block">C_1</span>
+                  <span class="font-code-sm text-[8px] text-tertiary font-semibold">30w ovlp</span>
+                </div>
+                <div class="doc-chunk-slice doc-chunk-2 p-2 rounded bg-surface-container border border-primary-container/70 shadow-lg text-center flex-1">
+                  <span class="font-code-sm text-[10px] font-bold text-primary-container block">C_2</span>
+                  <span class="font-code-sm text-[8px] text-on-surface-variant">200w</span>
+                </div>
+              </div>
+
+              <!-- Stage 5 3D Vector Tower Bars -->
+              <div class="doc-vector-bars-wrap">
+                <div class="sim-vbar h-[45%]"></div>
+                <div class="sim-vbar h-[70%]"></div>
+                <div class="sim-vbar h-[90%]"></div>
+                <div class="sim-vbar h-[60%]"></div>
+                <div class="sim-vbar h-[85%]"></div>
+                <div class="sim-vbar h-[50%]"></div>
+                <div class="sim-vbar h-[95%]"></div>
+                <div class="sim-vbar h-[65%]"></div>
+                <div class="sim-vbar h-[40%]"></div>
+                <div class="sim-vbar h-[75%]"></div>
+              </div>
+
+              <!-- Stage 6 Atomic Persistence Silo Overlay -->
+              <div class="doc-storage-silo">
+                <span class="material-symbols-outlined text-primary-container text-2xl mb-1">lock</span>
+                <span class="font-code-sm text-xs font-semibold text-on-surface">CHROMADB PERSISTENCE</span>
+                <span class="font-code-sm text-[10px] text-tertiary">CHUNK 0 COMMITTED LAST</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div class="pipeline-stage-row group flex items-center justify-between px-3.5 py-2.5 rounded-lg" data-step="3" tabindex="0" role="button" aria-label="Inspect Stage 3: Layer Separation">
-        <div class="flex items-center gap-3">
-          <span class="stage-active-indicator w-1.5 h-1.5 rounded-full bg-primary-container"></span>
-          <span class="stage-row-num font-label-caps text-primary-container text-xs">03</span>
-          <span class="stage-row-title font-headline-sm text-[14px] text-on-surface group-hover:text-white">Layer Separation</span>
+      <!-- Synchronized Playback Scrubber & Timeline Toolbar -->
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-1">
+        <!-- Playback control buttons -->
+        <div class="flex items-center gap-2 shrink-0">
+          <button id="sim-btn-prev" type="button" class="px-2.5 py-1.5 rounded-lg bg-surface-container border border-surface-variant text-on-surface hover:text-white font-code-sm text-xs flex items-center gap-1 cursor-pointer transition-colors" title="Previous Stage">
+            <span class="material-symbols-outlined text-[16px]">skip_previous</span>
+            <span class="hidden sm:inline">PREV</span>
+          </button>
+          <button id="sim-btn-play" type="button" class="px-3.5 py-1.5 rounded-lg bg-primary-container hover:bg-inverse-primary text-on-primary-container font-code-sm text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors shadow-sm" title="Play / Pause Autoplay">
+            <span id="sim-play-icon" class="material-symbols-outlined text-[16px]">play_arrow</span>
+            <span id="sim-play-text">PLAY</span>
+          </button>
+          <button id="sim-btn-next" type="button" class="px-2.5 py-1.5 rounded-lg bg-surface-container border border-surface-variant text-on-surface hover:text-white font-code-sm text-xs flex items-center gap-1 cursor-pointer transition-colors" title="Next Stage">
+            <span class="hidden sm:inline">NEXT</span>
+            <span class="material-symbols-outlined text-[16px]">skip_next</span>
+          </button>
+          <button id="sim-btn-reset" type="button" class="p-1.5 rounded-lg bg-surface-container border border-surface-variant text-on-surface-variant hover:text-white font-code-sm text-xs flex items-center justify-center cursor-pointer transition-colors" title="Reset to Stage 1">
+            <span class="material-symbols-outlined text-[16px]">restart_alt</span>
+          </button>
         </div>
-        <div class="flex items-center gap-2">
-          <span class="font-code-sm text-[11px] text-on-surface-variant">14 ms</span>
-          <span class="material-symbols-outlined text-[14px] text-primary-container opacity-0 group-hover:opacity-100 transition-opacity">chevron_right</span>
-        </div>
-      </div>
 
-      <div class="pipeline-stage-row group flex items-center justify-between px-3.5 py-2.5 rounded-lg" data-step="4" tabindex="0" role="button" aria-label="Inspect Stage 4: Sliding Chunk Window">
-        <div class="flex items-center gap-3">
-          <span class="stage-active-indicator w-1.5 h-1.5 rounded-full bg-primary-container"></span>
-          <span class="stage-row-num font-label-caps text-primary-container text-xs">04</span>
-          <span class="stage-row-title font-headline-sm text-[14px] text-on-surface group-hover:text-white">Sliding Chunk Window</span>
-        </div>
-        <div class="flex items-center gap-2">
-          <span class="font-code-sm text-[11px] text-on-surface-variant">2 ms</span>
-          <span class="material-symbols-outlined text-[14px] text-primary-container opacity-0 group-hover:opacity-100 transition-opacity">chevron_right</span>
-        </div>
-      </div>
+        <!-- 6-Stage Timeline Scrubber Track -->
+        <div class="flex-1 max-w-sm w-full flex items-center gap-1 px-1">
+          <div class="relative flex-1 flex items-center justify-between">
+            <!-- Connecting Track Line -->
+            <div class="absolute left-3 right-3 top-1/2 -translate-y-1/2 h-0.5 bg-surface-variant"></div>
+            <div id="sim-scrubber-progress" class="absolute left-3 top-1/2 -translate-y-1/2 h-0.5 bg-primary-container transition-all duration-300" style="width: 0%;"></div>
 
-      <div class="pipeline-stage-row group flex items-center justify-between px-3.5 py-2.5 rounded-lg" data-step="5" tabindex="0" role="button" aria-label="Inspect Stage 5: Dense Embedding">
-        <div class="flex items-center gap-3">
-          <span class="stage-active-indicator w-1.5 h-1.5 rounded-full bg-primary-container"></span>
-          <span class="stage-row-num font-label-caps text-primary-container text-xs">05</span>
-          <span class="stage-row-title font-headline-sm text-[14px] text-on-surface group-hover:text-white">Dense Embedding</span>
-        </div>
-        <div class="flex items-center gap-2">
-          <span class="font-code-sm text-[11px] text-on-surface-variant">92 ms</span>
-          <span class="material-symbols-outlined text-[14px] text-primary-container opacity-0 group-hover:opacity-100 transition-opacity">chevron_right</span>
-        </div>
-      </div>
-
-      <div class="pipeline-stage-row group flex items-center justify-between px-3.5 py-2.5 rounded-lg" data-step="6" tabindex="0" role="button" aria-label="Inspect Stage 6: Atomic Zero-Last Write">
-        <div class="flex items-center gap-3">
-          <span class="stage-active-indicator w-1.5 h-1.5 rounded-full bg-primary-container"></span>
-          <span class="stage-row-num font-label-caps text-primary-container text-xs">06</span>
-          <span class="stage-row-title font-headline-sm text-[14px] text-on-surface group-hover:text-white">Atomic Zero-Last Write</span>
-        </div>
-        <div class="flex items-center gap-2">
-          <span class="font-code-sm text-[11px] text-on-surface-variant">11 ms</span>
-          <span class="material-symbols-outlined text-[14px] text-primary-container opacity-0 group-hover:opacity-100 transition-opacity">chevron_right</span>
+            <!-- 6 Step Dots -->
+            <button type="button" class="sim-step-dot is-active" data-step="1" title="Stage 1: Upload & Ingest">01</button>
+            <button type="button" class="sim-step-dot" data-step="2" title="Stage 2: Magic-Byte Validation">02</button>
+            <button type="button" class="sim-step-dot" data-step="3" title="Stage 3: Layer Separation">03</button>
+            <button type="button" class="sim-step-dot" data-step="4" title="Stage 4: Sliding Chunk Window">04</button>
+            <button type="button" class="sim-step-dot" data-step="5" title="Stage 5: Dense Embedding">05</button>
+            <button type="button" class="sim-step-dot" data-step="6" title="Stage 6: Atomic Zero-Last Write">06</button>
+          </div>
         </div>
       </div>
     </div>
@@ -470,154 +527,8 @@
     </p>
   </div>
 </div>
-<!-- Right Column: 6 Stacked Keyframe Technical Blueprints (7 cols) with 3D Depth -->
-<div id="pipeline-3d-stage" class="lg:col-span-7 flex flex-col gap-3 relative" role="region" aria-label="Interactive Document Ingestion Pipeline" aria-roledescription="Interactive engineering 3D visualization">
-  <!-- Interactive 3D Document Simulation Centerpiece -->
-  <div id="doc-simulation-viewport" class="p-4 sm:p-5 bg-[#141416] border border-surface-variant rounded-xl flex flex-col gap-4 relative overflow-hidden shadow-2xl mb-2">
-    <!-- Viewport Telemetry Header -->
-    <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-surface-variant">
-      <div class="flex items-center gap-2">
-        <span class="w-2 h-2 rounded-full bg-primary-container animate-pulse"></span>
-        <span id="sim-stage-badge" class="font-code-sm text-xs font-semibold text-primary-container tracking-wider uppercase">SIMULATION · STAGE 01: UPLOAD DISPATCH</span>
-      </div>
-      <div class="flex items-center gap-3 font-code-sm text-[11px] text-on-surface-variant">
-        <span id="sim-status-pill" class="px-2 py-0.5 rounded bg-surface-container border border-surface-variant text-tertiary font-medium">STATUS: READY</span>
-        <span id="sim-latency-pill" class="text-on-surface font-semibold">14 ms</span>
-      </div>
-    </div>
-
-    <!-- 3D Interactive Stage Canvas Area -->
-    <div id="doc-3d-canvas-wrap" class="relative w-full h-[300px] bg-surface-container-lowest border border-surface-variant/80 rounded-lg overflow-hidden flex items-center justify-center select-none" style="perspective: 1000px;">
-      <!-- Technical Blueprint Grid Background -->
-      <div class="absolute inset-0 opacity-15 pointer-events-none" style="background-image: radial-gradient(#ff571d 1px, transparent 1px); background-size: 20px 20px;"></div>
-      
-      <!-- 3D Interactive Document Scene -->
-      <div id="doc-3d-scene" class="doc-3d-scene flex items-center justify-center relative">
-        <!-- Dimensional Paper Stack with physical thickness -->
-        <div class="doc-3d-stack">
-          <!-- Deepest Page (Page 3) -->
-          <div class="doc-page doc-page-3"></div>
-          <!-- Middle Page (Page 2) -->
-          <div class="doc-page doc-page-2"></div>
-          <!-- Top Front Page (Page 1) -->
-          <div class="doc-page doc-page-1 p-4 flex flex-col justify-between overflow-hidden relative">
-            <!-- Document Header Bar -->
-            <div class="flex items-center justify-between border-b border-surface-variant/60 pb-2">
-              <div class="flex items-center gap-2">
-                <span class="material-symbols-outlined text-primary-container text-base">description</span>
-                <span class="font-code-sm text-[11px] font-semibold text-on-surface">kernel_cpu.pdf</span>
-              </div>
-              <span class="font-code-sm text-[9px] text-tertiary px-1.5 py-0.5 rounded bg-surface-container border border-surface-variant">1.48 MB</span>
-            </div>
-
-            <!-- Document Content / Text Stream Lines -->
-            <div class="flex flex-col gap-2 my-auto">
-              <div class="h-1.5 w-4/5 bg-surface-variant/80 rounded"></div>
-              <div class="h-1.5 w-full bg-surface-variant/60 rounded"></div>
-              <div class="h-1.5 w-3/4 bg-surface-variant/60 rounded"></div>
-              <div class="h-1.5 w-5/6 bg-surface-variant/70 rounded"></div>
-            </div>
-
-            <!-- Document Cryptographic Footer Seal -->
-            <div class="flex items-center justify-between pt-2 border-t border-surface-variant/60 font-code-sm text-[9px] text-on-surface-variant">
-              <span class="text-primary-container">SHA-256: e3b0c442...</span>
-              <span class="text-tertiary">L2-NORM</span>
-            </div>
-
-            <!-- Stage 2 Sweeping Laser Scan Line -->
-            <div class="doc-scan-laser-line"></div>
-
-            <!-- Stage 3 Floating Text Layer (Extracted text stream) -->
-            <div class="doc-floating-text-layer flex flex-col gap-1.5 bg-[#141416]/95 p-3 rounded border border-primary-container/60 shadow-xl">
-              <div class="font-code-sm text-[9px] text-primary-container font-semibold uppercase flex items-center justify-between">
-                <span>RAW TEXT STREAM EXTRACTED</span>
-                <span class="text-tertiary">pypdf sandbox</span>
-              </div>
-              <div class="font-code-sm text-[10px] text-on-surface leading-snug">
-                "Process scheduling coordinates CPU execution quantum across active PCBs..."
-              </div>
-            </div>
-
-            <!-- Stage 4 Dimensional Chunks Overlay -->
-            <div id="sim-chunks-overlay" class="absolute inset-2 flex items-center justify-center gap-1.5 pointer-events-none opacity-0 transition-opacity">
-              <div class="doc-chunk-slice doc-chunk-0 p-2 rounded bg-surface-container border border-primary-container/70 shadow-lg text-center flex-1">
-                <span class="font-code-sm text-[10px] font-bold text-primary-container block">C_0</span>
-                <span class="font-code-sm text-[8px] text-on-surface-variant">200w</span>
-              </div>
-              <div class="doc-chunk-slice doc-chunk-1 p-2 rounded bg-surface-container border border-primary-container shadow-xl text-center flex-1">
-                <span class="font-code-sm text-[10px] font-bold text-primary-container block">C_1</span>
-                <span class="font-code-sm text-[8px] text-tertiary font-semibold">30w ovlp</span>
-              </div>
-              <div class="doc-chunk-slice doc-chunk-2 p-2 rounded bg-surface-container border border-primary-container/70 shadow-lg text-center flex-1">
-                <span class="font-code-sm text-[10px] font-bold text-primary-container block">C_2</span>
-                <span class="font-code-sm text-[8px] text-on-surface-variant">200w</span>
-              </div>
-            </div>
-
-            <!-- Stage 5 3D Vector Tower Bars -->
-            <div class="doc-vector-bars-wrap">
-              <div class="sim-vbar h-[45%]"></div>
-              <div class="sim-vbar h-[70%]"></div>
-              <div class="sim-vbar h-[90%]"></div>
-              <div class="sim-vbar h-[60%]"></div>
-              <div class="sim-vbar h-[85%]"></div>
-              <div class="sim-vbar h-[50%]"></div>
-              <div class="sim-vbar h-[95%]"></div>
-              <div class="sim-vbar h-[65%]"></div>
-              <div class="sim-vbar h-[40%]"></div>
-              <div class="sim-vbar h-[75%]"></div>
-            </div>
-
-            <!-- Stage 6 Atomic Persistence Silo Overlay -->
-            <div class="doc-storage-silo">
-              <span class="material-symbols-outlined text-primary-container text-2xl mb-1">lock</span>
-              <span class="font-code-sm text-xs font-semibold text-on-surface">CHROMADB PERSISTENCE</span>
-              <span class="font-code-sm text-[10px] text-tertiary">CHUNK 0 COMMITTED LAST</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Synchronized Playback Scrubber & Timeline Toolbar -->
-    <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-1">
-      <!-- Playback control buttons -->
-      <div class="flex items-center gap-2 shrink-0">
-        <button id="sim-btn-prev" type="button" class="px-2.5 py-1.5 rounded-lg bg-surface-container border border-surface-variant text-on-surface hover:text-white font-code-sm text-xs flex items-center gap-1 cursor-pointer transition-colors" title="Previous Stage">
-          <span class="material-symbols-outlined text-[16px]">skip_previous</span>
-          <span class="hidden sm:inline">PREV</span>
-        </button>
-        <button id="sim-btn-play" type="button" class="px-3.5 py-1.5 rounded-lg bg-primary-container hover:bg-inverse-primary text-on-primary-container font-code-sm text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors shadow-sm" title="Play / Pause Autoplay">
-          <span id="sim-play-icon" class="material-symbols-outlined text-[16px]">play_arrow</span>
-          <span id="sim-play-text">PLAY</span>
-        </button>
-        <button id="sim-btn-next" type="button" class="px-2.5 py-1.5 rounded-lg bg-surface-container border border-surface-variant text-on-surface hover:text-white font-code-sm text-xs flex items-center gap-1 cursor-pointer transition-colors" title="Next Stage">
-          <span class="hidden sm:inline">NEXT</span>
-          <span class="material-symbols-outlined text-[16px]">skip_next</span>
-        </button>
-        <button id="sim-btn-reset" type="button" class="p-1.5 rounded-lg bg-surface-container border border-surface-variant text-on-surface-variant hover:text-white font-code-sm text-xs flex items-center justify-center cursor-pointer transition-colors" title="Reset to Stage 1">
-          <span class="material-symbols-outlined text-[16px]">restart_alt</span>
-        </button>
-      </div>
-
-      <!-- 6-Stage Timeline Scrubber Track -->
-      <div class="flex-1 max-w-sm w-full flex items-center gap-1 px-1">
-        <div class="relative flex-1 flex items-center justify-between">
-          <!-- Connecting Track Line -->
-          <div class="absolute left-3 right-3 top-1/2 -translate-y-1/2 h-0.5 bg-surface-variant"></div>
-          <div id="sim-scrubber-progress" class="absolute left-3 top-1/2 -translate-y-1/2 h-0.5 bg-primary-container transition-all duration-300" style="width: 0%;"></div>
-
-          <!-- 6 Step Dots -->
-          <button type="button" class="sim-step-dot is-active" data-step="1" title="Stage 1: Upload & Ingest">01</button>
-          <button type="button" class="sim-step-dot" data-step="2" title="Stage 2: Magic-Byte Validation">02</button>
-          <button type="button" class="sim-step-dot" data-step="3" title="Stage 3: Layer Separation">03</button>
-          <button type="button" class="sim-step-dot" data-step="4" title="Stage 4: Sliding Chunk Window">04</button>
-          <button type="button" class="sim-step-dot" data-step="5" title="Stage 5: Dense Embedding">05</button>
-          <button type="button" class="sim-step-dot" data-step="6" title="Stage 6: Atomic Zero-Last Write">06</button>
-        </div>
-      </div>
-    </div>
-  </div>
+<!-- Right Column: 6 Stacked Keyframe Technical Blueprints (6 cols) with 3D Depth -->
+<div id="pipeline-3d-stage" class="lg:col-span-6 flex flex-col gap-3 relative" role="region" aria-label="Interactive Document Ingestion Pipeline" aria-roledescription="Interactive engineering 3D visualization">
 
   <div id="pipeline-3d-container" class="flex flex-col gap-3">
     <!-- K1 UPLOAD DISPATCH -->

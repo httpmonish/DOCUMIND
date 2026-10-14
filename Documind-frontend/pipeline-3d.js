@@ -345,6 +345,7 @@
   let tiltRafId = null;
 
   function update3DTilt() {
+    if (!container) return;
     if (!isPointerInside && Math.abs(currentRotX) < 0.01 && Math.abs(currentRotY) < 0.01) {
       container.style.transform = "rotateX(0deg) rotateY(0deg)";
       tiltRafId = null;
