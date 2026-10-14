@@ -1312,6 +1312,20 @@ def create_app(
     ) -> JSONResponse:
         user, session_id = auth_info
         auth_mgr = getattr(request.app.state, "auth_manager", None)
+
+        # Prohibit uploads for anonymous or unauthenticated guest users unless explicitly allowed
+        if (
+            auth_mgr
+            and user
+            and user.id.startswith("guest_")
+            and not getattr(request.app.state.settings, "allow_guest_upload", False)
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Authentication required. Please sign in or register to upload documents.",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
         ip = client_ip(request)
         ip_h = hash_ip(ip)
         multi_limiter: MultiActionRateLimiter = getattr(
