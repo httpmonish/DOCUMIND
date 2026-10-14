@@ -74,3 +74,13 @@ def real_index(tmp_path: Path, real_embedder: SentenceTransformerEmbedder) -> Re
 
     index_path(fixtures_dir, fixtures_dir, real_embedder, store, settings)
     return RealIndexHelper(store, real_embedder)
+
+
+@pytest.fixture(autouse=True)
+def configure_saas_test_env(
+    monkeypatch: pytest.MonkeyPatch, request: pytest.FixtureRequest
+) -> None:
+    if "test_saas_monetization" not in request.node.nodeid:
+        monkeypatch.setenv("DOCUMIND_FREE_DOC_LIMIT", "10")
+        monkeypatch.setenv("DOCUMIND_FREE_QUESTION_LIMIT", "20")
+        monkeypatch.setenv("DOCUMIND_ALLOW_GUEST_UPLOAD", "1")
