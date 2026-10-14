@@ -245,20 +245,15 @@
 <!-- Blueprint Grid Mesh -->
 <div class="absolute inset-0 opacity-15 pointer-events-none" style="background-image: radial-gradient(#ad897e 1px, transparent 1px); background-size: 16px 16px;"></div>
 
-<!-- Continuous Animation Controls Header -->
-<div class="arch-ctrl-bar">
+<!-- Live Animation Stage Indicator Header -->
+<div class="arch-ctrl-bar pointer-events-none">
   <div class="arch-stage-pill">
     <span id="arch-live-dot" class="arch-live-dot"></span>
-    <span id="arch-stage-label" class="arch-stage-text">STAGE 01 · INGESTION: MAGIC-BYTE VALIDATION</span>
-  </div>
-  <div class="arch-btn-group">
-    <button id="arch-btn-outcome" type="button" class="arch-ctrl-btn" title="Toggle simulation outcome: Auto-cycle, Grounded Answer, or Abstention Gate">MODE: AUTO</button>
-    <button id="arch-btn-replay" type="button" class="arch-ctrl-btn" title="Replay Animation (R)"><span class="material-symbols-outlined text-[13px]">restart_alt</span></button>
-    <button id="arch-btn-play" type="button" class="arch-ctrl-btn is-active" title="Play / Pause Animation (Space)"><span id="arch-play-icon" class="material-symbols-outlined text-[13px]">pause</span><span id="arch-play-text">PAUSE</span></button>
+    <span id="arch-stage-label" class="arch-stage-text">01 · UPLOAD: Your document enters DocuMind</span>
   </div>
 </div>
 
-<svg id="arch-anim-svg" class="w-full h-auto max-w-[540px] select-none my-2" fill="none" stroke="currentColor" viewBox="0 0 620 440">
+<svg id="arch-anim-svg" class="w-full h-auto max-w-[540px] select-none my-1" fill="none" stroke="currentColor" viewBox="0 0 620 520">
   <defs>
     <filter id="glow-orange" x="-20%" y="-20%" width="140%" height="140%">
       <feGaussianBlur stdDeviation="2.5" result="blur"></feGaussianBlur>
@@ -276,173 +271,158 @@
     </filter>
   </defs>
 
-  <!-- Guide lines (Exploded axis) -->
-  <line stroke="#5c4038" stroke-dasharray="3 3" stroke-width="1" x1="270" x2="270" y1="40" y2="390"></line>
-  <line stroke="#353534" stroke-dasharray="2 2" stroke-width="0.8" x1="120" x2="120" y1="130" y2="350"></line>
-  <line stroke="#353534" stroke-dasharray="2 2" stroke-width="0.8" x1="420" x2="420" y1="130" y2="350"></line>
+  <!-- Exploded Stack Axis Guide Lines -->
+  <line stroke="#5c4038" stroke-dasharray="3 3" stroke-width="1" x1="270" x2="270" y1="25" y2="480"></line>
+  <line stroke="#353534" stroke-dasharray="2 2" stroke-width="0.8" x1="120" x2="120" y1="75" y2="445"></line>
+  <line stroke="#353534" stroke-dasharray="2 2" stroke-width="0.8" x1="420" x2="420" y1="75" y2="445"></line>
 
   <!-- Central Traveling Pulse Node -->
-  <circle id="central-axis-pulse" cx="270" cy="105" r="4" fill="#ff571d" opacity="0" filter="url(#glow-soft)"></circle>
+  <circle id="central-axis-pulse" cx="270" cy="75" r="4" fill="#ff571d" opacity="0" filter="url(#glow-soft)"></circle>
 
-  <!-- Retrieval Query Ray Path (Scene F/G) -->
-  <path id="arch-query-ray" d="M 125,44 Q 165,190 270,340" stroke="#ff571d" stroke-width="1.5" stroke-dasharray="4 4" fill="none" opacity="0"></path>
+  <!-- Retrieval Query Ray Path (Scene 6) -->
+  <path id="arch-query-ray" d="M 125,40 Q 145,260 270,430" stroke="#ff571d" stroke-width="1.5" stroke-dasharray="4 4" fill="none" opacity="0"></path>
 
-  <!-- LAYER 1: Top Document Sheet -->
-  <g id="layer-doc" class="cursor-pointer transition-all hover:opacity-80" data-layer="doc" data-tooltip="Document Layer: Uploaded PDF sanitized, validated, and converted to byte stream" transform="translate(0, -10)">
+  <!-- LAYER 1: Top Document Sheet (Y: 25 to 130) -->
+  <g id="layer-doc" class="cursor-pointer transition-all hover:opacity-80" data-layer="doc" data-tooltip="Document Layer: Uploaded PDF sanitized, validated, and converted to byte stream" transform="translate(0, 0)">
     <!-- Top Face -->
-    <polygon id="doc-top-face" fill="#1c1b1b" points="270,45 420,105 270,165 120,105" stroke="#e5e2e1" stroke-width="1.2"></polygon>
+    <polygon id="doc-top-face" fill="#1c1b1b" points="270,30 410,75 270,120 130,75" stroke="#e5e2e1" stroke-width="1.2"></polygon>
     <!-- Thickness / Droop -->
-    <polygon fill="#0e0e0e" points="120,105 120,113 270,173 420,113 420,105 270,165" stroke="#5c4038" stroke-width="1"></polygon>
+    <polygon fill="#0e0e0e" points="130,75 130,83 270,128 410,83 410,75 270,120" stroke="#5c4038" stroke-width="1"></polygon>
     <!-- Laser Scan Sweep Line -->
-    <line id="doc-scan-line" stroke="#ff571d" stroke-width="2" x1="195" y1="75" x2="345" y2="135" opacity="0" filter="url(#glow-soft)"></line>
+    <line id="doc-scan-line" stroke="#ff571d" stroke-width="2" x1="200" y1="52" x2="340" y2="97" opacity="0" filter="url(#glow-soft)"></line>
     <!-- Corner Verification Ticks -->
     <g id="doc-verify-ticks" opacity="0">
-      <circle cx="270" cy="45" r="2.5" fill="#ff571d"></circle>
-      <circle cx="420" cy="105" r="2.5" fill="#ff571d"></circle>
-      <circle cx="270" cy="165" r="2.5" fill="#ff571d"></circle>
-      <circle cx="120" cy="105" r="2.5" fill="#ff571d"></circle>
+      <circle cx="270" cy="30" r="2.5" fill="#ff571d"></circle>
+      <circle cx="410" cy="75" r="2.5" fill="#ff571d"></circle>
+      <circle cx="270" cy="120" r="2.5" fill="#ff571d"></circle>
+      <circle cx="130" cy="75" r="2.5" fill="#ff571d"></circle>
     </g>
     <!-- Illustrative Validation Badge -->
-    <g id="doc-validation-tag" opacity="0" transform="translate(135, 75)">
+    <g id="doc-validation-tag" opacity="0" transform="translate(135, 42)">
       <rect width="112" height="18" rx="3" fill="#141416" stroke="#ff571d" stroke-width="0.8"></rect>
       <text x="6" y="12" fill="#ff8c53" font-family="JetBrains Mono" font-size="7.5" font-weight="600">✓ SHA-256 MATCH</text>
     </g>
     <!-- Wireframe text lines on isometric plane -->
-    <line id="doc-line-1" stroke="#8A8690" stroke-width="1.2" x1="180" x2="250" y1="100" y2="128"></line>
-    <line id="doc-line-2" stroke="#8A8690" stroke-width="1.2" x1="170" x2="310" y1="110" y2="132"></line>
-    <line id="doc-line-3" stroke="#8A8690" stroke-width="1.2" x1="200" x2="340" y1="120" y2="142"></line>
+    <line id="doc-line-1" stroke="#8A8690" stroke-width="1.2" x1="180" y1="68" x2="250" y2="90"></line>
+    <line id="doc-line-2" stroke="#8A8690" stroke-width="1.2" x1="170" y1="78" x2="310" y2="94"></line>
+    <line id="doc-line-3" stroke="#8A8690" stroke-width="1.2" x1="200" y1="88" x2="340" y2="104"></line>
     <!-- Callout -->
-    <circle cx="390" cy="118" fill="#e5e2e1" r="2.5"></circle>
-    <line stroke="#e5e2e1" stroke-width="0.8" x1="390" x2="475" y1="118" y2="85"></line>
-    <text fill="#e5e2e1" font-family="JetBrains Mono" font-size="10" letter-spacing="0.08em" x="480" y="88">DOCUMENT LAYER</text>
+    <circle cx="380" cy="85" fill="#e5e2e1" r="2.5"></circle>
+    <line stroke="#e5e2e1" stroke-width="0.8" x1="380" y1="85" x2="475" y2="55"></line>
+    <text fill="#e5e2e1" font-family="JetBrains Mono" font-size="10" letter-spacing="0.08em" x="480" y="58">DOCUMENT LAYER</text>
   </g>
 
-  <!-- LAYER 2: Chunk Tiles Grid -->
-  <g id="layer-chunk" class="cursor-pointer transition-all hover:opacity-80" data-layer="chunk" data-tooltip="Chunk Layer: Sliding window 200 words with 30-word overlap for contextual continuity" transform="translate(0, 80)">
-    <!-- Overlap Highlight Zones (Scene C) -->
+  <!-- LAYER 2: Chunk Tiles Grid (Y: 165 to 255) -->
+  <g id="layer-chunk" class="cursor-pointer transition-all hover:opacity-80" data-layer="chunk" data-tooltip="Chunk Layer: Sliding window 200 words with 30-word overlap for contextual continuity" transform="translate(0, 0)">
+    <!-- Overlap Highlight Zones (Scene 3) -->
     <g id="chunk-overlap-zones" opacity="0">
-      <polygon points="215,112 245,124 225,132 195,120" fill="#ff571d" fill-opacity="0.25" stroke="#ff571d" stroke-width="0.8" stroke-dasharray="2 2"></polygon>
-      <polygon points="295,112 325,124 305,132 275,120" fill="#ff571d" fill-opacity="0.25" stroke="#ff571d" stroke-width="0.8" stroke-dasharray="2 2"></polygon>
-      <text x="270" y="98" text-anchor="middle" fill="#ff8c53" font-family="JetBrains Mono" font-size="7" font-weight="600" letter-spacing="0.05em">30-W CONTEXT OVERLAP</text>
+      <polygon points="210,211 230,217 215,225 195,219" fill="#ff571d" fill-opacity="0.25" stroke="#ff571d" stroke-width="0.8" stroke-dasharray="2 2"></polygon>
+      <polygon points="310,219 330,225 315,217 295,211" fill="#ff571d" fill-opacity="0.25" stroke="#ff571d" stroke-width="0.8" stroke-dasharray="2 2"></polygon>
+      <text x="270" y="212" text-anchor="middle" fill="#ff8c53" font-family="JetBrains Mono" font-size="7" font-weight="600" letter-spacing="0.05em">30-W CONTEXT OVERLAP</text>
     </g>
-    <!-- 4 Iso Chunks -->
+    <!-- 4 Iso Chunks: C_3 (top), C_0 (left), C_2 (right), C_1 (bottom) -->
+    <g id="chunk-c3" class="arch-chunk">
+      <polygon fill="#201f1f" points="270,165 315,178 270,191 225,178" stroke="#e5e2e1" stroke-width="1"></polygon>
+      <text fill="#8A8690" font-family="JetBrains Mono" font-size="8" x="265" y="181">C_3</text>
+    </g>
     <g id="chunk-c0" class="arch-chunk">
-      <polygon fill="#201f1f" points="200,90 250,110 200,130 150,110" stroke="#e5e2e1" stroke-width="1"></polygon>
-      <text fill="#8A8690" font-family="JetBrains Mono" font-size="8" x="195" y="113">C_0</text>
-    </g>
-    <g id="chunk-c1" class="arch-chunk">
-      <polygon fill="#201f1f" points="270,118 320,138 270,158 220,138" stroke="#e5e2e1" stroke-width="1"></polygon>
-      <text fill="#8A8690" font-family="JetBrains Mono" font-size="8" x="265" y="141">C_1</text>
+      <polygon fill="#201f1f" points="195,197 240,210 195,223 150,210" stroke="#e5e2e1" stroke-width="1"></polygon>
+      <text fill="#8A8690" font-family="JetBrains Mono" font-size="8" x="190" y="213">C_0</text>
     </g>
     <g id="chunk-c2" class="arch-chunk">
-      <polygon fill="#201f1f" points="340,90 390,110 340,130 290,110" stroke="#e5e2e1" stroke-width="1"></polygon>
-      <text fill="#8A8690" font-family="JetBrains Mono" font-size="8" x="335" y="113">C_2</text>
+      <polygon fill="#201f1f" points="345,197 390,210 345,223 300,210" stroke="#e5e2e1" stroke-width="1"></polygon>
+      <text fill="#8A8690" font-family="JetBrains Mono" font-size="8" x="340" y="213">C_2</text>
     </g>
-    <g id="chunk-c3" class="arch-chunk">
-      <polygon fill="#201f1f" points="270,62 320,82 270,102 220,82" stroke="#e5e2e1" stroke-width="1"></polygon>
-      <text fill="#8A8690" font-family="JetBrains Mono" font-size="8" x="265" y="85">C_3</text>
+    <g id="chunk-c1" class="arch-chunk">
+      <polygon fill="#201f1f" points="270,229 315,242 270,255 225,242" stroke="#e5e2e1" stroke-width="1"></polygon>
+      <text fill="#8A8690" font-family="JetBrains Mono" font-size="8" x="265" y="245">C_1</text>
     </g>
     <!-- Callout -->
-    <circle cx="150" cy="110" fill="#e5e2e1" r="2.5"></circle>
-    <line stroke="#e5e2e1" stroke-width="0.8" x1="150" x2="65" y1="110" y2="95"></line>
-    <text fill="#e5e2e1" font-family="JetBrains Mono" font-size="10" letter-spacing="0.08em" x="15" y="98">200-W CHUNKS</text>
+    <circle cx="150" cy="210" fill="#e5e2e1" r="2.5"></circle>
+    <line stroke="#e5e2e1" stroke-width="0.8" x1="150" y1="210" x2="65" y2="210"></line>
+    <text fill="#e5e2e1" font-family="JetBrains Mono" font-size="10" letter-spacing="0.08em" x="15" y="213">200-W CHUNKS</text>
   </g>
 
-  <!-- Citation Markers [S1] and [S2] (Scene G/H) -->
-  <g id="cite-s1" opacity="0" transform="translate(230, 218)">
+  <!-- Citation Markers [S1] and [S2] (Scene 6/7/8) -->
+  <g id="cite-s1" opacity="0" transform="translate(180, 175)">
     <rect width="28" height="13" rx="2" fill="#ff571d"></rect>
     <text x="14" y="9.5" text-anchor="middle" fill="#141416" font-family="JetBrains Mono" font-size="7.5" font-weight="700">[S1]</text>
   </g>
-  <g id="cite-s2" opacity="0" transform="translate(395, 195)">
+  <g id="cite-s2" opacity="0" transform="translate(360, 175)">
     <rect width="28" height="13" rx="2" fill="#ff571d"></rect>
     <text x="14" y="9.5" text-anchor="middle" fill="#141416" font-family="JetBrains Mono" font-size="7.5" font-weight="700">[S2]</text>
   </g>
 
-  <!-- LAYER 3: 384-d Vector Layer (Orange Highlighted) -->
-  <g id="layer-vector" class="cursor-pointer transition-all hover:opacity-80" data-layer="vector" data-tooltip="Embedding Layer: BAAI/bge-small-en-v1.5 generating 384-dimensional dense semantic vectors" transform="translate(0, 180)">
+  <!-- LAYER 3: 384-D Vector Layer (Y: 290 to 380) -->
+  <g id="layer-vector" class="cursor-pointer transition-all hover:opacity-80" data-layer="vector" data-tooltip="Embedding Layer: BAAI/bge-small-en-v1.5 generating 384-dimensional dense semantic vectors" transform="translate(0, 0)">
     <!-- Pulse connecting C_1 to Vector Plate -->
-    <line id="v-pulse-beam" stroke="#ff571d" stroke-width="1.5" stroke-dasharray="3 3" x1="270" y1="0" x2="270" y2="50" opacity="0"></line>
+    <line id="v-pulse-beam" stroke="#ff571d" stroke-width="1.5" stroke-dasharray="3 3" x1="270" y1="255" x2="270" y2="290" opacity="0"></line>
     <!-- Iso Plate base -->
-    <polygon fill="#131313" points="270,55 390,105 270,155 150,105" stroke="#5c4038" stroke-dasharray="2 2" stroke-width="0.8"></polygon>
+    <polygon fill="#131313" points="270,330 380,355 270,380 160,355" stroke="#5c4038" stroke-dasharray="2 2" stroke-width="0.8"></polygon>
     <!-- Vertical Vector Spikes -->
-    <line id="v-bar-0" class="arch-vector-spike" stroke="#ff571d" stroke-width="2.5" x1="210" x2="210" y1="105" y2="70"></line>
-    <line id="v-bar-1" class="arch-vector-spike" stroke="#ff571d" stroke-width="2.5" x1="230" x2="230" y1="115" y2="60"></line>
-    <line id="v-bar-2" class="arch-vector-spike" stroke="#ff571d" stroke-width="2.5" x1="250" x2="250" y1="125" y2="82"></line>
-    <line id="v-bar-3" class="arch-vector-spike" stroke="#ff571d" stroke-width="3" x1="270" x2="270" y1="135" y2="50"></line>
-    <line id="v-bar-4" class="arch-vector-spike" stroke="#ff571d" stroke-width="2.5" x1="290" x2="290" y1="125" y2="75"></line>
-    <line id="v-bar-5" class="arch-vector-spike" stroke="#ff571d" stroke-width="2.5" x1="310" x2="310" y1="115" y2="65"></line>
-    <line id="v-bar-6" class="arch-vector-spike" stroke="#ff571d" stroke-width="2.5" x1="330" x2="330" y1="105" y2="80"></line>
+    <line id="v-bar-0" class="arch-vector-spike" stroke="#ff571d" stroke-width="2.5" x1="210" x2="210" y1="350" y2="320"></line>
+    <line id="v-bar-1" class="arch-vector-spike" stroke="#ff571d" stroke-width="2.5" x1="230" x2="230" y1="354" y2="310"></line>
+    <line id="v-bar-2" class="arch-vector-spike" stroke="#ff571d" stroke-width="2.5" x1="250" x2="250" y1="358" y2="300"></line>
+    <line id="v-bar-3" class="arch-vector-spike" stroke="#ff571d" stroke-width="3" x1="270" x2="270" y1="362" y2="290"></line>
+    <line id="v-bar-4" class="arch-vector-spike" stroke="#ff571d" stroke-width="2.5" x1="290" x2="290" y1="358" y2="305"></line>
+    <line id="v-bar-5" class="arch-vector-spike" stroke="#ff571d" stroke-width="2.5" x1="310" x2="310" y1="354" y2="312"></line>
+    <line id="v-bar-6" class="arch-vector-spike" stroke="#ff571d" stroke-width="2.5" x1="330" x2="330" y1="350" y2="325"></line>
     <!-- Peak Spark Node -->
-    <circle id="v-peak-spark" cx="270" cy="50" fill="#ff571d" r="3.5" filter="url(#glow-soft)"></circle>
+    <circle id="v-peak-spark" cx="270" cy="290" fill="#ff571d" r="3.5" filter="url(#glow-soft)"></circle>
     <!-- Dimension Indicator -->
-    <text id="v-dim-tag" opacity="0" x="350" y="65" fill="#ff8c53" font-family="JetBrains Mono" font-size="7">||v|| = 1.0 (L2-NORM)</text>
+    <text id="v-dim-tag" opacity="0" x="345" y="300" fill="#ff8c53" font-family="JetBrains Mono" font-size="7">||v|| = 1.0 (L2-NORM)</text>
     <!-- Callout -->
-    <line stroke="#ff571d" stroke-width="1" x1="270" x2="475" y1="50" y2="35"></line>
-    <circle cx="475" cy="35" fill="#ff571d" r="2"></circle>
-    <text fill="#ff571d" font-family="JetBrains Mono" font-size="10" font-weight="600" letter-spacing="0.08em" x="480" y="38">384-D VECTORS</text>
+    <line stroke="#ff571d" stroke-width="1" x1="270" y1="290" x2="475" y2="275"></line>
+    <circle cx="475" cy="275" fill="#ff571d" r="2"></circle>
+    <text fill="#ff571d" font-family="JetBrains Mono" font-size="10" font-weight="600" letter-spacing="0.08em" x="480" y="278">384-D VECTORS</text>
   </g>
 
-  <!-- LAYER 4: Chroma Vector Store (Cylinder at Bottom) -->
-  <g id="layer-store" class="cursor-pointer transition-all hover:opacity-80" data-layer="store" data-tooltip="Vector Store Layer: Chroma local persistent vector store with isolated session partitions" transform="translate(0, 275)">
+  <!-- LAYER 4: Chroma Vector Store (Y: 410 to 500) -->
+  <g id="layer-store" class="cursor-pointer transition-all hover:opacity-80" data-layer="store" data-tooltip="Vector Store Layer: Chroma local persistent vector store with isolated session partitions" transform="translate(0, 0)">
     <!-- Expanding Ripple Ring on Top Face -->
-    <ellipse id="chroma-ripple" cx="270" cy="65" rx="30" ry="9" fill="none" stroke="#ff571d" stroke-width="1.2" opacity="0"></ellipse>
+    <ellipse id="chroma-ripple" cx="270" cy="430" rx="30" ry="8" fill="none" stroke="#ff571d" stroke-width="1.2" opacity="0"></ellipse>
     <!-- Top Ellipse -->
-    <ellipse id="chroma-top-ellipse" cx="270" cy="65" fill="#201f1f" rx="110" ry="32" stroke="#e5e2e1" stroke-width="1"></ellipse>
+    <ellipse id="chroma-top-ellipse" cx="270" cy="430" fill="#201f1f" rx="100" ry="24" stroke="#e5e2e1" stroke-width="1"></ellipse>
     <!-- Body -->
-    <path d="M 160,65 v 45 a 110,32 0 0,0 220,0 v -45" fill="#131313" stroke="#e5e2e1" stroke-width="1"></path>
+    <path d="M 170,430 v 38 a 100,24 0 0,0 200,0 v -38" fill="#131313" stroke="#e5e2e1" stroke-width="1"></path>
     <!-- Center Ring Division -->
-    <path d="M 160,88 a 110,32 0 0,0 220,0" stroke="#5c4038" stroke-dasharray="2 2" stroke-width="1"></path>
+    <path d="M 170,450 a 100,24 0 0,0 200,0" stroke="#5c4038" stroke-dasharray="2 2" stroke-width="1"></path>
     <!-- Internal DB Sector -->
-    <ellipse cx="270" cy="65" fill="none" rx="70" ry="20" stroke="#5c4038" stroke-width="0.8"></ellipse>
+    <ellipse cx="270" cy="430" rx="65" ry="15" stroke="#5c4038" stroke-width="0.8"></ellipse>
     <!-- Persistence Commit Badge -->
-    <g id="chroma-commit-tag" opacity="0" transform="translate(200, 115)">
+    <g id="chroma-commit-tag" opacity="0" transform="translate(200, 468)">
       <rect width="140" height="15" rx="3" fill="#141416" stroke="#5c4038" stroke-width="0.8"></rect>
       <text x="70" y="10.5" text-anchor="middle" fill="#8A8690" font-family="JetBrains Mono" font-size="7">PARTITION COMMITTED (ATOMIC)</text>
     </g>
     <!-- Callout -->
-    <circle cx="270" cy="98" fill="#e5e2e1" r="2.5"></circle>
-    <line stroke="#e5e2e1" stroke-width="0.8" x1="270" x2="90" y1="98" y2="125"></line>
-    <text fill="#e5e2e1" font-family="JetBrains Mono" font-size="10" letter-spacing="0.08em" x="15" y="128">CHROMA STORE</text>
+    <circle cx="270" cy="468" fill="#e5e2e1" r="2.5"></circle>
+    <line stroke="#e5e2e1" stroke-width="0.8" x1="270" y1="468" x2="90" y2="495"></line>
+    <text fill="#e5e2e1" font-family="JetBrains Mono" font-size="10" letter-spacing="0.08em" x="15" y="498">CHROMA STORE</text>
   </g>
 
-  <!-- User Query Capsule (Scene F) -->
-  <g id="arch-query-capsule" opacity="0" transform="translate(18, 16)">
+  <!-- User Query Capsule (Scene 6) -->
+  <g id="arch-query-capsule" opacity="0" transform="translate(18, 12)">
     <rect width="216" height="28" rx="4" fill="#141416" fill-opacity="0.95" stroke="#ff571d" stroke-opacity="0.7" stroke-width="0.8"></rect>
-    <text x="8" y="11" fill="#ad897e" font-family="JetBrains Mono" font-size="6.5" font-weight="600" letter-spacing="0.05em">ILLUSTRATIVE QUERY · RETRIEVAL CYCLE</text>
+    <text x="8" y="11" fill="#ad897e" font-family="JetBrains Mono" font-size="6.5" font-weight="600" letter-spacing="0.05em">SAMPLE QUERY · RETRIEVAL CYCLE</text>
     <text x="8" y="22" fill="#e5e2e1" font-family="JetBrains Mono" font-size="7.5">"Explain process scheduling in OS kernel"</text>
   </g>
 
-  <!-- Evidence Decision Panels (Scene H) -->
+  <!-- Evidence Decision Panels (Scene 8) -->
   <!-- Outcome 1: Grounded Answer with Citations -->
-  <g id="arch-outcome-grounded" opacity="0" transform="translate(365, 310)">
-    <rect width="240" height="42" rx="4" fill="#141416" fill-opacity="0.95" stroke="#ff571d" stroke-width="1"></rect>
+  <g id="arch-outcome-grounded" opacity="0" transform="translate(365, 415)">
+    <rect width="240" height="44" rx="4" fill="#141416" fill-opacity="0.96" stroke="#ff571d" stroke-width="1"></rect>
     <text x="10" y="13" fill="#ff571d" font-family="JetBrains Mono" font-size="7" font-weight="700" letter-spacing="0.06em">✓ CONFIDENCE GATE: τ 0.71 ≥ 0.35</text>
     <text x="10" y="25" fill="#e5e2e1" font-family="JetBrains Mono" font-size="7.5" font-weight="500">GROUNDED ANSWER · CITATIONS [S1][S2]</text>
-    <text x="10" y="35" fill="#8A8690" font-family="JetBrains Mono" font-size="6.5">EVIDENCE ATTESTED FROM INDEXED CHUNKS</text>
+    <text x="10" y="36" fill="#8A8690" font-family="JetBrains Mono" font-size="6.5">ATTESTED STRICTLY FROM RETRIEVED CHUNKS</text>
   </g>
   <!-- Outcome 2: Abstention Gate Barrier -->
-  <g id="arch-outcome-abstain" opacity="0" transform="translate(365, 310)">
-    <rect width="240" height="42" rx="4" fill="#141416" fill-opacity="0.95" stroke="#ad897e" stroke-width="1"></rect>
+  <g id="arch-outcome-abstain" opacity="0" transform="translate(365, 415)">
+    <rect width="240" height="44" rx="4" fill="#141416" fill-opacity="0.96" stroke="#ad897e" stroke-width="1"></rect>
     <text x="10" y="13" fill="#ad897e" font-family="JetBrains Mono" font-size="7" font-weight="700" letter-spacing="0.06em">⊘ CONFIDENCE GATE: τ 0.22 &lt; 0.35</text>
     <text x="10" y="25" fill="#e5e2e1" font-family="JetBrains Mono" font-size="7.5" font-weight="500">ABSTAIN · INSUFFICIENT EVIDENCE</text>
-    <text x="10" y="35" fill="#8A8690" font-family="JetBrains Mono" font-size="6.5">AUTOMATED REFUSAL PREVENTS HALLUCINATIONS</text>
+    <text x="10" y="36" fill="#8A8690" font-family="JetBrains Mono" font-size="6.5">AUTOMATED REFUSAL PREVENTS HALLUCINATIONS</text>
   </g>
 </svg>
-
-<!-- Scrubber Timeline Track -->
-<div id="arch-scrubber-track" class="arch-scrubber-track" title="Click to scrub animation timeline">
-  <div id="arch-scrubber-progress" class="arch-scrubber-progress"></div>
-</div>
-
-<!-- Footer Telemetry -->
-<div id="arch-timeline-time" class="arch-footer-telemetry">
-  <span>00:00.0 / 00:18</span> · <span class="active-outcome">GROUNDED [S1][S2]</span>
-</div>
-
-<div class="absolute bottom-2 right-4 font-code-sm text-[10px] text-on-surface-variant flex items-center gap-1.5 select-none">
-  <span class="w-1.5 h-1.5 bg-primary-container inline-block"></span>
-  STACK TOPOLOGY: ISOLATED PERSISTENCE
-</div>
 </div>
 </section>
 <!-- ========================================================================= -->

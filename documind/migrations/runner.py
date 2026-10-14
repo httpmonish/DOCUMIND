@@ -304,11 +304,25 @@ class MigrationRunner:
             cursor = conn.execute("SELECT version FROM schema_migrations ORDER BY version ASC")
             applied_versions = {row["version"] for row in cursor.fetchall()}
 
-            # Ensure user_quotas matches canonical schema (self-healing for draft DBs)
+            # Ensure SaaS monetization tables match canonical schema (self-healing for draft DBs)
+            cursor = conn.execute("PRAGMA table_info(quota_events)")
+            qevt_cols = {row["name"] for row in cursor.fetchall()}
             cursor = conn.execute("PRAGMA table_info(user_quotas)")
             quota_cols = {row["name"] for row in cursor.fetchall()}
-            if quota_cols and "doc_limit" not in quota_cols:
+            cursor = conn.execute("PRAGMA table_info(processed_webhooks)")
+            webhook_cols = {row["name"] for row in cursor.fetchall()}
+
+            needs_m5_repair = (
+                (quota_cols and "doc_limit" not in quota_cols)
+                or (qevt_cols and "updated_at" not in qevt_cols)
+                or (webhook_cols and "payload" not in webhook_cols)
+            )
+
+            if needs_m5_repair:
+                conn.execute("DROP TABLE IF EXISTS quota_events")
                 conn.execute("DROP TABLE IF EXISTS user_quotas")
+                conn.execute("DROP TABLE IF EXISTS subscriptions")
+                conn.execute("DROP TABLE IF EXISTS processed_webhooks")
                 conn.execute("DELETE FROM schema_migrations WHERE version = 5")
                 conn.commit()
                 applied_versions.discard(5)
