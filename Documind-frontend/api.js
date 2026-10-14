@@ -793,6 +793,252 @@
     }
   }
 
+  function escapeHtml(str) {
+    if (!str) return "";
+    return String(str).replace(/[&<>"']/g, function (m) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[m];
+    });
+  }
+
+  async function openUpgradeModal() {
+    let existing = document.getElementById("documind-upgrade-modal");
+    if (existing) existing.remove();
+
+    const overlay = document.createElement("div");
+    overlay.id = "documind-upgrade-modal";
+    overlay.className = "fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 overflow-y-auto";
+
+    overlay.innerHTML = `
+      <div class="bg-surface-container border border-surface-variant rounded-2xl p-6 shadow-2xl max-w-lg w-full flex flex-col gap-4 text-on-surface my-auto">
+        <div class="flex items-center justify-between pb-3 border-b border-surface-variant">
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-primary-container">workspace_premium</span>
+            <span class="font-headline-sm text-base font-semibold text-on-surface">DOCUMIND SUBSCRIPTIONS</span>
+          </div>
+          <button id="upgrade-modal-close" class="text-on-surface-variant hover:text-on-surface p-1 cursor-pointer">✕</button>
+        </div>
+
+        <div id="upgrade-modal-content" class="flex flex-col gap-4">
+          <div class="p-4 rounded-xl bg-surface-container-low border border-surface-variant/50 text-center font-code-sm text-xs text-on-surface-variant">
+            Loading current plan and entitlements…
+          </div>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    const closeBtn = overlay.querySelector("#upgrade-modal-close");
+    if (closeBtn) closeBtn.onclick = () => overlay.remove();
+    overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+
+    try {
+      const [authRes, plansRes] = await Promise.all([
+        API.getAuthUser(),
+        API.getBillingPlans().catch(() => ({ plans: [] })),
+      ]);
+
+      const content = overlay.querySelector("#upgrade-modal-content");
+      if (!content) return;
+
+      if (!authRes || !authRes.authenticated) {
+        content.innerHTML = `
+          <div class="p-4 rounded-xl bg-error/15 border border-error/30 text-error font-code-sm text-xs flex flex-col gap-2">
+            <span><strong>Authentication Required:</strong> Please sign in to view and purchase DocuMind subscriptions.</span>
+            <a href="/app/auth.html?redirect=${encodeURIComponent(window.location.href)}" class="mt-2 inline-block px-4 py-2 bg-primary text-on-primary font-bold rounded-lg text-center uppercase tracking-wider">
+              SIGN IN / REGISTER ›
+            </a>
+          </div>
+        `;
+        return;
+      }
+
+      const quota = authRes.quota || { plan_id: "free", doc_limit: 1, consumed_docs: 0, question_limit: 5, consumed_questions: 0 };
+      const sub = authRes.subscription || null;
+      const plans = (plansRes && plansRes.plans) || [];
+      const paidPlans = plans.filter(p => p.plan_id !== "free");
+
+      const isSubscribed = sub && sub.status === "active" && sub.plan_id !== "free";
+      const qRemaining = Math.max(0, quota.question_limit - quota.consumed_questions);
+      const docsRemaining = Math.max(0, quota.doc_limit - quota.consumed_docs);
+
+      let plansHtml = paidPlans.map(plan => {
+        const isCurrentPlan = quota.plan_id === plan.plan_id;
+        const priceInr = Math.round(plan.price_cents / 100);
+        return `
+          <div class="p-4 rounded-xl border ${isCurrentPlan ? 'border-primary bg-primary/5' : 'border-surface-variant bg-surface-container-low'} flex flex-col gap-3">
+            <div class="flex items-center justify-between">
+              <div>
+                <h4 class="font-headline-sm text-sm font-bold text-on-surface">${escapeHtml(plan.display_name)}</h4>
+                <span class="font-code-sm text-xs text-primary font-semibold">₹${priceInr.toLocaleString('en-IN')} / month</span>
+              </div>
+              ${isCurrentPlan ? '<span class="px-2 py-0.5 rounded-full bg-primary/20 text-primary font-code-sm text-[10px] uppercase font-bold">CURRENT PLAN</span>' : ''}
+            </div>
+            <ul class="font-code-sm text-[11px] text-on-surface-variant space-y-1">
+              <li>✓ Up to <strong>${plan.doc_limit}</strong> indexed documents</li>
+              <li>✓ <strong>${plan.question_limit}</strong> document questions per month</li>
+              <li>✓ Citations, relevance checks, and evidence export</li>
+            </ul>
+            ${!isCurrentPlan ? `
+              <button data-plan-id="${plan.plan_id}" class="btn-checkout-plan w-full py-2 bg-primary-container hover:bg-inverse-primary text-on-primary-container font-code-sm text-xs font-bold rounded-lg uppercase tracking-wider transition-colors cursor-pointer">
+                UPGRADE TO ${escapeHtml(plan.display_name)}
+              </button>
+            ` : ''}
+          </div>
+        `;
+      }).join("");
+
+      content.innerHTML = `
+        <!-- Current Quota Badge -->
+        <div class="p-4 rounded-xl bg-surface-container-low border border-surface-variant flex flex-col gap-2">
+          <div class="flex items-center justify-between">
+            <span class="font-code-sm text-[10px] text-on-surface-variant uppercase tracking-wider">YOUR ACCOUNT STATUS</span>
+            <span class="font-code-sm text-xs font-bold ${quota.plan_id === 'free' ? 'text-primary' : 'text-tertiary'} uppercase">${quota.plan_id === 'free' ? 'Free Tier' : quota.plan_id}</span>
+          </div>
+          <div class="grid grid-cols-2 gap-2 mt-1">
+            <div class="p-2.5 rounded-lg bg-surface-container border border-surface-variant/40 flex flex-col">
+              <span class="font-code-sm text-[10px] text-on-surface-variant">DOCUMENTS</span>
+              <span class="font-metric-display text-sm font-bold text-on-surface">${quota.consumed_docs} / ${quota.doc_limit} used</span>
+              <span class="font-code-sm text-[10px] text-on-surface-variant/80">${docsRemaining} remaining</span>
+            </div>
+            <div class="p-2.5 rounded-lg bg-surface-container border border-surface-variant/40 flex flex-col">
+              <span class="font-code-sm text-[10px] text-on-surface-variant">QUESTIONS</span>
+              <span class="font-metric-display text-sm font-bold text-on-surface">${quota.consumed_questions} / ${quota.question_limit} used</span>
+              <span class="font-code-sm text-[10px] text-on-surface-variant/80">${qRemaining} remaining</span>
+            </div>
+          </div>
+          ${isSubscribed ? `
+            <div class="pt-2 flex items-center justify-between border-t border-surface-variant/50 font-code-sm text-[11px] text-on-surface-variant">
+              <span>Subscription Provider: Razorpay (${sub.status})</span>
+              <button id="btn-cancel-sub" class="text-error hover:underline cursor-pointer">Cancel Subscription</button>
+            </div>
+          ` : ''}
+        </div>
+
+        <!-- Available Upgrades -->
+        <div class="flex flex-col gap-3">
+          <span class="font-code-sm text-[10px] text-on-surface-variant uppercase tracking-wider">AVAILABLE SUBSCRIPTIONS</span>
+          ${plansHtml}
+        </div>
+      `;
+
+      // Bind Checkout buttons
+      content.querySelectorAll(".btn-checkout-plan").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          const planId = btn.getAttribute("data-plan-id");
+          btn.disabled = true;
+          btn.textContent = "INITIALIZING CHECKOUT…";
+          try {
+            const checkout = await API.createCheckout(planId);
+            if (checkout.is_test_mode) {
+              const confirmVerify = window.confirm(
+                `[TEST MODE ACTIVATED]\nRazorpay Test Checkout initialized.\nOrder ID: ${checkout.order_id}\nAmount: ₹${(checkout.amount / 100).toLocaleString('en-IN')}\n\nClick OK to simulate cryptographically verified signature and activate entitlements instantly.`
+              );
+              if (confirmVerify) {
+                btn.textContent = "VERIFYING PAYMENT…";
+                await API.verifyPayment({
+                  plan_id: planId,
+                  order_id: checkout.order_id,
+                  payment_id: "pay_test_" + Date.now(),
+                  signature: checkout.test_signature,
+                });
+                alert(`Subscription successfully activated! Your new limits are in effect.`);
+                overlay.remove();
+                window.location.reload();
+              } else {
+                btn.disabled = false;
+                btn.textContent = "UPGRADE NOW";
+              }
+            } else if (typeof Razorpay !== "undefined") {
+              const rzp = new Razorpay({
+                key: checkout.key_id,
+                order_id: checkout.order_id,
+                amount: checkout.amount,
+                currency: checkout.currency,
+                name: "DocuMind SaaS",
+                description: checkout.plan_name,
+                handler: async function (response) {
+                  btn.textContent = "VERIFYING PAYMENT…";
+                  await API.verifyPayment({
+                    plan_id: planId,
+                    order_id: response.razorpay_order_id,
+                    payment_id: response.razorpay_payment_id,
+                    signature: response.razorpay_signature,
+                  });
+                  alert(`Payment verified! Your ${checkout.plan_name} plan is now active.`);
+                  overlay.remove();
+                  window.location.reload();
+                },
+              });
+              rzp.open();
+            } else {
+              alert(`Checkout created (Order: ${checkout.order_id}). Razorpay SDK script is loading.`);
+            }
+          } catch (cErr) {
+            alert(`Checkout failed: ${cErr.message || "Server error"}`);
+            btn.disabled = false;
+            btn.textContent = "TRY AGAIN";
+          }
+        });
+      });
+
+      // Bind Cancel Subscription button
+      const cancelBtn = content.querySelector("#btn-cancel-sub");
+      if (cancelBtn) {
+        cancelBtn.addEventListener("click", async () => {
+          if (!window.confirm("Are you sure you want to cancel your subscription? Your entitlements will remain active until the end of the current period.")) return;
+          cancelBtn.disabled = true;
+          cancelBtn.textContent = "CANCELLING…";
+          try {
+            await API.cancelSubscription();
+            alert("Subscription cancelled successfully.");
+            overlay.remove();
+            window.location.reload();
+          } catch (cancelErr) {
+            alert(`Failed to cancel subscription: ${cancelErr.message}`);
+            cancelBtn.disabled = false;
+            cancelBtn.textContent = "Cancel Subscription";
+          }
+        });
+      }
+
+    } catch (err) {
+      console.error("Failed to load upgrade options:", err);
+    }
+  }
+
+  function updateUsagePill(res) {
+    if (!res || !res.authenticated || !res.quota) return;
+    const quota = res.quota;
+    const planName = quota.plan_id === "free" ? "Free" : (quota.plan_id.includes("team") ? "Team" : "Pro");
+    const docText = `${quota.consumed_docs}/${quota.doc_limit} Docs`;
+    const qRemaining = Math.max(0, quota.question_limit - quota.consumed_questions);
+    const qText = `${quota.consumed_questions}/${quota.question_limit} Qs (${qRemaining} left)`;
+
+    let pill = document.getElementById("header-usage-indicator");
+    if (!pill) {
+      const headerContainers = document.querySelectorAll("header .flex.items-center.gap-space-lg, header .h-14 > .flex.items-center:last-child");
+      if (headerContainers.length) {
+        pill = document.createElement("button");
+        pill.id = "header-usage-indicator";
+        pill.className = "hidden sm:inline-flex items-center gap-2 px-3 py-1 rounded-xl bg-surface-container-high border border-surface-variant hover:border-primary text-on-surface font-code-sm text-[11px] transition-colors cursor-pointer mr-1";
+        headerContainers[0].insertBefore(pill, headerContainers[0].firstChild);
+      }
+    }
+    if (pill) {
+      pill.innerHTML = `
+        <span class="w-1.5 h-1.5 rounded-full ${quota.plan_id === 'free' ? 'bg-primary-container' : 'bg-tertiary'}"></span>
+        <span class="font-medium text-on-surface">${planName}:</span>
+        <span class="text-on-surface-variant">${docText} · ${qText}</span>
+        <span class="text-primary font-bold ml-1">${quota.plan_id === 'free' ? 'UPGRADE' : 'MANAGE'}</span>
+      `;
+      pill.onclick = (e) => {
+        e.preventDefault();
+        openUpgradeModal();
+      };
+    }
+  }
+
   function bindAuthUI() {
     const avatarBtns = document.querySelectorAll("header .rounded-full.bg-primary, #header-user-avatar");
     if (!avatarBtns.length) return;
@@ -802,8 +1048,9 @@
     API.getAuthUser().then((res) => {
       if (res && res.authenticated && res.user) {
         currentUser = res.user;
+        updateUsagePill(res);
         avatarBtns.forEach((btn) => {
-          btn.setAttribute("title", `Signed in as ${res.user.email}`);
+          btn.setAttribute("title", `Signed in as ${res.user.email} (${res.quota ? res.quota.plan_id : 'plan'})`);
           btn.classList.add("cursor-pointer", "ring-2", "ring-primary");
           const initials = (res.user.display_name || res.user.email).slice(0, 2).toUpperCase();
           btn.innerHTML = `<span class="font-code-sm text-[12px] font-bold text-on-primary uppercase">${initials}</span>`;
@@ -827,6 +1074,9 @@
       });
     });
   }
+
+  API.openUpgradeModal = openUpgradeModal;
+  API.updateUsagePill = updateUsagePill;
 
   // Cross-view Navigation handler
   function bindNavigation() {

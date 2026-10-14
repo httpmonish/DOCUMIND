@@ -452,3 +452,245 @@
     animation: none !important;
   }
 }
+
+/* =========================================================================
+   INTERACTIVE 3D DOCUMENT SIMULATION VIEWPORT & REALISTIC DOCUMENT OBJECT
+   ========================================================================= */
+
+#doc-simulation-viewport {
+  border: 1px solid rgba(255, 87, 29, 0.25);
+  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.9), 0 0 25px rgba(255, 87, 29, 0.08);
+}
+
+.doc-3d-scene {
+  transform-style: preserve-3d;
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
+}
+
+/* Dimensional Paper Stack with physical thickness */
+.doc-3d-stack {
+  position: relative;
+  width: 240px;
+  height: 250px;
+  transform-style: preserve-3d;
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.doc-page {
+  position: absolute;
+  inset: 0;
+  border-radius: 8px;
+  background: #181717;
+  border: 1px solid #353434;
+  box-shadow: -4px 8px 24px rgba(0, 0, 0, 0.8), 0 1px 0 rgba(255, 255, 255, 0.05);
+  transform-style: preserve-3d;
+  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.doc-page-3 {
+  transform: translateZ(-20px) rotate(-4deg) translateY(4px);
+  background: #111112;
+  border-color: #262525;
+  opacity: 0.7;
+}
+
+.doc-page-2 {
+  transform: translateZ(-10px) rotate(-2deg) translateY(2px);
+  background: #141415;
+  border-color: #2d2c2c;
+  opacity: 0.88;
+}
+
+.doc-page-1 {
+  transform: translateZ(0px) rotate(0deg);
+  background: #1c1b1c;
+  border-color: #3f3e3e;
+}
+
+/* Stage-specific Scene states */
+.sim-stage-1 .doc-3d-scene {
+  transform: rotateX(14deg) rotateY(-18deg) translateY(-8px);
+}
+
+.sim-stage-2 .doc-3d-scene {
+  transform: rotateX(10deg) rotateY(-8deg) translateY(-4px);
+}
+
+.sim-stage-3 .doc-3d-scene {
+  transform: rotateX(24deg) rotateY(-26deg) translateY(-12px);
+}
+
+.sim-stage-4 .doc-3d-scene {
+  transform: rotateX(18deg) rotateY(12deg) translateY(-6px);
+}
+
+.sim-stage-5 .doc-3d-scene {
+  transform: rotateX(20deg) rotateY(-14deg) translateY(-10px);
+}
+
+.sim-stage-6 .doc-3d-scene {
+  transform: rotateX(16deg) rotateY(16deg) translateY(-6px);
+}
+
+/* Stage 2 Sweeping Laser Scan */
+.doc-scan-laser-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: #ff571d;
+  box-shadow: 0 0 12px 3px rgba(255, 87, 29, 0.9);
+  opacity: 0;
+  pointer-events-none;
+}
+
+.sim-stage-2 .doc-scan-laser-line {
+  opacity: 1;
+  animation: docLaserScan 2s infinite ease-in-out;
+}
+
+@keyframes docLaserScan {
+  0% { top: 10%; opacity: 0.2; }
+  20% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { top: 90%; opacity: 0.2; }
+}
+
+/* Stage 3 Exploded Text Layer */
+.doc-floating-text-layer {
+  position: absolute;
+  inset: 16px;
+  transform-style: preserve-3d;
+  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  opacity: 0.4;
+}
+
+.sim-stage-3 .doc-floating-text-layer {
+  transform: translateZ(42px) translateY(-10px);
+  opacity: 1;
+  filter: drop-shadow(0 0 10px rgba(255, 87, 29, 0.6));
+}
+
+/* Stage 4 Dimensional Chunks */
+.doc-chunk-slice {
+  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  transform-style: preserve-3d;
+}
+
+.sim-stage-4 .doc-chunk-0 {
+  transform: translateX(-24px) translateZ(26px) rotate(-2deg);
+}
+
+.sim-stage-4 .doc-chunk-1 {
+  transform: translateX(0px) translateZ(40px) scale(1.04);
+}
+
+.sim-stage-4 .doc-chunk-2 {
+  transform: translateX(24px) translateZ(26px) rotate(2deg);
+}
+
+/* Stage 5 3D Vector Tower Bars */
+.doc-vector-bars-wrap {
+  position: absolute;
+  bottom: 18px;
+  left: 20px;
+  right: 20px;
+  height: 90px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 5px;
+  transform-style: preserve-3d;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.sim-stage-5 .doc-vector-bars-wrap {
+  opacity: 1;
+  transform: translateZ(35px);
+}
+
+.sim-vbar {
+  flex: 1;
+  background: linear-gradient(to top, rgba(255, 87, 29, 0.8), #ff9d7a);
+  border-radius: 2px 2px 0 0;
+  box-shadow: 0 0 8px rgba(255, 87, 29, 0.6);
+  transform-origin: bottom;
+  animation: vbarPulse 1.4s infinite ease-in-out alternate;
+}
+
+@keyframes vbarPulse {
+  0% { transform: scaleY(0.6); }
+  100% { transform: scaleY(1.15); filter: drop-shadow(0 0 6px #ff571d); }
+}
+
+/* Stage 6 Atomic Persistence Silo */
+.doc-storage-silo {
+  position: absolute;
+  inset: 12px;
+  border-radius: 8px;
+  border: 1px dashed #353534;
+  background: rgba(18, 18, 20, 0.7);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: translateZ(10px);
+  transition: all 0.4s ease;
+}
+
+.sim-stage-6 .doc-storage-silo {
+  opacity: 1;
+  border-color: rgba(255, 87, 29, 0.5);
+  box-shadow: inset 0 0 20px rgba(255, 87, 29, 0.12);
+}
+
+/* Scrubber step buttons */
+.sim-step-dot {
+  position: relative;
+  z-index: 10;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #1f1e1e;
+  border: 1px solid #353534;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 10px;
+  font-weight: 600;
+  color: #8A8690;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sim-step-dot:hover {
+  border-color: #ff571d;
+  color: #fff;
+  transform: scale(1.1);
+}
+
+.sim-step-dot.is-active {
+  background: #ff571d;
+  border-color: #ff571d;
+  color: #fff;
+  box-shadow: 0 0 12px rgba(255, 87, 29, 0.7);
+  transform: scale(1.15);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .doc-3d-scene,
+  .doc-3d-stack,
+  .doc-page,
+  .doc-floating-text-layer,
+  .doc-chunk-slice,
+  .sim-vbar {
+    transform: none !important;
+    animation: none !important;
+    transition: none !important;
+  }
+}
+

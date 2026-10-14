@@ -29,6 +29,22 @@
   const inspectorInvariant = document.getElementById("inspector-stage-invariant");
   const inspectorSpec = document.getElementById("inspector-stage-spec");
 
+  // Simulation Viewport & Timeline Elements
+  const simViewport = document.getElementById("doc-simulation-viewport");
+  const simStageBadge = document.getElementById("sim-stage-badge");
+  const simStatusPill = document.getElementById("sim-status-pill");
+  const simLatencyPill = document.getElementById("sim-latency-pill");
+  const simScrubberProgress = document.getElementById("sim-scrubber-progress");
+  const simStepDots = Array.from(document.querySelectorAll(".sim-step-dot"));
+  const simChunksOverlay = document.getElementById("sim-chunks-overlay");
+
+  const simBtnPrev = document.getElementById("sim-btn-prev");
+  const simBtnPlay = document.getElementById("sim-btn-play");
+  const simBtnNext = document.getElementById("sim-btn-next");
+  const simBtnReset = document.getElementById("sim-btn-reset");
+  const simPlayIcon = document.getElementById("sim-play-icon");
+  const simPlayText = document.getElementById("sim-play-text");
+
   // Walkthrough buttons
   const btnWalkthrough = document.getElementById("btn-pipeline-walkthrough");
   const btnReset = document.getElementById("btn-pipeline-reset");
@@ -147,10 +163,40 @@
     if (inspectorDesc) inspectorDesc.textContent = data.desc;
     if (inspectorInvariant) inspectorInvariant.textContent = data.invariant;
     if (inspectorSpec) inspectorSpec.textContent = data.spec;
+
+    // Update 3D Simulation Viewport State
+    if (simViewport) {
+      simViewport.className = simViewport.className.replace(/\bsim-stage-\d\b/g, "").trim();
+      simViewport.classList.add(`sim-stage-${stepNum}`);
+    }
+    if (simStageBadge) {
+      simStageBadge.textContent = `SIMULATION · ${data.label}`;
+    }
+    if (simLatencyPill) {
+      simLatencyPill.textContent = data.latency;
+    }
+    if (simStatusPill) {
+      simStatusPill.textContent = "STATUS: ACTIVE";
+    }
+    if (simScrubberProgress) {
+      simScrubberProgress.style.width = `${((stepNum - 1) / 5) * 100}%`;
+    }
+    simStepDots.forEach(dot => {
+      const dotStep = parseInt(dot.dataset.step, 10);
+      if (dotStep === stepNum) {
+        dot.classList.add("is-active");
+      } else {
+        dot.classList.remove("is-active");
+      }
+    });
+    if (simChunksOverlay) {
+      simChunksOverlay.style.opacity = stepNum === 4 ? "1" : "0";
+      simChunksOverlay.style.pointerEvents = stepNum === 4 ? "auto" : "none";
+    }
   }
 
   /* =========================================================================
-     EVENT LISTENERS: LEFT ROWS & RIGHT CARDS
+     EVENT LISTENERS: LEFT ROWS, RIGHT CARDS & TIMELINE SCRUBBER
      ========================================================================= */
 
   stageRows.forEach(row => {
@@ -174,6 +220,47 @@
       }
     });
   });
+
+  simStepDots.forEach(dot => {
+    const step = parseInt(dot.dataset.step, 10);
+    dot.addEventListener("click", () => {
+      stopWalkthrough();
+      setActiveStage(step, true);
+    });
+  });
+
+  if (simBtnPrev) {
+    simBtnPrev.addEventListener("click", () => {
+      stopWalkthrough();
+      const prevStep = activeStep > 1 ? activeStep - 1 : 6;
+      setActiveStage(prevStep, true);
+    });
+  }
+
+  if (simBtnNext) {
+    simBtnNext.addEventListener("click", () => {
+      stopWalkthrough();
+      const nextStep = activeStep < 6 ? activeStep + 1 : 1;
+      setActiveStage(nextStep, true);
+    });
+  }
+
+  if (simBtnPlay) {
+    simBtnPlay.addEventListener("click", () => {
+      if (isWalkthroughPlaying) {
+        stopWalkthrough();
+      } else {
+        startWalkthrough();
+      }
+    });
+  }
+
+  if (simBtnReset) {
+    simBtnReset.addEventListener("click", () => {
+      stopWalkthrough();
+      setActiveStage(1, true);
+    });
+  }
 
   cards.forEach(card => {
     const step = parseInt(card.dataset.step, 10);
@@ -203,6 +290,8 @@
     if (btnWalkthrough) {
       btnWalkthrough.innerHTML = `<span class="material-symbols-outlined text-[15px]">pause</span><span>PAUSE TOUR</span>`;
     }
+    if (simPlayIcon) simPlayIcon.textContent = "pause";
+    if (simPlayText) simPlayText.textContent = "PAUSE";
 
     function stepLoop() {
       let nextStep = activeStep + 1;
@@ -223,6 +312,8 @@
     if (btnWalkthrough) {
       btnWalkthrough.innerHTML = `<span class="material-symbols-outlined text-[15px]">play_arrow</span><span>AUTOPLAY TOUR</span>`;
     }
+    if (simPlayIcon) simPlayIcon.textContent = "play_arrow";
+    if (simPlayText) simPlayText.textContent = "PLAY";
   }
 
   if (btnWalkthrough) {
