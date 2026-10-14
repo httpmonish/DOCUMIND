@@ -339,13 +339,6 @@
 <!-- Left Column: Pipeline Steps (5 cols) Sticky Controller -->
 <div class="lg:col-span-6 flex flex-col gap-5 lg:sticky lg:top-20 self-start z-10">
   <div>
-    <div class="flex items-center justify-between mb-2">
-      <span class="font-code-sm text-[11px] text-primary-container tracking-wider uppercase font-semibold flex items-center gap-1.5">
-        <span class="w-1.5 h-1.5 rounded-full bg-primary-container animate-pulse"></span>
-        INTERACTIVE 3D PIPELINE
-      </span>
-      <span class="font-code-sm text-[11px] text-on-surface-variant">6 STAGES · 131.8 ms</span>
-    </div>
     <h2 class="font-headline-lg text-[30px] sm:text-[36px] leading-tight text-on-surface font-semibold mb-3">
       The Journey of a Document
     </h2>
@@ -354,24 +347,18 @@
     </p>
 
     <!-- Interactive 3D Document Simulation Centerpiece -->
-    <div id="doc-simulation-viewport" class="p-4 sm:p-5 bg-[#141416] border border-surface-variant rounded-xl flex flex-col gap-4 relative overflow-hidden shadow-2xl">
-      <!-- Viewport Telemetry Header -->
-      <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-surface-variant">
-        <div class="flex items-center gap-2">
-          <span class="w-2 h-2 rounded-full bg-primary-container animate-pulse"></span>
-          <span id="sim-stage-badge" class="font-code-sm text-xs font-semibold text-primary-container tracking-wider uppercase">SIMULATION · STAGE 01: UPLOAD DISPATCH</span>
-        </div>
-        <div class="flex items-center gap-3 font-code-sm text-[11px] text-on-surface-variant">
-          <span id="sim-status-pill" class="px-2 py-0.5 rounded bg-surface-container border border-surface-variant text-tertiary font-medium">STATUS: READY</span>
-          <span id="sim-latency-pill" class="text-on-surface font-semibold">14 ms</span>
-        </div>
-      </div>
-
+    <div id="doc-simulation-viewport" class="p-3 sm:p-4 bg-[#141416] border border-surface-variant rounded-xl flex flex-col relative overflow-hidden shadow-2xl">
       <!-- 3D Interactive Stage Canvas Area -->
-      <div id="doc-3d-canvas-wrap" class="relative w-full h-[300px] bg-surface-container-lowest border border-surface-variant/80 rounded-lg overflow-hidden flex items-center justify-center select-none" style="perspective: 1000px;">
+      <div id="doc-3d-canvas-wrap" class="group/canvas relative w-full h-[320px] bg-surface-container-lowest border border-surface-variant/80 rounded-lg overflow-hidden flex items-center justify-center select-none" style="perspective: 1000px;">
         <!-- Technical Blueprint Grid Background -->
         <div class="absolute inset-0 opacity-15 pointer-events-none" style="background-image: radial-gradient(#ff571d 1px, transparent 1px); background-size: 20px 20px;"></div>
         
+        <!-- Subtle Gesture Cue Overlay -->
+        <div class="absolute top-2.5 right-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#141416]/80 border border-surface-variant/50 font-code-sm text-[10px] text-on-surface-variant backdrop-blur-sm pointer-events-none select-none z-20">
+          <span class="material-symbols-outlined text-[13px] text-primary-container">swipe</span>
+          <span>Slide or 2-finger swipe</span>
+        </div>
+
         <!-- 3D Interactive Document Scene -->
         <div id="doc-3d-scene" class="doc-3d-scene flex items-center justify-center relative">
           <!-- Dimensional Paper Stack with physical thickness -->
@@ -458,45 +445,24 @@
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- Synchronized Playback Scrubber & Timeline Toolbar -->
-      <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-1">
-        <!-- Playback control buttons -->
-        <div class="flex items-center gap-2 shrink-0">
-          <button id="sim-btn-prev" type="button" class="px-2.5 py-1.5 rounded-lg bg-surface-container border border-surface-variant text-on-surface hover:text-white font-code-sm text-xs flex items-center gap-1 cursor-pointer transition-colors" title="Previous Stage">
-            <span class="material-symbols-outlined text-[16px]">skip_previous</span>
-            <span class="hidden sm:inline">PREV</span>
-          </button>
-          <button id="sim-btn-play" type="button" class="px-3.5 py-1.5 rounded-lg bg-primary-container hover:bg-inverse-primary text-on-primary-container font-code-sm text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors shadow-sm" title="Play / Pause Autoplay">
-            <span id="sim-play-icon" class="material-symbols-outlined text-[16px]">play_arrow</span>
-            <span id="sim-play-text">PLAY</span>
-          </button>
-          <button id="sim-btn-next" type="button" class="px-2.5 py-1.5 rounded-lg bg-surface-container border border-surface-variant text-on-surface hover:text-white font-code-sm text-xs flex items-center gap-1 cursor-pointer transition-colors" title="Next Stage">
-            <span class="hidden sm:inline">NEXT</span>
-            <span class="material-symbols-outlined text-[16px]">skip_next</span>
-          </button>
-          <button id="sim-btn-reset" type="button" class="p-1.5 rounded-lg bg-surface-container border border-surface-variant text-on-surface-variant hover:text-white font-code-sm text-xs flex items-center justify-center cursor-pointer transition-colors" title="Reset to Stage 1">
-            <span class="material-symbols-outlined text-[16px]">restart_alt</span>
-          </button>
+        <!-- Stage Progress Pips (Minimalist 6-dot indicator inside canvas) -->
+        <div id="sim-canvas-pips" class="absolute bottom-2.5 left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#141416]/85 border border-surface-variant/50 backdrop-blur-sm z-20 select-none">
+          <button type="button" class="sim-canvas-pip is-active" data-step="1" title="Stage 1: Upload & Ingest" aria-label="Stage 1"></button>
+          <button type="button" class="sim-canvas-pip" data-step="2" title="Stage 2: Magic-Byte Validation" aria-label="Stage 2"></button>
+          <button type="button" class="sim-canvas-pip" data-step="3" title="Stage 3: Layer Separation" aria-label="Stage 3"></button>
+          <button type="button" class="sim-canvas-pip" data-step="4" title="Stage 4: Sliding Chunk Window" aria-label="Stage 4"></button>
+          <button type="button" class="sim-canvas-pip" data-step="5" title="Stage 5: Dense Embedding" aria-label="Stage 5"></button>
+          <button type="button" class="sim-canvas-pip" data-step="6" title="Stage 6: Atomic Zero-Last Write" aria-label="Stage 6"></button>
         </div>
 
-        <!-- 6-Stage Timeline Scrubber Track -->
-        <div class="flex-1 max-w-sm w-full flex items-center gap-1 px-1">
-          <div class="relative flex-1 flex items-center justify-between">
-            <!-- Connecting Track Line -->
-            <div class="absolute left-3 right-3 top-1/2 -translate-y-1/2 h-0.5 bg-surface-variant"></div>
-            <div id="sim-scrubber-progress" class="absolute left-3 top-1/2 -translate-y-1/2 h-0.5 bg-primary-container transition-all duration-300" style="width: 0%;"></div>
-
-            <!-- 6 Step Dots -->
-            <button type="button" class="sim-step-dot is-active" data-step="1" title="Stage 1: Upload & Ingest">01</button>
-            <button type="button" class="sim-step-dot" data-step="2" title="Stage 2: Magic-Byte Validation">02</button>
-            <button type="button" class="sim-step-dot" data-step="3" title="Stage 3: Layer Separation">03</button>
-            <button type="button" class="sim-step-dot" data-step="4" title="Stage 4: Sliding Chunk Window">04</button>
-            <button type="button" class="sim-step-dot" data-step="5" title="Stage 5: Dense Embedding">05</button>
-            <button type="button" class="sim-step-dot" data-step="6" title="Stage 6: Atomic Zero-Last Write">06</button>
-          </div>
-        </div>
+        <!-- Left / Right Click Navigators (visible on hover) -->
+        <button id="sim-canvas-prev" type="button" class="absolute left-2.5 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-[#141416]/80 hover:bg-surface-container border border-surface-variant/60 text-on-surface-variant hover:text-white flex items-center justify-center opacity-0 group-hover/canvas:opacity-100 transition-opacity z-20 cursor-pointer shadow-lg" title="Previous Stage" aria-label="Previous Stage">
+          <span class="material-symbols-outlined text-[18px]">chevron_left</span>
+        </button>
+        <button id="sim-canvas-next" type="button" class="absolute right-2.5 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-[#141416]/80 hover:bg-surface-container border border-surface-variant/60 text-on-surface-variant hover:text-white flex items-center justify-center opacity-0 group-hover/canvas:opacity-100 transition-opacity z-20 cursor-pointer shadow-lg" title="Next Stage" aria-label="Next Stage">
+          <span class="material-symbols-outlined text-[18px]">chevron_right</span>
+        </button>
       </div>
     </div>
   </div>

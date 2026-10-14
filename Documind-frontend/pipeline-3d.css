@@ -462,10 +462,47 @@
   box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.9), 0 0 25px rgba(255, 87, 29, 0.08);
 }
 
+#doc-3d-canvas-wrap {
+  cursor: grab;
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+#doc-3d-canvas-wrap:active,
+#doc-3d-canvas-wrap.is-dragging {
+  cursor: grabbing;
+}
+
 .doc-3d-scene {
   transform-style: preserve-3d;
-  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
   will-change: transform;
+}
+
+.doc-3d-scene.is-dragging {
+  transition: none !important;
+}
+
+.sim-canvas-pip {
+  width: 14px;
+  height: 3px;
+  border-radius: 9999px;
+  background: #353434;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.sim-canvas-pip:hover {
+  background: #8A8690;
+}
+
+.sim-canvas-pip.is-active {
+  width: 24px;
+  background: #ff571d;
+  box-shadow: 0 0 8px rgba(255, 87, 29, 0.6);
 }
 
 /* Dimensional Paper Stack with physical thickness */

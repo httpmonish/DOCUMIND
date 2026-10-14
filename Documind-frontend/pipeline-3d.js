@@ -29,21 +29,14 @@
   const inspectorInvariant = document.getElementById("inspector-stage-invariant");
   const inspectorSpec = document.getElementById("inspector-stage-spec");
 
-  // Simulation Viewport & Timeline Elements
+  // Simulation Viewport & Interactive Canvas Elements
   const simViewport = document.getElementById("doc-simulation-viewport");
-  const simStageBadge = document.getElementById("sim-stage-badge");
-  const simStatusPill = document.getElementById("sim-status-pill");
-  const simLatencyPill = document.getElementById("sim-latency-pill");
-  const simScrubberProgress = document.getElementById("sim-scrubber-progress");
-  const simStepDots = Array.from(document.querySelectorAll(".sim-step-dot"));
+  const canvasWrap = document.getElementById("doc-3d-canvas-wrap");
+  const docScene = document.getElementById("doc-3d-scene");
+  const canvasPips = Array.from(document.querySelectorAll(".sim-canvas-pip"));
+  const btnCanvasPrev = document.getElementById("sim-canvas-prev");
+  const btnCanvasNext = document.getElementById("sim-canvas-next");
   const simChunksOverlay = document.getElementById("sim-chunks-overlay");
-
-  const simBtnPrev = document.getElementById("sim-btn-prev");
-  const simBtnPlay = document.getElementById("sim-btn-play");
-  const simBtnNext = document.getElementById("sim-btn-next");
-  const simBtnReset = document.getElementById("sim-btn-reset");
-  const simPlayIcon = document.getElementById("sim-play-icon");
-  const simPlayText = document.getElementById("sim-play-text");
 
   // Walkthrough buttons
   const btnWalkthrough = document.getElementById("btn-pipeline-walkthrough");
@@ -169,24 +162,13 @@
       simViewport.className = simViewport.className.replace(/\bsim-stage-\d\b/g, "").trim();
       simViewport.classList.add(`sim-stage-${stepNum}`);
     }
-    if (simStageBadge) {
-      simStageBadge.textContent = `SIMULATION · ${data.label}`;
-    }
-    if (simLatencyPill) {
-      simLatencyPill.textContent = data.latency;
-    }
-    if (simStatusPill) {
-      simStatusPill.textContent = "STATUS: ACTIVE";
-    }
-    if (simScrubberProgress) {
-      simScrubberProgress.style.width = `${((stepNum - 1) / 5) * 100}%`;
-    }
-    simStepDots.forEach(dot => {
-      const dotStep = parseInt(dot.dataset.step, 10);
+    // Update Canvas Step Pips
+    canvasPips.forEach(pip => {
+      const dotStep = parseInt(pip.dataset.step, 10);
       if (dotStep === stepNum) {
-        dot.classList.add("is-active");
+        pip.classList.add("is-active");
       } else {
-        dot.classList.remove("is-active");
+        pip.classList.remove("is-active");
       }
     });
     if (simChunksOverlay) {
@@ -196,7 +178,225 @@
   }
 
   /* =========================================================================
-     EVENT LISTENERS: LEFT ROWS, RIGHT CARDS & TIMELINE SCRUBBER
+     GESTURE NAVIGATION: MOUSE PRESS & SLIDE + TWO-FINGER LAPTOP SWIPE
+     ========================================================================= */
+
+  function slideNext() {
+    stopWalkthrough();
+    const nextStep = activeStep < 6 ? activeStep + 1 : 1;
+    setActiveStage(nextStep, true);
+  }
+
+  function slidePrev() {
+    stopWalkthrough();
+    const prevStep = activeStep > 1 ? activeStep - 1 : 6;
+    setActiveStage(prevStep, true);
+  }
+
+  // Base rotation for stages
+  const STAGE_TRANSFORMS = {
+    1: { rx: 14, ry: -18, ty: -8 },
+    2: { rx: 10, ry: -8, ty: -4 },
+    3: { rx: 24, ry: -26, ty: -12 },
+    4: { rx: 18, ry: 12, ty: -6 },
+    5: { rx: 20, ry: -14, ty: -10 },
+    6: { rx: 12, ry: -14, ty: -4 }
+  };
+
+  function getStageTransform(step, offsetX = 0) {
+    const base = STAGE_TRANSFORMS[step] || STAGE_TRANSFORMS[1];
+    const rotY = base.ry + offsetX * 0.12;
+    const transX = offsetX * 0.55;
+    return `rotateX(${base.rx}deg) rotateY(${rotY.toFixed(2)}deg) translateX(${transX.toFixed(1)}px) translateY(${base.ty}px)`;
+  }
+
+  // Canvas Pips Click Handlers
+  canvasPips.forEach(pip => {
+    const step = parseInt(pip.dataset.step, 10);
+    pip.addEventListener("click", (e) => {
+      e.stopPropagation();
+      stopWalkthrough();
+      setActiveStage(step, true);
+    });
+  });
+
+  // Canvas Nav Chevrons
+  if (btnCanvasPrev) {
+    btnCanvasPrev.addEventListener("click", (e) => {
+      e.stopPropagation();
+      slidePrev();
+    });
+  }
+
+  if (btnCanvasNext) {
+    btnCanvasNext.addEventListener("click", (e) => {
+      e.stopPropagation();
+      slideNext();
+    });
+  }
+
+  // Mouse "Press & Slide" and Laptop Two-Finger Swipe Gestures
+  if (canvasWrap && docScene) {
+    let isMouseDown = false;
+    let dragStartX = 0;
+    let lastDragX = 0;
+    let hasSwapped = false;
+    let activePointerId = null;
+
+    // 1. Pointer & Mouse Drag ("Press & Slide")
+    const onPointerDown = (e) => {
+      if (e.target.closest("button")) return; // Let buttons and pips handle clicks directly
+      if (e.button !== undefined && e.button !== 0) return;
+      isMouseDown = true;
+      hasSwapped = false;
+      dragStartX = e.clientX;
+      lastDragX = e.clientX;
+      activePointerId = e.pointerId;
+      if (e.pointerId && canvasWrap.setPointerCapture) {
+        try { canvasWrap.setPointerCapture(e.pointerId); } catch (_) {}
+      }
+      docScene.classList.add("is-dragging");
+      canvasWrap.classList.add("is-dragging");
+    };
+
+    const onPointerMove = (e) => {
+      if (!isMouseDown) return;
+      lastDragX = e.clientX;
+      const dx = e.clientX - dragStartX;
+
+      // Real-time 3D translation & rotation feedback
+      docScene.style.transform = getStageTransform(activeStep, dx);
+
+      // Trigger stage swap when dragged past threshold
+      if (Math.abs(dx) >= 30 && !hasSwapped) {
+        hasSwapped = true;
+        if (dx < 0) {
+          slideNext();
+        } else {
+          slidePrev();
+        }
+        dragStartX = e.clientX;
+      }
+    };
+
+    const onPointerUp = (e) => {
+      if (!isMouseDown) return;
+      isMouseDown = false;
+      if (activePointerId !== null && canvasWrap.releasePointerCapture) {
+        try { canvasWrap.releasePointerCapture(activePointerId); } catch (_) {}
+      }
+      activePointerId = null;
+
+      const finalDx = (e.clientX !== undefined ? e.clientX : lastDragX) - dragStartX;
+      if (!hasSwapped && Math.abs(finalDx) >= 30) {
+        if (finalDx < 0) {
+          slideNext();
+        } else {
+          slidePrev();
+        }
+      }
+
+      docScene.classList.remove("is-dragging");
+      canvasWrap.classList.remove("is-dragging");
+      docScene.style.transform = "";
+    };
+
+    canvasWrap.addEventListener("pointerdown", onPointerDown);
+    canvasWrap.addEventListener("pointermove", onPointerMove);
+    canvasWrap.addEventListener("pointerup", onPointerUp);
+    canvasWrap.addEventListener("pointercancel", onPointerUp);
+
+    canvasWrap.addEventListener("mousedown", onPointerDown);
+    window.addEventListener("mousemove", onPointerMove);
+    window.addEventListener("mouseup", onPointerUp);
+
+    // 2. Laptop Two-Finger Trackpad Horizontal Swipe
+    let wheelAccum = 0;
+    let wheelCooldown = false;
+    let wheelResetTimer = null;
+
+    canvasWrap.addEventListener("wheel", (e) => {
+      const absX = Math.abs(e.deltaX);
+      const absY = Math.abs(e.deltaY);
+      // Check for horizontal swipe intent
+      if (absX > absY && absX > 1.5) {
+        if (e.cancelable) e.preventDefault();
+        if (wheelCooldown) return;
+
+        wheelAccum += e.deltaX;
+        docScene.classList.add("is-dragging");
+        docScene.style.transform = getStageTransform(activeStep, -wheelAccum * 0.7);
+
+        clearTimeout(wheelResetTimer);
+        wheelResetTimer = setTimeout(() => {
+          wheelAccum = 0;
+          docScene.classList.remove("is-dragging");
+          docScene.style.transform = "";
+        }, 150);
+
+        if (Math.abs(wheelAccum) >= 25) {
+          if (wheelAccum > 0) {
+            slideNext();
+          } else {
+            slidePrev();
+          }
+          wheelAccum = 0;
+          wheelCooldown = true;
+          docScene.classList.remove("is-dragging");
+          docScene.style.transform = "";
+          setTimeout(() => {
+            wheelCooldown = false;
+          }, 300);
+        }
+      }
+    }, { passive: false });
+
+    // 3. Touch Gestures for Touchpad/Mobile
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let touchSwapped = false;
+
+    canvasWrap.addEventListener("touchstart", (e) => {
+      if (e.touches.length === 1) {
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+        touchSwapped = false;
+        docScene.classList.add("is-dragging");
+      }
+    }, { passive: true });
+
+    canvasWrap.addEventListener("touchmove", (e) => {
+      if (e.touches.length === 1) {
+        const dx = e.touches[0].clientX - touchStartX;
+        const dy = e.touches[0].clientY - touchStartY;
+        if (Math.abs(dx) > Math.abs(dy)) {
+          e.preventDefault();
+          docScene.style.transform = getStageTransform(activeStep, dx);
+
+          if (Math.abs(dx) >= 55 && !touchSwapped) {
+            touchSwapped = true;
+            if (dx < 0) {
+              slideNext();
+            } else {
+              slidePrev();
+            }
+            touchStartX = e.touches[0].clientX;
+          }
+        }
+      }
+    }, { passive: false });
+
+    const endTouch = () => {
+      docScene.classList.remove("is-dragging");
+      docScene.style.transform = "";
+    };
+
+    canvasWrap.addEventListener("touchend", endTouch);
+    canvasWrap.addEventListener("touchcancel", endTouch);
+  }
+
+  /* =========================================================================
+     EVENT LISTENERS: LEFT ROWS & RIGHT CARDS
      ========================================================================= */
 
   stageRows.forEach(row => {
@@ -220,47 +420,6 @@
       }
     });
   });
-
-  simStepDots.forEach(dot => {
-    const step = parseInt(dot.dataset.step, 10);
-    dot.addEventListener("click", () => {
-      stopWalkthrough();
-      setActiveStage(step, true);
-    });
-  });
-
-  if (simBtnPrev) {
-    simBtnPrev.addEventListener("click", () => {
-      stopWalkthrough();
-      const prevStep = activeStep > 1 ? activeStep - 1 : 6;
-      setActiveStage(prevStep, true);
-    });
-  }
-
-  if (simBtnNext) {
-    simBtnNext.addEventListener("click", () => {
-      stopWalkthrough();
-      const nextStep = activeStep < 6 ? activeStep + 1 : 1;
-      setActiveStage(nextStep, true);
-    });
-  }
-
-  if (simBtnPlay) {
-    simBtnPlay.addEventListener("click", () => {
-      if (isWalkthroughPlaying) {
-        stopWalkthrough();
-      } else {
-        startWalkthrough();
-      }
-    });
-  }
-
-  if (simBtnReset) {
-    simBtnReset.addEventListener("click", () => {
-      stopWalkthrough();
-      setActiveStage(1, true);
-    });
-  }
 
   cards.forEach(card => {
     const step = parseInt(card.dataset.step, 10);
@@ -290,8 +449,6 @@
     if (btnWalkthrough) {
       btnWalkthrough.innerHTML = `<span class="material-symbols-outlined text-[15px]">pause</span><span>PAUSE TOUR</span>`;
     }
-    if (simPlayIcon) simPlayIcon.textContent = "pause";
-    if (simPlayText) simPlayText.textContent = "PAUSE";
 
     function stepLoop() {
       let nextStep = activeStep + 1;
@@ -312,8 +469,6 @@
     if (btnWalkthrough) {
       btnWalkthrough.innerHTML = `<span class="material-symbols-outlined text-[15px]">play_arrow</span><span>AUTOPLAY TOUR</span>`;
     }
-    if (simPlayIcon) simPlayIcon.textContent = "play_arrow";
-    if (simPlayText) simPlayText.textContent = "PLAY";
   }
 
   if (btnWalkthrough) {
