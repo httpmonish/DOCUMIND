@@ -16,13 +16,11 @@ import numpy as np
 import pytest
 from fastapi.testclient import TestClient
 
-from documind.core.chat import ChatManager
 from documind.core.config import Settings
 from documind.core.pipeline import DocuMind
 from documind.core.vector_store import NumpyStore
 from documind.interfaces.api import create_app
 from documind.interfaces.auth import AuthManager
-from documind.interfaces.session import SessionManager
 from tests.fake_llm import FakeLLM
 
 
@@ -96,7 +94,8 @@ def test_generation_killswitch_demo_ask_and_stream(sec_app):
     headers = {"X-Session-ID": sid}
 
     # 2. Upload document
-    files = {"file": ("guide.md", b"# DocuMind Architecture\nGrounded deterministic RAG engine.", "text/markdown")}
+    doc_content = b"# DocuMind Architecture\nGrounded deterministic RAG engine."
+    files = {"file": ("guide.md", doc_content, "text/markdown")}
     up_resp = client.post("/api/demo/documents", files=files, headers=headers)
     assert up_resp.status_code == 201
 
@@ -135,7 +134,8 @@ def test_structured_security_events_logged(tmp_path: Path):
     # Verify event logged without password leak
     with auth_mgr._get_connection() as conn:
         cursor = conn.cursor()
-        cursor.execute("SELECT event_type, metadata FROM usage_events WHERE user_id = ?", (user.id,))
+        query = "SELECT event_type, metadata FROM usage_events WHERE user_id = ?"
+        cursor.execute(query, (user.id,))
         rows = cursor.fetchall()
         assert len(rows) > 0
         event_type, meta_str = rows[0]
