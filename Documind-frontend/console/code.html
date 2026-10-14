@@ -269,10 +269,10 @@ Try abstention demo →
 </g>
 <!-- Node 1: Question -->
 <g id="node-1-group" class="cursor-pointer" title="Step 1: Input Query Processing">
-<circle id="node-1-circle" cx="40" cy="40" fill="#201f1f" r="14" stroke="#ff571d" stroke-width="2"></circle>
+<circle id="node-1-circle" cx="40" cy="40" fill="#201f1f" r="14" stroke="#353534" stroke-width="2"></circle>
 <text fill="#e5e2e1" font-family="JetBrains Mono" font-size="11" font-weight="600" text-anchor="middle" x="40" y="44">1</text>
 <text fill="#e5e2e1" font-family="Inter" font-size="12" font-weight="500" text-anchor="middle" x="40" y="68">Question</text>
-<text id="node-1-ms" fill="#e6beb2" font-family="JetBrains Mono" font-size="11" text-anchor="middle" x="40" y="88">0 ms</text>
+<text id="node-1-ms" fill="#e6beb2" font-family="JetBrains Mono" font-size="11" text-anchor="middle" x="40" y="88">—</text>
 </g>
 <!-- Node 2: Embed -->
 <g id="node-2-group" class="cursor-pointer" title="Step 2: SentenceTransformer Bi-Encoder Embed">
@@ -771,18 +771,32 @@ Listening for pipeline execution events…
     function resetPipeline() {
       if (liveTraceId) liveTraceId.textContent = "#IDLE";
       if (traceTotalMs) traceTotalMs.textContent = "— ms";
-      if (pipelineActiveLine) pipelineActiveLine.setAttribute("d", "M 40 40 L 40 40");
+      if (pipelineActiveLine) {
+        pipelineActiveLine.setAttribute("d", "M 40 40 L 40 40");
+        pipelineActiveLine.setAttribute("stroke", "#ff571d");
+      }
       if (pipelineAbstainGroup) pipelineAbstainGroup.classList.add("opacity-0");
 
       [node1Circle, node2Circle, node3Circle, node5Circle, node6Circle, node7Circle].forEach(c => {
         if (c) c.setAttribute("stroke", "#353534");
       });
-      if (node4Poly) node4Poly.setAttribute("stroke", "#353534");
+      if (node4Poly) {
+        node4Poly.setAttribute("stroke", "#353534");
+        node4Poly.setAttribute("fill", "#201f1f");
+      }
       if (node3Badge) node3Badge.classList.add("hidden");
 
       [node1Ms, node2Ms, node3Ms, node4Ms, node5Ms, node6Ms, node7Ms].forEach(m => {
         if (m) m.textContent = "—";
       });
+    }
+
+    function animatePipelineError(reqId, err) {
+      if (liveTraceId) liveTraceId.textContent = "#ERROR";
+      if (traceTotalMs) traceTotalMs.textContent = "err";
+      if (pipelineActiveLine) pipelineActiveLine.setAttribute("stroke", "#ff5449");
+      if (node1Circle) node1Circle.setAttribute("stroke", "#ff5449");
+      if (node2Circle) node2Circle.setAttribute("stroke", "#ff5449");
     }
 
     function animatePipelineStart(reqId) {
@@ -1020,6 +1034,7 @@ Listening for pipeline execution events…
               `;
             }
           }
+          animatePipelineError(clientReqId, errMsg);
           addLiveEvent("chat_error", elapsed, clientReqId, "error", errMsg);
           return; // STOP NORMAL ANSWER FINALIZATION!
         }
@@ -1041,6 +1056,7 @@ Listening for pipeline execution events…
               </div>
             `;
           }
+          animatePipelineError(clientReqId, "stream_interrupted");
           addLiveEvent("chat_stream_interrupted", elapsed, clientReqId, "error");
           return; // STOP NORMAL ANSWER FINALIZATION!
         }
@@ -1143,6 +1159,7 @@ Listening for pipeline execution events…
             </div>
           `;
         }
+        animatePipelineError(clientReqId, err.message);
         addLiveEvent("chat_error", performance.now() - startTime, clientReqId, "error", err.message);
         handleError(err);
       } finally {
@@ -1299,6 +1316,9 @@ Listening for pipeline execution events…
       }
     }
     window.refreshWorkspaceStatus = refreshWorkspaceStatus;
+
+    // Initialize pipeline trace state
+    resetPipeline();
 
     // Sync with backend session, meta, and health on load & focus
     DocuMindAPI.initSession().then(sid => {

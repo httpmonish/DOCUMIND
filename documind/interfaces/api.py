@@ -633,7 +633,7 @@ def create_app(
         )
         response.headers["Content-Security-Policy"] = (
             "default-src 'self'; "
-            "script-src 'self'; "
+            "script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com; "
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
             "font-src 'self' https://fonts.gstatic.com data:; "
             "img-src 'self' data:; "
@@ -1114,20 +1114,22 @@ def create_app(
             request.app.state, "multi_limiter", MultiActionRateLimiter()
         )
 
-        allowed_hr, retry_hr = multi_limiter.consume("session_create_hour", ip_h)
-        if not allowed_hr:
-            raise HTTPException(
-                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                detail=f"Session creation rate limit exceeded (5/hour). Retry in {retry_hr} s.",
-                headers={"Retry-After": str(retry_hr)},
-            )
-        allowed_day, retry_day = multi_limiter.consume("session_create_day", ip_h)
-        if not allowed_day:
-            raise HTTPException(
-                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                detail=f"Daily session creation limit reached (20/day). Retry in {retry_day} s.",
-                headers={"Retry-After": str(retry_day)},
-            )
+        is_loopback = ip in ("127.0.0.1", "::1", "localhost", "testclient")
+        if not is_loopback:
+            allowed_hr, retry_hr = multi_limiter.consume("session_create_hour", ip_h)
+            if not allowed_hr:
+                raise HTTPException(
+                    status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                    detail=f"Session creation rate limit exceeded (5/hour). Retry in {retry_hr} s.",
+                    headers={"Retry-After": str(retry_hr)},
+                )
+            allowed_day, retry_day = multi_limiter.consume("session_create_day", ip_h)
+            if not allowed_day:
+                raise HTTPException(
+                    status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                    detail=f"Daily session creation limit reached (20/day). Retry in {retry_day} s.",
+                    headers={"Retry-After": str(retry_day)},
+                )
 
         mgr: SessionManager = request.app.state.session_manager
         token, expires_at = mgr.create_session(ip_h)
@@ -2054,6 +2056,12 @@ def create_app(
                 document_id=doc_target,
             )
 
+        # Check quota if account is authenticated and store has documents
+        reserved_q = False
+        if session_engine.store.count() > 0 and auth_mgr and not user.id.startswith("guest_"):
+            auth_mgr.check_and_reserve_question(user.id, req_id)
+            reserved_q = True
+
         async def event_generator() -> AsyncGenerator[str, None]:
             import json as json_lib
 
@@ -2134,6 +2142,8 @@ def create_app(
 
             # Confidence gate check
             if not retrieved or retrieved[0].score < session_engine.settings.min_score:
+                if reserved_q and auth_mgr:
+                    auth_mgr.finalize_question(user.id, req_id, final_status="committed")
                 decline_msg = (
                     "I couldn't find any sufficiently relevant passages in your documents."
                 )
@@ -2151,6 +2161,8 @@ def create_app(
                 return
 
             if os.getenv("DOCUMIND_DISABLE_GENERATION") == "1":
+                if reserved_q and auth_mgr:
+                    auth_mgr.release_question_reservation(user.id, req_id, reason="kill_switch_active")
                 if auth_mgr and owner_id:
                     auth_mgr.log_event(owner_id, "kill_switch_activated", {"request_id": req_id})
                 kill_msg = (
@@ -2175,6 +2187,8 @@ def create_app(
             can_spend, reason = spend_ledger.can_spend(ip_h, est_cost)
 
             if not can_spend:
+                if reserved_q and auth_mgr:
+                    auth_mgr.release_question_reservation(user.id, req_id, reason="spend_cap_reached")
                 cap_msg = (
                     "Public demo daily spend cap reached ($2.00 global / $0.25 per IP). "
                     "Showing retrieved candidate passages only."
@@ -2216,6 +2230,8 @@ def create_app(
                         collected_tokens.append(chunk)
                         yield f"event: token\ndata: {json_lib.dumps({'delta': chunk})}\n\n"
                 else:
+                    if reserved_q and auth_mgr:
+                        auth_mgr.release_question_reservation(user.id, req_id, reason="unconfigured_model")
                     setup_notice = (
                         "No language model configured. DocuMind has verified your document "
                         "and retrieved the relevant passages above, but cannot generate text "
@@ -2279,6 +2295,8 @@ def create_app(
                 out_tok = len(full_answer.split())
                 cost_usd = calculate_cost_usd(in_tok, out_tok)
                 spend_ledger.settle(ip_h, session_id, est_cost, cost_usd)
+                if reserved_q and auth_mgr:
+                    auth_mgr.finalize_question(user.id, req_id, final_status="committed")
 
                 # 5. Event: done
                 usage_info: dict[str, Any] = {
@@ -2310,6 +2328,8 @@ def create_app(
                 )
             except Exception as err:
                 spend_ledger.release(ip_h, session_id, est_cost)
+                if reserved_q and auth_mgr:
+                    auth_mgr.release_question_reservation(user.id, req_id, reason="generation_error")
                 err_data = json_lib.dumps({"code": "generation_error", "message": str(err)})
                 yield f"event: error\ndata: {err_data}\n\n"
 
@@ -2562,8 +2582,6 @@ def create_app(
             mock_res: dict[str, Any] = mock_oauth(code=code, redirect_uri=redirect_uri)
             return mock_res
 
-        import urllib.parse
-        import urllib.request
 
         google_token_endpoint = "https://oauth2.googleapis.com/token"  # noqa: S105
         import httpx
