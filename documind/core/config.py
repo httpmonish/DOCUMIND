@@ -43,6 +43,12 @@ class Settings:
     google_client_secret: str = ""
     google_redirect_uri: str = ""
     session_secret_key: str = ""
+    free_doc_limit: int = 1
+    free_question_limit: int = 5
+    razorpay_key_id: str = ""
+    razorpay_key_secret: str = ""
+    razorpay_webhook_secret: str = ""
+    allow_guest_upload: bool = True
 
     def __post_init__(self) -> None:
         valid_providers = {"none", "ollama", "openai_compat", "anthropic", "gemini", "openrouter"}
@@ -78,6 +84,12 @@ class Settings:
             raise ValueError(f"max_upload_mb must be positive, got {self.max_upload_mb}")
         if self.max_pages <= 0:
             raise ValueError(f"max_pages must be positive, got {self.max_pages}")
+        if self.free_doc_limit <= 0:
+            raise ValueError(f"free_doc_limit must be positive, got {self.free_doc_limit}")
+        if self.free_question_limit <= 0:
+            raise ValueError(
+                f"free_question_limit must be positive, got {self.free_question_limit}"
+            )
 
 
 def _parse_positive_int(var_name: str, raw_val: str | None, default: int) -> int:
@@ -243,6 +255,22 @@ def load_settings() -> Settings:
     ).strip()
     session_secret_key = os.getenv("DOCUMIND_SESSION_SECRET", os.getenv("SECRET_KEY", "")).strip()
 
+    free_doc_limit = _parse_positive_int(
+        "DOCUMIND_FREE_DOC_LIMIT", os.getenv("DOCUMIND_FREE_DOC_LIMIT"), 1
+    )
+    free_question_limit = _parse_positive_int(
+        "DOCUMIND_FREE_QUESTION_LIMIT", os.getenv("DOCUMIND_FREE_QUESTION_LIMIT"), 5
+    )
+    razorpay_key_id = os.getenv(
+        "RAZORPAY_KEY_ID", os.getenv("DOCUMIND_RAZORPAY_KEY_ID", "")
+    ).strip()
+    razorpay_key_secret = os.getenv(
+        "RAZORPAY_KEY_SECRET", os.getenv("DOCUMIND_RAZORPAY_KEY_SECRET", "")
+    ).strip()
+    razorpay_webhook_secret = os.getenv(
+        "RAZORPAY_WEBHOOK_SECRET", os.getenv("DOCUMIND_RAZORPAY_WEBHOOK_SECRET", "")
+    ).strip()
+
     return Settings(
         home=home,
         embed_model=embed_model,
@@ -272,4 +300,9 @@ def load_settings() -> Settings:
         google_client_secret=google_client_secret,
         google_redirect_uri=google_redirect_uri,
         session_secret_key=session_secret_key,
+        free_doc_limit=free_doc_limit,
+        free_question_limit=free_question_limit,
+        razorpay_key_id=razorpay_key_id,
+        razorpay_key_secret=razorpay_key_secret,
+        razorpay_webhook_secret=razorpay_webhook_secret,
     )
