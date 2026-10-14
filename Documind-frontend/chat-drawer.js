@@ -571,7 +571,7 @@
     const file = e.target.files && e.target.files[0];
     if (!file) return;
 
-    // Check authentication
+    // Check authentication - require login or register before uploading
     try {
       const authState = await DocuMindAPI.getAuthUser();
       if (!authState || !authState.authenticated) {
@@ -579,7 +579,7 @@
         authCard.className = "docu-msg-row assistant";
         authCard.innerHTML = `
           <div class="docu-banner-error" style="display: flex; flex-direction: column; gap: 8px;">
-            <span><strong>Authentication Required:</strong> Anonymous users cannot upload or index documents. Please sign in to access your secure vault.</span>
+            <span><strong>Authentication Required:</strong> Anonymous users cannot upload or index documents. Please sign in or register to access your secure vault.</span>
             <a href="/app/auth.html?reason=auth_required&redirect=${encodeURIComponent(window.location.href)}" class="docu-btn-primary" style="align-self: flex-start; text-decoration: none; padding: 4px 12px; font-size: 11px;">Sign in / Register ›</a>
           </div>
         `;
@@ -589,7 +589,18 @@
         return;
       }
     } catch (authErr) {
-      // Continue to try upload
+      const authCard = document.createElement("div");
+      authCard.className = "docu-msg-row assistant";
+      authCard.innerHTML = `
+        <div class="docu-banner-error" style="display: flex; flex-direction: column; gap: 8px;">
+          <span><strong>Authentication Required:</strong> Anonymous users cannot upload or index documents. Please sign in or register to access your secure vault.</span>
+          <a href="/app/auth.html?reason=auth_required&redirect=${encodeURIComponent(window.location.href)}" class="docu-btn-primary" style="align-self: flex-start; text-decoration: none; padding: 4px 12px; font-size: 11px;">Sign in / Register ›</a>
+        </div>
+      `;
+      messagesListEl.appendChild(authCard);
+      messagesListEl.scrollTop = messagesListEl.scrollHeight;
+      fileInputEl.value = "";
+      return;
     }
 
     // Show temporary banner in message area
@@ -618,7 +629,23 @@
       `;
       refreshDocuments();
     } catch (err) {
-      if (err.status === 401 || err.code === "UNAUTHORIZED" || (err.message && err.message.includes("Authentication required"))) {
+      if (err.code === "FREE_DOCUMENT_LIMIT_REACHED" || (err.message && err.message.includes("FREE_DOCUMENT_LIMIT_REACHED"))) {
+        uploadingCard.innerHTML = `
+          <div class="docu-banner-upgrade" style="background: rgba(255,87,29,0.12); border: 1px solid rgba(255,87,29,0.35); border-radius: 8px; padding: 12px; color: #ffb59f; font-family: 'JetBrains Mono', monospace; display: flex; flex-direction: column; gap: 8px;">
+            <div style="font-weight: 700; font-size: 13px;">📄 Lifetime Document Limit Reached</div>
+            <div style="font-size: 12px; color: #e5e2e1;">The initial free plan includes 1 indexed document over your account's lifetime. Upgrade your plan to index additional documents.</div>
+            <button id="docu-upload-upgrade-btn" class="docu-btn-primary" style="align-self: flex-start; padding: 5px 14px; font-size: 11px; font-weight: 700; cursor: pointer;">VIEW PLANS & UPGRADE ›</button>
+          </div>
+        `;
+        const upBtn = uploadingCard.querySelector("#docu-upload-upgrade-btn");
+        if (upBtn) {
+          upBtn.onclick = () => {
+            if (typeof DocuMindAPI !== "undefined" && DocuMindAPI.openUpgradeModal) {
+              DocuMindAPI.openUpgradeModal();
+            }
+          };
+        }
+      } else if (err.status === 401 || err.code === "UNAUTHORIZED" || (err.message && err.message.includes("Authentication required"))) {
         uploadingCard.innerHTML = `
           <div class="docu-banner-error" style="display: flex; flex-direction: column; gap: 6px;">
             <span><strong>Authentication Required:</strong> Please sign in to index and query documents.</span>
@@ -809,25 +836,46 @@
       console.error("Chat error:", err);
       lastFailedQuestion = q;
       if (cursorEl) cursorEl.remove();
-      statusLabel.textContent = "Request failed";
-      statusLabel.style.color = "var(--docu-chat-red)";
 
-      assistantRow.querySelector(".docu-assistant-card").innerHTML = `
-        <div class="docu-banner-error">
-          <span>${escapeHtml(err.message || "Failed to stream response.")}</span>
-          <button class="docu-btn-text" id="docu-btn-retry" style="padding: 2px 8px; font-size: 11px;">
-            Retry
-          </button>
-        </div>
-      `;
+      if (err.code === "FREE_QUESTION_LIMIT_REACHED" || (err.message && err.message.includes("FREE_QUESTION_LIMIT_REACHED"))) {
+        statusLabel.textContent = "Free Question Quota Reached";
+        statusLabel.style.color = "var(--docu-chat-amber)";
+        assistantRow.querySelector(".docu-assistant-card").innerHTML = `
+          <div class="docu-banner-upgrade" style="background: rgba(255,87,29,0.12); border: 1px solid rgba(255,87,29,0.35); border-radius: 8px; padding: 12px; color: #ffb59f; font-family: 'JetBrains Mono', monospace; display: flex; flex-direction: column; gap: 8px;">
+            <div style="font-weight: 700; font-size: 13px;">🚀 Free Question Limit Reached</div>
+            <div style="font-size: 12px; color: #e5e2e1;">Your five free DocuMind questions have been used. Upgrade your plan to continue asking questions about your documents.</div>
+            <button id="docu-chat-upgrade-btn" class="docu-btn-primary" style="align-self: flex-start; padding: 5px 14px; font-size: 11px; font-weight: 700; cursor: pointer;">VIEW PLANS & UPGRADE ›</button>
+          </div>
+        `;
+        const upBtn = assistantRow.querySelector("#docu-chat-upgrade-btn");
+        if (upBtn) {
+          upBtn.onclick = () => {
+            if (typeof DocuMindAPI !== "undefined" && DocuMindAPI.openUpgradeModal) {
+              DocuMindAPI.openUpgradeModal();
+            }
+          };
+        }
+      } else {
+        statusLabel.textContent = "Request failed";
+        statusLabel.style.color = "var(--docu-chat-red)";
 
-      const btnRetry = assistantRow.querySelector("#docu-btn-retry");
-      if (btnRetry) {
-        btnRetry.addEventListener("click", () => {
-          assistantRow.remove();
-          composerTextarea.value = lastFailedQuestion;
-          sendCurrentQuestion();
-        });
+        assistantRow.querySelector(".docu-assistant-card").innerHTML = `
+          <div class="docu-banner-error">
+            <span>${escapeHtml(err.message || "Failed to stream response.")}</span>
+            <button class="docu-btn-text" id="docu-btn-retry" style="padding: 2px 8px; font-size: 11px;">
+              Retry
+            </button>
+          </div>
+        `;
+
+        const btnRetry = assistantRow.querySelector("#docu-btn-retry");
+        if (btnRetry) {
+          btnRetry.addEventListener("click", () => {
+            assistantRow.remove();
+            composerTextarea.value = lastFailedQuestion;
+            sendCurrentQuestion();
+          });
+        }
       }
     } finally {
       isStreaming = false;
