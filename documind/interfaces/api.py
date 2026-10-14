@@ -570,6 +570,11 @@ def create_app(
                 "DOCUMIND_API_KEY must be configured and at least 32 characters long."
             )
 
+        # Ensure persistent storage directories exist
+        app_settings.home.mkdir(parents=True, exist_ok=True)
+        (app_settings.home / "uploads").mkdir(parents=True, exist_ok=True)
+        (app_settings.home / "sessions").mkdir(parents=True, exist_ok=True)
+
         # Attach or construct engine
         if getattr(app_instance.state, "engine", None) is None:
             if dm is not None:
@@ -662,7 +667,14 @@ def create_app(
 
     from starlette.middleware.trustedhost import TrustedHostMiddleware
 
-    trusted_hosts = ["localhost", "127.0.0.1", "testserver", "*.localhost", "host.docker.internal"]
+    trusted_hosts = [
+        "localhost",
+        "127.0.0.1",
+        "testserver",
+        "*.localhost",
+        "host.docker.internal",
+        "*.onrender.com",
+    ]
     env_hosts = os.getenv("DOCUMIND_ALLOWED_HOSTS")
     if env_hosts:
         trusted_hosts.extend([h.strip() for h in env_hosts.split(",") if h.strip()])

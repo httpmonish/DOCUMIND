@@ -35,7 +35,7 @@ RUN groupadd -g 10001 documind && \
 WORKDIR /app
 
 # Copy installed python site-packages from builder stage
-COPY --from=builder /root/.local /home/documind/.local
+COPY --from=builder --chown=documind:documind /root/.local /home/documind/.local
 ENV PATH=/home/documind/.local/bin:$PATH
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
@@ -58,7 +58,7 @@ ENV TMPDIR=/app/tmp
 
 EXPOSE 8000
 
-HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-    CMD curl -f http://127.0.0.1:8000/healthz || exit 1
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+    CMD sh -c 'curl -f "http://127.0.0.1:${PORT:-8000}/healthz"' || exit 1
 
-ENTRYPOINT ["python", "-m", "uvicorn", "documind.interfaces.api:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers", "--forwarded-allow-ips", "*"]
+ENTRYPOINT ["sh", "-c", "exec python -m uvicorn documind.interfaces.api:app --host 0.0.0.0 --port \"${PORT:-8000}\" --proxy-headers --forwarded-allow-ips \"*\""]

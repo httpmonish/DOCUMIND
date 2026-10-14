@@ -27,6 +27,8 @@ api = [
   "starlette>=1.0.1",
   "uvicorn>=0.30.0",
   "python-multipart>=0.0.12",
+  "sse-starlette>=2.1.0",
+  "razorpay>=1.4.0",
 ]
 mcp = ["mcp>=1.29.0,<2"]
 dev = [

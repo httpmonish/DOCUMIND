@@ -1,0 +1,40 @@
+services:
+  - type: web
+    name: documind
+    runtime: docker
+    plan: starter
+    region: oregon
+    healthCheckPath: /healthz
+    disk:
+      name: documind-data
+      mountPath: /app/data
+      sizeGB: 10
+    envVars:
+      - key: DOCUMIND_ENV
+        value: production
+      - key: DOCUMIND_HOME
+        value: /app/data
+      - key: DOCUMIND_API_KEY
+        generateValue: true
+      - key: DOCUMIND_SESSION_SECRET
+        generateValue: true
+      - key: DOCUMIND_REQUIRE_AUTH
+        value: "1"
+      - key: DOCUMIND_ALLOW_GUEST_UPLOAD
+        value: "0"
+      - key: DOCUMIND_LLM_PROVIDER
+        value: none
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: OPENROUTER_API_KEY
+        sync: false
+      - key: DOCUMIND_MODEL
+        sync: false
+      - key: RAZORPAY_KEY_ID
+        sync: false
+      - key: RAZORPAY_KEY_SECRET
+        sync: false
+      - key: RAZORPAY_WEBHOOK_SECRET
+        sync: false
