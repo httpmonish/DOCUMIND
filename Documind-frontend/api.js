@@ -253,6 +253,24 @@
     },
 
     async uploadDocument(file, replace = false) {
+      try {
+        const auth = await API.getAuthUser();
+        if (!auth || !auth.authenticated) {
+          const err = new Error("Authentication required. Please sign in or register to upload documents.");
+          err.type = "client_error";
+          err.code = "AUTH_REQUIRED";
+          err.status = 401;
+          throw err;
+        }
+      } catch (authErr) {
+        if (authErr.code === "AUTH_REQUIRED") throw authErr;
+        const err = new Error("Authentication required. Please sign in or register to upload documents.");
+        err.type = "client_error";
+        err.code = "AUTH_REQUIRED";
+        err.status = 401;
+        throw err;
+      }
+
       const formData = new FormData();
       formData.append("file", file);
       const query = replace ? "?replace=true" : "";
