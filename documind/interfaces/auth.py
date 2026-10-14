@@ -1114,3 +1114,93 @@ class AuthManager:
         with self._lock, self._get_connection() as conn:
             row = self._ensure_user_quota(conn, user_id)
             return self._quota_row_to_dict(row)
+
+    def check_and_reserve_document(
+        self, user_id: str, request_id: str, resource_id: str | None = None
+    ) -> None:
+        """Atomically verify and reserve 1 document indexing quota slot.
+        Raises QuotaExceededError if user has already reached their lifetime limit.
+        """
+        with self._lock, self._get_connection() as conn:
+            row = self._ensure_user_quota(conn, user_id)
+            active_res = conn.execute(
+                """
+                SELECT COUNT(*) FROM quota_events
+                WHERE user_id = ? AND event_type = 'document_indexing' AND status = 'reserved'
+                """,
+                (user_id,),
+            ).fetchone()[0]
+
+            if (row["consumed_docs"] + active_res) >= row["doc_limit"]:
+                q_dict = self._quota_row_to_dict(row)
+                self.log_event(
+                    user_id,
+                    "document_quota_exceeded",
+                    {"consumed": row["consumed_docs"], "limit": row["doc_limit"]},
+                )
+                raise QuotaExceededError(
+                    code="FREE_DOCUMENT_LIMIT_REACHED",
+                    message=(
+                        f"You have reached your limit of {row['doc_limit']} document(s). "
+                        "Upgrade to Pro to index additional documents."
+                    ),
+                    quota=q_dict,
+                )
+
+            event_id = "qevt_" + secrets.token_hex(8)
+            now = time.time()
+            conn.execute(
+                """
+                INSERT INTO quota_events
+                (id, user_id, event_type, status, request_id, resource_id, created_at, updated_at)
+                VALUES (?, ?, 'document_indexing', 'reserved', ?, ?, ?, ?)
+                """,
+                (event_id, user_id, request_id, resource_id, now, now),
+            )
+            conn.commit()
+
+    def commit_document_indexed(self, user_id: str, request_id: str) -> None:
+        """Settle document indexing reservation into permanent consumed count."""
+        now = time.time()
+        with self._lock, self._get_connection() as conn:
+            conn.execute(
+                """
+                UPDATE user_quotas
+                SET consumed_docs = consumed_docs + 1, updated_at = ?
+                WHERE user_id = ?
+                """,
+                (now, user_id),
+            )
+            conn.execute(
+                """
+                UPDATE quota_events
+                SET status = 'committed', updated_at = ?
+                WHERE user_id = ? AND request_id = ? AND event_type = 'document_indexing'
+                  AND status = 'reserved'
+                """,
+                (now, user_id, request_id),
+            )
+            conn.commit()
+            self.log_event(user_id, "document_quota_committed", {"request_id": request_id})
+
+    def release_document_reservation(
+        self, user_id: str, request_id: str, reason: str = ""
+    ) -> None:
+        """Release active document indexing reservation upon validation or processing failure."""
+        now = time.time()
+        with self._lock, self._get_connection() as conn:
+            conn.execute(
+                """
+                UPDATE quota_events
+                SET status = 'released', reason = ?, updated_at = ?
+                WHERE user_id = ? AND request_id = ? AND event_type = 'document_indexing'
+                  AND status = 'reserved'
+                """,
+                (reason[:250], now, user_id, request_id),
+            )
+            conn.commit()
+            self.log_event(
+                user_id,
+                "document_quota_released",
+                {"request_id": request_id, "reason": reason[:100]},
+            )
