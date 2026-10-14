@@ -258,6 +258,7 @@
     (function () {
       "use strict";
 
+      const urlParams = new URLSearchParams(window.location.search);
       let currentMode = "login"; // 'login' | 'register' | 'recovery' | 'reset_confirm'
       let rawRedirect = urlParams.get("redirect") || "/app/console/code.html";
       if (
@@ -452,9 +453,22 @@
       });
 
       // Google Sign-In trigger
-      btnGoogleAuth.addEventListener("click", () => {
+      btnGoogleAuth.addEventListener("click", async () => {
         clearAlerts();
-        window.location.href = `/api/auth/google/authorize?redirect=${encodeURIComponent(redirectUrl)}`;
+        try {
+          const checkRes = await fetch(`/api/auth/google/authorize?redirect=${encodeURIComponent(redirectUrl)}`, {
+            method: "GET",
+            headers: { "Accept": "application/json" }
+          });
+          if (checkRes.status === 503) {
+            const data = await checkRes.json().catch(() => ({}));
+            showError(data.detail || "Google OAuth is not configured on this server. Please register or sign in with Email & Password.");
+            return;
+          }
+          window.location.href = `/api/auth/google/authorize?redirect=${encodeURIComponent(redirectUrl)}`;
+        } catch (_) {
+          window.location.href = `/api/auth/google/authorize?redirect=${encodeURIComponent(redirectUrl)}`;
+        }
       });
 
       // Email / Password Form Submit

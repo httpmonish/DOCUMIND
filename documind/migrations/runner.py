@@ -191,6 +191,71 @@ MIGRATIONS: list[tuple[int, str, list[str]]] = [
             ),
         ],
     ),
+    (
+        5,
+        "0005_saas_monetization_and_quotas",
+        [
+            # User quotas & allowances table
+            """
+            CREATE TABLE IF NOT EXISTS user_quotas (
+                user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+                plan_id TEXT NOT NULL DEFAULT 'free',
+                doc_limit INTEGER NOT NULL DEFAULT 1,
+                consumed_docs INTEGER NOT NULL DEFAULT 0,
+                question_limit INTEGER NOT NULL DEFAULT 5,
+                consumed_questions INTEGER NOT NULL DEFAULT 0,
+                reserved_questions INTEGER NOT NULL DEFAULT 0,
+                created_at REAL NOT NULL,
+                updated_at REAL NOT NULL
+            );
+            """,
+            # Subscriptions table
+            """
+            CREATE TABLE IF NOT EXISTS subscriptions (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                plan_id TEXT NOT NULL,
+                status TEXT NOT NULL DEFAULT 'active',
+                provider TEXT NOT NULL DEFAULT 'razorpay',
+                provider_subscription_id TEXT,
+                current_period_start REAL,
+                current_period_end REAL,
+                cancel_at_period_end INTEGER NOT NULL DEFAULT 0,
+                created_at REAL NOT NULL,
+                updated_at REAL NOT NULL
+            );
+            """,
+            # Quota events log (atomic reservation and audit trail)
+            """
+            CREATE TABLE IF NOT EXISTS quota_events (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                event_type TEXT NOT NULL,
+                status TEXT NOT NULL DEFAULT 'reserved',
+                request_id TEXT NOT NULL,
+                resource_id TEXT,
+                reason TEXT,
+                created_at REAL NOT NULL,
+                updated_at REAL NOT NULL
+            );
+            """,
+            # Replay protection table for payment webhooks
+            """
+            CREATE TABLE IF NOT EXISTS processed_webhooks (
+                event_id TEXT PRIMARY KEY,
+                event_type TEXT NOT NULL,
+                payload TEXT,
+                processed_at REAL NOT NULL
+            );
+            """,
+            "CREATE INDEX IF NOT EXISTS idx_subscriptions_user ON subscriptions(user_id);",
+            (
+                "CREATE INDEX IF NOT EXISTS idx_quota_events_user_req "
+                "ON quota_events(user_id, request_id);"
+            ),
+            "CREATE INDEX IF NOT EXISTS idx_quota_events_req ON quota_events(request_id);",
+        ],
+    ),
 ]
 
 
@@ -238,6 +303,15 @@ class MigrationRunner:
             # Inspect current applied versions
             cursor = conn.execute("SELECT version FROM schema_migrations ORDER BY version ASC")
             applied_versions = {row["version"] for row in cursor.fetchall()}
+
+            # Ensure user_quotas matches canonical schema (self-healing for draft DBs)
+            cursor = conn.execute("PRAGMA table_info(user_quotas)")
+            quota_cols = {row["name"] for row in cursor.fetchall()}
+            if quota_cols and "doc_limit" not in quota_cols:
+                conn.execute("DROP TABLE IF EXISTS user_quotas")
+                conn.execute("DELETE FROM schema_migrations WHERE version = 5")
+                conn.commit()
+                applied_versions.discard(5)
 
             for version, name, statements in MIGRATIONS:
                 if version in applied_versions:
