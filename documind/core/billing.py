@@ -290,10 +290,3 @@ class RazorpayManager:
         """Compute HMAC-SHA256 signature for webhook payload."""
         secret = (self.webhook_secret or "mock_webhook_secret_key_123").encode("utf-8")
         return hmac.new(secret, body, hashlib.sha256).hexdigest()
-
-    def verify_webhook_signature(self, body: bytes, signature: str) -> bool:
-        """Cryptographically verify Razorpay webhook signature header."""
-        if not signature:
-            return False
-        expected = self.compute_webhook_signature(body)
-        return hmac.compare_digest(expected, signature.strip())
