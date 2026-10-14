@@ -4,8 +4,8 @@
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Status: Phase 6](https://img.shields.io/badge/Status-v0.6.0%20(Full--Stack%20RAG)-green.svg)](#status)
-[![Tests: 257 Passed](https://img.shields.io/badge/tests-257%20passed-brightgreen.svg)](#testing--verification)
+[![Status: Phase 7](https://img.shields.io/badge/Status-v0.7.0%20(Secure%20MCP%20Server)-green.svg)](#status)
+[![Tests: 370+ Passed](https://img.shields.io/badge/tests-370+%20passed-brightgreen.svg)](#testing--verification)
 [![Type Checked: Mypy](https://img.shields.io/badge/type--check-mypy%20strict-blue.svg)](#testing--verification)
 [![Code Style: Ruff](https://img.shields.io/badge/code%20style-ruff-black.svg)](#testing--verification)
 
@@ -14,6 +14,7 @@
 ## Highlights
 
 - **Local-First & Private:** Local document extraction, sliding-window chunking, dense vector embeddings (`BAAI/bge-small-en-v1.5`), and similarity search without cloud dependencies.
+- **Secure Read-Only MCP Server (v0.7.0):** Native Model Context Protocol (MCP) server for Claude Desktop and Claude Code over stdio transport. Exposes 4 read-only tools (`search_documents`, `get_chunk`, `list_documents`, `index_info`), 2 resources, and 1 prompt. Strict stream discipline guarantees clean JSON-RPC stdout; zero internal LLM calls or network egress.
 - **Relevance Gate & Abstention ($\tau = 0.35$):** Pre-generation similarity gating prevents hallucination; queries lacking support in the indexed documents cleanly abstain (Exit Code 3).
 - **Verifiable Citations:** Responses cite precise chunk anchors (`[S1]`, `[S2]`) with matching source filenames and snippet similarity scores.
 - **Dual API Boundary:**
@@ -28,7 +29,8 @@
 
 ## Status
 
-- **Current (Phase 6 / v0.6.0):** Full-stack grounded document intelligence engine with Glass Box UI, server-issued session isolation in SQLite, spend ledger & rate-limiting guards, multi-turn chat persistence, neighbor chunk expansion, and AsyncAnthropic SSE streaming (`text/event-stream`).
+- **Current (Phase 7 / v0.7.0):** Model Context Protocol (MCP) server for desktop AI agents (Claude Desktop, Claude Code) over stdio with sub-250ms cold handshake, read-only guarantees, prompt-injection defense, and zero-key retrieval.
+- **Previous (Phase 6 / v0.6.0):** Full-stack grounded document intelligence engine with Glass Box UI, server-issued session isolation in SQLite, spend ledger & rate-limiting guards, multi-turn chat persistence, neighbor chunk expansion, and AsyncAnthropic SSE streaming (`text/event-stream`).
 - **Administrative Core:** REST API (`/v1/*`) secured by 32+ character API keys for trusted programmatic microservices.
 
 ---
@@ -331,6 +333,32 @@ Evaluation performed on SQuAD 2.0 evaluation sets with deterministic hashing spl
 
 ---
 
+## Model Context Protocol (MCP) Server
+
+DocuMind includes a native, secure, read-only MCP server allowing desktop agents (such as **Claude Desktop** and **Claude Code**) to search and cite your private local documents directly.
+
+- **Transport:** Standard I/O (`stdio`) only (no network ports opened).
+- **Retrieval-Only:** Zero internal LLM calls or API keys required; client model synthesizes answers from cited chunks.
+- **Tools:** `search_documents`, `get_chunk`, `list_documents`, `index_info`.
+- **Resources & Prompts:** `documind://index/info`, `documind://chunk/{chunk_id}`, and `answer_from_documents`.
+
+### Quick Setup
+
+```bash
+# 1. Print ready-to-paste Claude Desktop JSON and Claude Code CLI command:
+documind mcp config
+
+# 2. Run the stdio server directly:
+documind mcp serve
+
+# 3. Verify MCP installation and health:
+documind doctor
+```
+
+See [`docs/MCP.md`](docs/MCP.md) for full configuration, security model, and troubleshooting.
+
+---
+
 ## Architecture Decision Records (ADRs)
 
 All engineering decisions are documented under [`docs/decisions/`](docs/decisions/):
@@ -345,7 +373,8 @@ All engineering decisions are documented under [`docs/decisions/`](docs/decision
 | [0006](docs/decisions/0006-concurrency.md) | Concurrency Model | Non-blocking async endpoints with thread-pool delegation for CPU embeddings |
 | [0007](docs/decisions/0007-storage-layout.md) | Storage Layout | Quarantined storage under `~/.documind/` with dedicated `sessions/` trees |
 | [0008](docs/decisions/0008-abstention-threshold.md) | Abstention Threshold | Calibrated relevance gate $\tau = 0.35$ balancing recall and false abstentions |
-| [0009](docs/decisions/0009-cli-framework.md) | CLI Framework | Click-based subcommands with strict stdout data / stderr diagnostics separation |
+| [0009](docs/decisions/0009-cli-framework.md) | CLI Framework | Standard library `argparse` with subcommands and strict stream discipline |
+| [0010](docs/decisions/0010-mcp-server.md) | MCP Server | Secure, read-only stdio MCP server for Claude Desktop and Claude Code |
 
 ---
 

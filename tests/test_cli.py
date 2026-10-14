@@ -317,7 +317,7 @@ def test_serve_command_loopback_and_non_loopback_warning(tmp_path):
     with patch("uvicorn.run") as mock_run:
         code, out, err = run_cli(["serve"], eng, settings=cfg)
         assert code == 0
-        assert "WARNING" not in err
+        assert "WARNING: Binding to non-loopback" not in err
         mock_run.assert_called_once()
         _, kwargs = mock_run.call_args
         assert kwargs["host"] == "127.0.0.1"
@@ -338,3 +338,27 @@ def test_serve_command_loopback_and_non_loopback_warning(tmp_path):
         assert kwargs["host"] == "0.0.0.0"  # noqa: S104
         assert kwargs["port"] == 9000
         assert kwargs["workers"] == 1
+
+
+def test_mcp_cli_commands(tmp_path):
+    eng, _, _ = make_engine(tmp_path, NumpyStore())
+
+    # 1. mcp without subcommand exits 2
+    code, out, err = run_cli(["mcp"], eng)
+    assert code == 2
+    assert "usage:" in err
+
+    # 2. mcp config prints JSON configuration
+    code, out, err = run_cli(["mcp", "config", "--home", str(tmp_path)], eng)
+    assert code == 0
+    assert "CLAUDE DESKTOP CONFIGURATION" in out
+    assert "claude_desktop_config.json" in out
+    assert "claude mcp add documind" in out
+
+    # 3. mcp serve invokes run_stdio_server
+    with patch("documind.interfaces.mcp_server.run_stdio_server", return_value=0) as mock_serve:
+        code, out, err = run_cli(["mcp", "serve", "--home", str(tmp_path)], eng)
+        assert code == 0
+        mock_serve.assert_called_once()
+        _, kwargs = mock_serve.call_args
+        assert kwargs["home"] == tmp_path

@@ -254,6 +254,7 @@ def _handle_doctor(
         check_api_key,
         check_extras,
         check_home,
+        check_mcp,
         check_meta,
         check_python,
         exit_code,
@@ -265,6 +266,7 @@ def _handle_doctor(
         check_home(settings.home),
         check_meta(settings.home, settings.embed_model),
         *check_extras(),
+        *check_mcp(settings.home, settings.embed_model),
     ]
 
     if args.json:
@@ -344,6 +346,49 @@ def _handle_serve(args: argparse.Namespace, settings: Settings, stderr: TextIO) 
     return 0
 
 
+def _handle_mcp_serve(args: argparse.Namespace, settings: Settings, stderr: TextIO) -> int:
+    """Run DocuMind MCP server over stdio transport."""
+    from documind.interfaces.mcp_server import run_stdio_server
+
+    home_path = Path(args.home if args.home is not None else settings.home).resolve()
+    log_level = getattr(args, "log_level", "INFO")
+    return run_stdio_server(home=home_path, log_level=log_level)
+
+
+def _handle_mcp_config(args: argparse.Namespace, settings: Settings, stdout: TextIO) -> int:
+    """Print ready-to-paste Claude Desktop JSON and Claude Code CLI configuration."""
+    home_path = Path(args.home if args.home is not None else settings.home).resolve()
+    py_exec = sys.executable
+
+    claude_desktop_cfg = {
+        "mcpServers": {
+            "documind": {
+                "command": py_exec,
+                "args": ["-m", "documind.interfaces.cli", "mcp", "serve"],
+                "env": {
+                    "DOCUMIND_HOME": str(home_path),
+                },
+            }
+        }
+    }
+
+    add_cmd = (
+        f'claude mcp add documind -e DOCUMIND_HOME="{home_path}" -- '
+        f'"{py_exec}" -m documind.interfaces.cli mcp serve'
+    )
+
+    macos_config_path = (
+        "~/Library/Application Support/Claude/claude_desktop_config.json"
+    )
+
+    _emit("=== CLAUDE DESKTOP CONFIGURATION ===", stdout)
+    _emit(f"Configuration file location on macOS:\n  {macos_config_path}\n", stdout)
+    _emit(json.dumps(claude_desktop_cfg, indent=2), stdout)
+    _emit("\n=== CLAUDE CODE CLI COMMAND ===", stdout)
+    _emit(f"{add_cmd}", stdout)
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     """Construct argument parser with subcommands and options."""
     parser = argparse.ArgumentParser(
@@ -416,6 +461,36 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p_serve.add_argument("--port", type=int, default=8000, help="Port to listen on (default: 8000)")
 
+    # mcp
+    p_mcp = subparsers.add_parser(
+        "mcp", help="Run or configure the Model Context Protocol (MCP) server"
+    )
+    mcp_subs = p_mcp.add_subparsers(dest="mcp_subcommand", help="MCP subcommands")
+
+    p_mcp_serve = mcp_subs.add_parser("serve", help="Run the DocuMind MCP server over stdio")
+    p_mcp_serve.add_argument(
+        "--home",
+        type=Path,
+        default=None,
+        help="Override DocuMind home directory (DOCUMIND_HOME)",
+    )
+    p_mcp_serve.add_argument(
+        "--log-level",
+        default="INFO",
+        choices=["DEBUG", "INFO", "WARNING", "ERROR"],
+        help="Logging level for stderr (default: INFO)",
+    )
+
+    p_mcp_config = mcp_subs.add_parser(
+        "config", help="Print configuration for Claude Desktop and Claude Code"
+    )
+    p_mcp_config.add_argument(
+        "--home",
+        type=Path,
+        default=None,
+        help="Override DocuMind home directory (DOCUMIND_HOME)",
+    )
+
     return parser
 
 
@@ -462,6 +537,14 @@ def main(
             return _handle_stats(args, cfg, stdout_stream)
         if args.command == "serve":
             return _handle_serve(args, cfg, stderr_stream)
+        if args.command == "mcp":
+            if getattr(args, "mcp_subcommand", None) == "serve":
+                return _handle_mcp_serve(args, cfg, stderr_stream)
+            elif getattr(args, "mcp_subcommand", None) == "config":
+                return _handle_mcp_config(args, cfg, stdout_stream)
+            else:
+                parser.print_usage(stderr_stream)
+                return 2
 
         # Build engine lazily
         if engine_factory is not None:

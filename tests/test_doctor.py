@@ -66,6 +66,28 @@ def test_missing_extras_say_how_to_fix_it():
     assert by["vector store"].status == "ok" and by["llm client"].status == "ok"
 
 
+def test_check_mcp(tmp_path):
+    from documind.core.doctor import check_mcp
+
+    # 1. Missing mcp
+    checks_missing = check_mcp(
+        tmp_path,
+        "BAAI/bge-small-en-v1.5",
+        find_spec=lambda name: None if name == "mcp" else object(),
+    )
+    by_missing = {c.name: c for c in checks_missing}
+    assert by_missing["mcp sdk"].status == "warn"
+    assert "documind[mcp]" in by_missing["mcp sdk"].detail
+
+    # 2. Present mcp and empty index
+    checks_present = check_mcp(
+        tmp_path, "BAAI/bge-small-en-v1.5", find_spec=lambda name: object()
+    )
+    by_present = {c.name: c for c in checks_present}
+    assert by_present["mcp sdk"].status == "ok"
+    assert by_present["mcp index"].status == "warn"
+
+
 @pytest.mark.parametrize(
     "checks,code",
     [

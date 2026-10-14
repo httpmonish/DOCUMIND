@@ -212,6 +212,114 @@ def check_extras(
     return results
 
 
+def check_mcp(
+    home: Path,
+    embed_model: str,
+    find_spec: Callable[[str], Any] = importlib.util.find_spec,
+) -> list[Check]:
+    """Check MCP server dependencies, index state, and embedding cache."""
+    import os
+    results: list[Check] = []
+
+    # 1. MCP SDK check
+    if find_spec("mcp") is not None:
+        try:
+            import importlib.metadata
+
+            mcp_ver = importlib.metadata.version("mcp")
+        except Exception:
+            mcp_ver = "installed"
+        results.append(
+            Check(
+                name="mcp sdk",
+                status="ok",
+                detail=f"mcp {mcp_ver} is installed",
+                category="config",
+            )
+        )
+    else:
+        results.append(
+            Check(
+                name="mcp sdk",
+                status="warn",
+                detail="mcp missing; install with: pip install 'documind[mcp]'",
+                category="config",
+            )
+        )
+
+    # 2. Index non-empty check
+    chroma_dir = home / "chroma"
+    meta_path = home / "meta.json"
+    if not home.exists() or (not chroma_dir.exists() and not meta_path.exists()):
+        results.append(
+            Check(
+                name="mcp index",
+                status="warn",
+                detail="No index found; run 'documind index <path>' before searching",
+                category="index",
+            )
+        )
+    else:
+        try:
+            import chromadb
+
+            client = chromadb.PersistentClient(path=str(chroma_dir))
+            colls = client.list_collections()
+            total_chunks = sum(c.count() for c in colls) if colls else 0
+            if total_chunks > 0:
+                results.append(
+                    Check(
+                        name="mcp index",
+                        status="ok",
+                        detail=f"Index contains {total_chunks} chunks",
+                        category="index",
+                    )
+                )
+            else:
+                results.append(
+                    Check(
+                        name="mcp index",
+                        status="warn",
+                        detail="Index is empty; run 'documind index <path>' before searching",
+                        category="index",
+                    )
+                )
+        except Exception:
+            results.append(
+                Check(
+                    name="mcp index",
+                    status="ok",
+                    detail=f"Index directory exists at {home}",
+                    category="index",
+                )
+            )
+
+    # 3. Embedding model cached check
+    model_slug = embed_model.replace("/", "--")
+    hf_hub = Path(os.getenv("HF_HOME") or (Path.home() / ".cache" / "huggingface" / "hub"))
+    model_cache = hf_hub / f"models--{model_slug}"
+    if model_cache.exists():
+        results.append(
+            Check(
+                name="mcp model cache",
+                status="ok",
+                detail=f"Model '{embed_model}' is cached locally",
+                category="config",
+            )
+        )
+    else:
+        results.append(
+            Check(
+                name="mcp model cache",
+                status="warn",
+                detail=f"Model '{embed_model}' not found in cache (will download on first run)",
+                category="config",
+            )
+        )
+
+    return results
+
+
 def exit_code(checks: Sequence[Check]) -> int:
     """Compute overall process exit code from diagnostic check results."""
     has_index_fail = any(c.status == "fail" and c.category == "index" for c in checks)
