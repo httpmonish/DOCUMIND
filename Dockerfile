@@ -7,7 +7,7 @@
 # - Drop all capabilities with no-new-privileges
 # - Safe isolated storage directory under /app/data
 
-FROM python:3.11-slim AS builder
+FROM python:3.12-slim AS builder
 
 WORKDIR /build
 
@@ -20,7 +20,7 @@ COPY requirements.txt pyproject.toml ./
 RUN pip install --no-cache-dir --user -r requirements.txt
 
 # Final minimal runtime image
-FROM python:3.11-slim AS runner
+FROM python:3.12-slim AS runner
 
 # Security: Install runtime libraries only, purge package manager caches
 RUN apt-get update && apt-get install --no-install-recommends -y \
@@ -37,6 +37,7 @@ WORKDIR /app
 # Copy installed python site-packages from builder stage
 COPY --from=builder --chown=documind:documind /root/.local /home/documind/.local
 ENV PATH=/home/documind/.local/bin:$PATH
+ENV PYTHONPATH=/home/documind/.local/lib/python3.12/site-packages
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 
@@ -46,7 +47,7 @@ COPY --chown=documind:documind Documind-frontend ./Documind-frontend
 COPY --chown=documind:documind pyproject.toml ./
 
 # Create dedicated persistent storage and temp directories with non-root ownership
-RUN mkdir -p /app/data /app/tmp && \
+RUN mkdir -p /app/data /app/tmp /app/data/huggingface && \
     chown -R documind:documind /app/data /app/tmp && \
     chmod 700 /app/data /app/tmp
 
@@ -54,6 +55,7 @@ USER documind:documind
 
 ENV DOCUMIND_HOME=/app/data
 ENV DOCUMIND_ENV=production
+ENV HF_HOME=/app/data/huggingface
 ENV TMPDIR=/app/tmp
 
 EXPOSE 8000
