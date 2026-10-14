@@ -306,7 +306,33 @@
     return drawerEl && drawerEl.classList.contains("open");
   }
 
-  function openDrawer() {
+  async function openDrawer() {
+    // Check authentication prior to granting chat access
+    try {
+      const auth = typeof DocuMindAPI !== "undefined" && DocuMindAPI.getAuthUser ? await DocuMindAPI.getAuthUser() : null;
+      if (!auth || !auth.authenticated) {
+        if (typeof DocuMindAPI !== "undefined" && typeof DocuMindAPI.showAuthRequiredModal === "function") {
+          DocuMindAPI.showAuthRequiredModal({
+            title: "Login or Register Required",
+            message: "You should first login or register to access the chat assistant and upload documents.",
+          });
+        } else {
+          window.location.href = `/app/auth.html?reason=auth_required&redirect=${encodeURIComponent(window.location.href)}`;
+        }
+        return;
+      }
+    } catch (e) {
+      if (typeof DocuMindAPI !== "undefined" && typeof DocuMindAPI.showAuthRequiredModal === "function") {
+        DocuMindAPI.showAuthRequiredModal({
+          title: "Login or Register Required",
+          message: "You should first login or register to access the chat assistant and upload documents.",
+        });
+      } else {
+        window.location.href = `/app/auth.html?reason=auth_required&redirect=${encodeURIComponent(window.location.href)}`;
+      }
+      return;
+    }
+
     if (!drawerEl) initChatDrawer();
     backdropEl.classList.add("active");
     drawerEl.classList.add("open");
@@ -575,6 +601,12 @@
     try {
       const authState = await DocuMindAPI.getAuthUser();
       if (!authState || !authState.authenticated) {
+        if (typeof DocuMindAPI !== "undefined" && typeof DocuMindAPI.showAuthRequiredModal === "function") {
+          DocuMindAPI.showAuthRequiredModal({
+            title: "Login or Register Required",
+            message: "You should first login or register before uploading documents.",
+          });
+        }
         const authCard = document.createElement("div");
         authCard.className = "docu-msg-row assistant";
         authCard.innerHTML = `
@@ -589,6 +621,12 @@
         return;
       }
     } catch (authErr) {
+      if (typeof DocuMindAPI !== "undefined" && typeof DocuMindAPI.showAuthRequiredModal === "function") {
+        DocuMindAPI.showAuthRequiredModal({
+          title: "Login or Register Required",
+          message: "You should first login or register before uploading documents.",
+        });
+      }
       const authCard = document.createElement("div");
       authCard.className = "docu-msg-row assistant";
       authCard.innerHTML = `
@@ -668,6 +706,28 @@
     if (isStreaming) return;
     const q = composerTextarea.value.trim();
     if (!q) return;
+
+    // Check authentication prior to sending questions
+    try {
+      const auth = typeof DocuMindAPI !== "undefined" && DocuMindAPI.getAuthUser ? await DocuMindAPI.getAuthUser() : null;
+      if (!auth || !auth.authenticated) {
+        if (typeof DocuMindAPI !== "undefined" && typeof DocuMindAPI.showAuthRequiredModal === "function") {
+          DocuMindAPI.showAuthRequiredModal({
+            title: "Login or Register Required",
+            message: "You should first login or register to access the chat assistant.",
+          });
+        }
+        return;
+      }
+    } catch (e) {
+      if (typeof DocuMindAPI !== "undefined" && typeof DocuMindAPI.showAuthRequiredModal === "function") {
+        DocuMindAPI.showAuthRequiredModal({
+          title: "Login or Register Required",
+          message: "You should first login or register to access the chat assistant.",
+        });
+      }
+      return;
+    }
 
     composerTextarea.value = "";
     composerTextarea.style.height = "auto";

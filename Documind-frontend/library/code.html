@@ -810,13 +810,27 @@ Delete this document
       try {
         const authState = await DocuMindAPI.getAuthUser();
         if (!authState || !authState.authenticated) {
-          alert("Authentication required: Please sign in or register an account before uploading documents.");
-          window.location.href = `/app/auth.html?reason=auth_required&redirect=${encodeURIComponent(window.location.href)}`;
+          if (typeof DocuMindAPI !== "undefined" && typeof DocuMindAPI.showAuthRequiredModal === "function") {
+            DocuMindAPI.showAuthRequiredModal({
+              title: "Login or Register Required",
+              message: "You should first login or register before uploading documents.",
+            });
+          } else {
+            alert("Authentication Required: You should first login or register before uploading documents.");
+            window.location.href = `/app/auth.html?reason=auth_required&redirect=${encodeURIComponent(window.location.href)}`;
+          }
           return;
         }
       } catch (e) {
-        alert("Authentication required: Please sign in or register an account before uploading documents.");
-        window.location.href = `/app/auth.html?reason=auth_required&redirect=${encodeURIComponent(window.location.href)}`;
+        if (typeof DocuMindAPI !== "undefined" && typeof DocuMindAPI.showAuthRequiredModal === "function") {
+          DocuMindAPI.showAuthRequiredModal({
+            title: "Login or Register Required",
+            message: "You should first login or register before uploading documents.",
+          });
+        } else {
+          alert("Authentication Required: You should first login or register before uploading documents.");
+          window.location.href = `/app/auth.html?reason=auth_required&redirect=${encodeURIComponent(window.location.href)}`;
+        }
         return;
       }
 

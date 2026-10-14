@@ -256,6 +256,10 @@
       try {
         const auth = await API.getAuthUser();
         if (!auth || !auth.authenticated) {
+          showAuthRequiredModal({
+            title: "Authentication Required",
+            message: "You should first login or register before uploading documents.",
+          });
           const err = new Error("Authentication required. Please sign in or register to upload documents.");
           err.type = "client_error";
           err.code = "AUTH_REQUIRED";
@@ -264,6 +268,10 @@
         }
       } catch (authErr) {
         if (authErr.code === "AUTH_REQUIRED") throw authErr;
+        showAuthRequiredModal({
+          title: "Authentication Required",
+          message: "You should first login or register before uploading documents.",
+        });
         const err = new Error("Authentication required. Please sign in or register to upload documents.");
         err.type = "client_error";
         err.code = "AUTH_REQUIRED";
@@ -818,6 +826,67 @@
     });
   }
 
+  function showAuthRequiredModal(options = {}) {
+    if (typeof document === "undefined") return;
+    let existing = document.getElementById("documind-auth-required-modal");
+    if (existing) existing.remove();
+
+    const title = options.title || "Authentication Required";
+    const message = options.message || "You should first login or register before uploading documents or accessing the chat.";
+    const redirectUrl = options.redirectUrl || `/app/auth.html?reason=auth_required&redirect=${encodeURIComponent(window.location.href)}`;
+
+    const overlay = document.createElement("div");
+    overlay.id = "documind-auth-required-modal";
+    overlay.style.cssText = `
+      position: fixed;
+      inset: 0;
+      z-index: 999999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(6px);
+      padding: 16px;
+      font-family: 'JetBrains Mono', monospace;
+    `;
+
+    overlay.innerHTML = `
+      <div style="background: #191818; border: 1px solid rgba(255, 87, 29, 0.45); border-radius: 14px; max-width: 440px; width: 100%; padding: 24px; box-shadow: 0 20px 45px rgba(0,0,0,0.85); display: flex; flex-direction: column; gap: 16px; color: #e5e2e1; position: relative;">
+        <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #2d2c2c; padding-bottom: 12px;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <div style="width: 28px; height: 28px; border-radius: 6px; background: rgba(255,87,29,0.15); border: 1px solid #ff571d; display: flex; align-items: center; justify-content: center; color: #ff571d; font-size: 15px; font-weight: bold;">
+              !
+            </div>
+            <span style="font-size: 13.5px; font-weight: 700; letter-spacing: 0.05em; color: #ffffff; text-transform: uppercase;">${escapeHtml(title)}</span>
+          </div>
+          <button id="docu-auth-modal-close" style="background: transparent; border: none; color: #8e8d8d; font-size: 18px; cursor: pointer; padding: 4px 8px; line-height: 1;">✕</button>
+        </div>
+
+        <div style="font-size: 13px; line-height: 1.5; color: #c4c2c1;">
+          ${escapeHtml(message)}
+        </div>
+
+        <div style="display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin-top: 8px;">
+          <button id="docu-auth-modal-cancel" style="background: #2b2a2a; border: 1px solid #3d3c3c; color: #e5e2e1; padding: 8px 16px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit;">
+            Cancel
+          </button>
+          <a href="${redirectUrl}" style="background: #ff571d; border: 1px solid #ff571d; color: #191818; padding: 8px 18px; border-radius: 6px; font-size: 12px; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-family: inherit;">
+            Login / Register ›
+          </a>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    const close = () => overlay.remove();
+    const closeBtn = overlay.querySelector("#docu-auth-modal-close");
+    const cancelBtn = overlay.querySelector("#docu-auth-modal-cancel");
+    if (closeBtn) closeBtn.onclick = close;
+    if (cancelBtn) cancelBtn.onclick = close;
+    overlay.onclick = (e) => { if (e.target === overlay) close(); };
+  }
+
   async function openUpgradeModal() {
     let existing = document.getElementById("documind-upgrade-modal");
     if (existing) existing.remove();
@@ -1094,6 +1163,7 @@
   }
 
   API.openUpgradeModal = openUpgradeModal;
+  API.showAuthRequiredModal = showAuthRequiredModal;
   API.updateUsagePill = updateUsagePill;
 
   // Cross-view Navigation handler
@@ -1109,8 +1179,24 @@
     document.querySelectorAll("[data-path]").forEach((el) => {
       const path = el.getAttribute("data-path");
       if (path === "chat") {
-        el.addEventListener("click", (e) => {
+        el.addEventListener("click", async (e) => {
           e.preventDefault();
+          try {
+            const auth = await API.getAuthUser();
+            if (!auth || !auth.authenticated) {
+              showAuthRequiredModal({
+                title: "Login or Register Required",
+                message: "You should first login or register to access the chat assistant and upload documents.",
+              });
+              return;
+            }
+          } catch (_) {
+            showAuthRequiredModal({
+              title: "Login or Register Required",
+              message: "You should first login or register to access the chat assistant and upload documents.",
+            });
+            return;
+          }
           if (window.DocuMindChatDrawer && typeof window.DocuMindChatDrawer.open === "function") {
             window.DocuMindChatDrawer.open();
           } else {
