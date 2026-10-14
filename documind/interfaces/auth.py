@@ -5,6 +5,7 @@ and document ownership tracking for DocuMind.
 
 from __future__ import annotations
 
+import contextlib
 import hashlib
 import hmac
 import json
@@ -19,10 +20,11 @@ import time
 import uuid
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from fastapi import Request, Response
 
+from documind.core.billing import QuotaExceededError
 from documind.interfaces.session import SessionManager
 from documind.migrations.runner import MigrationRunner
 
@@ -78,10 +80,26 @@ class AuthManager:
         db_path: Path | str,
         database_url: str = "",
         session_ttl_s: int = DEFAULT_SESSION_TTL_S,
+        free_doc_limit: int = 1,
+        free_question_limit: int = 5,
     ) -> None:
         self.db_path = Path(db_path).resolve()
         self.database_url = database_url
         self.session_ttl_s = session_ttl_s
+
+        if free_doc_limit == 1:
+            env_doc = os.getenv("DOCUMIND_FREE_DOC_LIMIT")
+            if env_doc:
+                with contextlib.suppress(ValueError):
+                    free_doc_limit = int(env_doc)
+        if free_question_limit == 5:
+            env_q = os.getenv("DOCUMIND_FREE_QUESTION_LIMIT")
+            if env_q:
+                with contextlib.suppress(ValueError):
+                    free_question_limit = int(env_q)
+
+        self.free_doc_limit = free_doc_limit
+        self.free_question_limit = free_question_limit
         self._lock = threading.RLock()
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -161,6 +179,15 @@ class AuthManager:
                     VALUES (?, ?, ?, ?, ?, 'active', 0, ?, ?)
                     """,
                     (user_id, clean_email, clean_name, salt, pw_hash, now, now),
+                )
+                conn.execute(
+                    """
+                    INSERT OR IGNORE INTO user_quotas
+                    (user_id, plan_id, doc_limit, consumed_docs, question_limit,
+                     consumed_questions, reserved_questions, created_at, updated_at)
+                    VALUES (?, 'free', ?, 0, ?, 0, 0, ?, ?)
+                    """,
+                    (user_id, self.free_doc_limit, self.free_question_limit, now, now),
                 )
                 conn.commit()
             except sqlite3.IntegrityError:
@@ -446,6 +473,15 @@ class AuthManager:
                 VALUES (?, ?, 'google', ?, ?, ?)
                 """,
                 (identity_id, new_user_id, clean_sub, clean_email, now),
+            )
+            conn.execute(
+                """
+                INSERT OR IGNORE INTO user_quotas
+                (user_id, plan_id, doc_limit, consumed_docs, question_limit,
+                 consumed_questions, reserved_questions, created_at, updated_at)
+                VALUES (?, 'free', ?, 0, ?, 0, 0, ?, ?)
+                """,
+                (new_user_id, self.free_doc_limit, self.free_question_limit, now, now),
             )
             conn.commit()
 
@@ -1022,27 +1058,59 @@ class AuthManager:
             logger.error("Failed to migrate guest session: %s", e)
             return False
 
+    # =========================================================================
+    # SaaS Monetization, Lifetime Quotas & Subscriptions
+    # =========================================================================
 
-def set_auth_cookie(response: Response, session_token: str, request: Request | None = None) -> None:
-    is_https = False
-    if request:
-        is_https = (
-            request.url.scheme == "https" or request.headers.get("x-forwarded-proto") == "https"
-        )
-    response.set_cookie(
-        key=AUTH_COOKIE_NAME,
-        value=session_token,
-        max_age=DEFAULT_SESSION_TTL_S,
-        httponly=True,
-        samesite="lax",
-        secure=is_https,
-        path="/",
-    )
+    def _ensure_user_quota(self, conn: sqlite3.Connection, user_id: str) -> sqlite3.Row:
+        row = conn.execute(
+            """
+            SELECT user_id, plan_id, doc_limit, consumed_docs, question_limit,
+                   consumed_questions, reserved_questions, created_at, updated_at
+            FROM user_quotas WHERE user_id = ?
+            """,
+            (user_id,),
+        ).fetchone()
+        if not row:
+            now = time.time()
+            conn.execute(
+                """
+                INSERT OR IGNORE INTO user_quotas
+                (user_id, plan_id, doc_limit, consumed_docs, question_limit,
+                 consumed_questions, reserved_questions, created_at, updated_at)
+                VALUES (?, 'free', ?, 0, ?, 0, 0, ?, ?)
+                """,
+                (user_id, self.free_doc_limit, self.free_question_limit, now, now),
+            )
+            conn.commit()
+            row = conn.execute(
+                """
+                SELECT user_id, plan_id, doc_limit, consumed_docs, question_limit,
+                       consumed_questions, reserved_questions, created_at, updated_at
+                FROM user_quotas WHERE user_id = ?
+                """,
+                (user_id,),
+            ).fetchone()
+        if row is None:
+            raise RuntimeError(f"Failed to create or load quota record for user {user_id}")
+        return cast(sqlite3.Row, row)
 
+    @staticmethod
+    def _quota_row_to_dict(row: sqlite3.Row) -> dict[str, Any]:
+        return {
+            "user_id": row["user_id"],
+            "plan_id": row["plan_id"],
+            "doc_limit": row["doc_limit"],
+            "consumed_docs": row["consumed_docs"],
+            "question_limit": row["question_limit"],
+            "consumed_questions": row["consumed_questions"],
+            "reserved_questions": row["reserved_questions"],
+            "created_at": row["created_at"],
+            "updated_at": row["updated_at"],
+        }
 
-def clear_auth_cookie(response: Response) -> None:
-    response.delete_cookie(
-        key=AUTH_COOKIE_NAME,
-        path="/",
-        samesite="lax",
-    )
+    def get_user_quota(self, user_id: str) -> dict[str, Any]:
+        """Fetch current plan and quota consumption metrics for user."""
+        with self._lock, self._get_connection() as conn:
+            row = self._ensure_user_quota(conn, user_id)
+            return self._quota_row_to_dict(row)
