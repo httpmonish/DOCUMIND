@@ -633,7 +633,7 @@ def create_app(
         )
         response.headers["Content-Security-Policy"] = (
             "default-src 'self'; "
-            "script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com; "
+            "script-src 'self'; "
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
             "font-src 'self' https://fonts.gstatic.com data:; "
             "img-src 'self' data:; "
@@ -695,9 +695,7 @@ def create_app(
                 content={
                     "error": {
                         "code": "generation_disabled",
-                        "message": (
-                            "AI generation is currently disabled by administrative kill switch."
-                        ),
+                        "message": "AI generation is currently disabled by administrative kill switch.",
                     }
                 },
             )
@@ -1524,10 +1522,7 @@ def create_app(
             return JSONResponse(
                 status_code=status.HTTP_200_OK,
                 content={
-                    "text": (
-                        "AI generation is currently disabled by administrative kill switch. "
-                        "Showing retrieved candidate passages only."
-                    ),
+                    "text": "AI generation is currently disabled by administrative kill switch. Showing retrieved candidate passages only.",
                     "outcome": "retrieval_only",
                     "reason": "kill_switch_active",
                     "citations": [],
@@ -2566,6 +2561,9 @@ def create_app(
         if mock_oauth:
             mock_res: dict[str, Any] = mock_oauth(code=code, redirect_uri=redirect_uri)
             return mock_res
+
+        import urllib.parse
+        import urllib.request
 
         google_token_endpoint = "https://oauth2.googleapis.com/token"  # noqa: S105
         import httpx

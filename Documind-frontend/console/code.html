@@ -271,15 +271,15 @@ Try abstention demo →
 <g id="node-1-group" class="cursor-pointer" title="Step 1: Input Query Processing">
 <circle id="node-1-circle" cx="40" cy="40" fill="#201f1f" r="14" stroke="#ff571d" stroke-width="2"></circle>
 <text fill="#e5e2e1" font-family="JetBrains Mono" font-size="11" font-weight="600" text-anchor="middle" x="40" y="44">1</text>
-<text fill="#e5e2e1" font-family="Inter" font-size="12" font-weight="500" text-anchor="middle" x="40" y="70">Question</text>
-<text id="node-1-ms" fill="#e6beb2" font-family="JetBrains Mono" font-size="11" text-anchor="middle" x="40" y="84">0 ms</text>
+<text fill="#e5e2e1" font-family="Inter" font-size="12" font-weight="500" text-anchor="middle" x="40" y="68">Question</text>
+<text id="node-1-ms" fill="#e6beb2" font-family="JetBrains Mono" font-size="11" text-anchor="middle" x="40" y="88">0 ms</text>
 </g>
 <!-- Node 2: Embed -->
 <g id="node-2-group" class="cursor-pointer" title="Step 2: SentenceTransformer Bi-Encoder Embed">
 <circle id="node-2-circle" cx="145" cy="40" fill="#201f1f" r="14" stroke="#353534" stroke-width="2"></circle>
 <text fill="#e5e2e1" font-family="JetBrains Mono" font-size="11" font-weight="600" text-anchor="middle" x="145" y="44">2</text>
-<text fill="#e5e2e1" font-family="Inter" font-size="12" font-weight="500" text-anchor="middle" x="145" y="70">Embed</text>
-<text id="node-2-ms" fill="#e6beb2" font-family="JetBrains Mono" font-size="11" text-anchor="middle" x="145" y="84">—</text>
+<text fill="#e5e2e1" font-family="Inter" font-size="12" font-weight="500" text-anchor="middle" x="145" y="68">Embed</text>
+<text id="node-2-ms" fill="#e6beb2" font-family="JetBrains Mono" font-size="11" text-anchor="middle" x="145" y="88">—</text>
 </g>
 <!-- Node 3: Retrieve -->
 <g id="node-3-group" class="cursor-pointer" title="Step 3: ChromaDB HNSW k-NN Vector Retrieval">
@@ -290,36 +290,36 @@ Try abstention demo →
 <rect fill="#0566d9" height="15" rx="3" width="70" x="220" y="2"></rect>
 <text fill="#e6ecff" font-family="JetBrains Mono" font-size="9" font-weight="600" letter-spacing="0.05em" text-anchor="middle" x="255" y="13">ACTIVE</text>
 </g>
-<text fill="#e5e2e1" font-family="Inter" font-size="12" font-weight="500" text-anchor="middle" x="255" y="70">Retrieve</text>
-<text id="node-3-ms" fill="#e6beb2" font-family="JetBrains Mono" font-size="11" text-anchor="middle" x="255" y="84">—</text>
+<text fill="#e5e2e1" font-family="Inter" font-size="12" font-weight="500" text-anchor="middle" x="255" y="68">Retrieve</text>
+<text id="node-3-ms" fill="#e6beb2" font-family="JetBrains Mono" font-size="11" text-anchor="middle" x="255" y="88">—</text>
 </g>
 <!-- Node 4: Confidence Gate (Diamond) -->
 <g id="node-4-group" class="cursor-pointer" title="Step 4: Relevance Gate (Threshold τ = 0.35)">
 <polygon id="node-4-poly" fill="#201f1f" points="370,26 384,40 370,54 356,40" stroke="#353534" stroke-width="2"></polygon>
 <text fill="#e5e2e1" font-family="JetBrains Mono" font-size="10" font-weight="700" text-anchor="middle" x="370" y="44">4</text>
-<text fill="#e5e2e1" font-family="Inter" font-size="12" font-weight="500" text-anchor="middle" x="370" y="70">Conf. Gate</text>
-<text id="node-4-ms" fill="#e6beb2" font-family="JetBrains Mono" font-size="11" text-anchor="middle" x="370" y="84">—</text>
+<text fill="#e5e2e1" font-family="Inter" font-size="12" font-weight="500" text-anchor="middle" x="370" y="68">Conf. Gate</text>
+<text id="node-4-ms" fill="#e6beb2" font-family="JetBrains Mono" font-size="11" text-anchor="middle" x="370" y="88">—</text>
 </g>
 <!-- Node 5: Build Prompt -->
 <g id="node-5-group" class="cursor-pointer" title="Step 5: Grounded Prompt Assembly & Neighbor Expansion">
 <circle id="node-5-circle" cx="490" cy="40" fill="#201f1f" r="14" stroke="#353534" stroke-width="2"></circle>
 <text fill="#e5e2e1" font-family="JetBrains Mono" font-size="11" font-weight="600" text-anchor="middle" x="490" y="44">5</text>
-<text fill="#e5e2e1" font-family="Inter" font-size="12" font-weight="500" text-anchor="middle" x="490" y="70">Build Prompt</text>
-<text id="node-5-ms" fill="#e6beb2" font-family="JetBrains Mono" font-size="11" text-anchor="middle" x="490" y="84">—</text>
+<text fill="#e5e2e1" font-family="Inter" font-size="12" font-weight="500" text-anchor="middle" x="490" y="68">Build Prompt</text>
+<text id="node-5-ms" fill="#e6beb2" font-family="JetBrains Mono" font-size="11" text-anchor="middle" x="490" y="88">—</text>
 </g>
 <!-- Node 6: LLM -->
 <g id="node-6-group" class="cursor-pointer" title="Step 6: LLM Generation / Streaming Inference">
 <circle id="node-6-circle" cx="615" cy="40" fill="#201f1f" r="14" stroke="#353534" stroke-width="2"></circle>
 <text fill="#e5e2e1" font-family="JetBrains Mono" font-size="11" font-weight="600" text-anchor="middle" x="615" y="44">6</text>
-<text fill="#e5e2e1" font-family="Inter" font-size="12" font-weight="500" text-anchor="middle" x="615" y="70">LLM</text>
-<text id="node-6-ms" fill="#e6beb2" font-family="JetBrains Mono" font-size="11" text-anchor="middle" x="615" y="84">—</text>
+<text fill="#e5e2e1" font-family="Inter" font-size="12" font-weight="500" text-anchor="middle" x="615" y="68">LLM</text>
+<text id="node-6-ms" fill="#e6beb2" font-family="JetBrains Mono" font-size="11" text-anchor="middle" x="615" y="88">—</text>
 </g>
 <!-- Node 7: Citations -->
 <g id="node-7-group" class="cursor-pointer" title="Step 7: Verifiable Citation Extraction & Boundary Validation">
 <circle id="node-7-circle" cx="730" cy="40" fill="#201f1f" r="14" stroke="#353534" stroke-width="2"></circle>
 <text fill="#e5e2e1" font-family="JetBrains Mono" font-size="11" font-weight="600" text-anchor="middle" x="730" y="44">7</text>
-<text fill="#e5e2e1" font-family="Inter" font-size="12" font-weight="500" text-anchor="middle" x="730" y="70">Citations</text>
-<text id="node-7-ms" fill="#e6beb2" font-family="JetBrains Mono" font-size="11" text-anchor="middle" x="730" y="84">—</text>
+<text fill="#e5e2e1" font-family="Inter" font-size="12" font-weight="500" text-anchor="middle" x="730" y="68">Citations</text>
+<text id="node-7-ms" fill="#e6beb2" font-family="JetBrains Mono" font-size="11" text-anchor="middle" x="730" y="88">—</text>
 </g>
 </svg>
 </div>
