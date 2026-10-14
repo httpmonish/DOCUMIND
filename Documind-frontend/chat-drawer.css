@@ -1,31 +1,34 @@
-/* Documind Chat Drawer Component CSS */
+/* Documind Chat Drawer Component CSS — Charcoal & Orange Unified Theme */
 :root {
   --docu-chat-width: 480px;
-  --docu-chat-bg: #ffffff;
+  --docu-chat-bg: #131313;
   --docu-chat-shell: #0e0e0e;
-  --docu-chat-text: #0f172a;
-  --docu-chat-muted: #64748b;
-  --docu-chat-border: #e2e8f0;
-  --docu-chat-user-bubble: #f1f5f9;
+  --docu-chat-surface: #1c1b1b;
+  --docu-chat-surface-high: #201f1f;
+  --docu-chat-surface-highest: #2a2a2a;
+  --docu-chat-text: #e5e2e1;
+  --docu-chat-muted: #8e8a88;
+  --docu-chat-border: #2e2d2d;
+  --docu-chat-border-subtle: #242424;
+  --docu-chat-user-bubble: #252220;
   --docu-chat-primary: #ff571d;
-  --docu-chat-primary-hover: #af3100;
-  --docu-chat-blue: #2563eb;
-  --docu-chat-blue-hover: #1d4ed8;
-  --docu-chat-chip-bg: #eff6ff;
-  --docu-chat-chip-border: #bfdbfe;
-  --docu-chat-chip-text: #1d4ed8;
-  --docu-chat-green: #10b981;
+  --docu-chat-primary-hover: #ff7343;
+  --docu-chat-primary-dim: #af3100;
+  --docu-chat-chip-bg: #2a1c16;
+  --docu-chat-chip-border: #5c2c1c;
+  --docu-chat-chip-text: #ffb59f;
+  --docu-chat-green: #4edea3;
   --docu-chat-amber: #f59e0b;
-  --docu-chat-red: #ef4444;
+  --docu-chat-red: #ffb4ab;
 }
 
 /* Backdrop */
 .documind-chat-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.65);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   z-index: 99998;
   opacity: 0;
   pointer-events: none;
@@ -50,11 +53,12 @@
   z-index: 99999;
   display: flex;
   flex-direction: column;
-  box-shadow: -10px 0 36px rgba(0, 0, 0, 0.45);
+  box-shadow: -10px 0 40px rgba(0, 0, 0, 0.75);
   transform: translateX(100%);
   transition: transform 0.32s cubic-bezier(0.16, 1, 0.3, 1);
   overflow: hidden;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  border-left: 1px solid var(--docu-chat-border);
 }
 
 .documind-chat-drawer.open {
@@ -70,13 +74,13 @@
 /* Header */
 .docu-drawer-header {
   padding: 14px 18px;
-  background: #ffffff;
+  background: var(--docu-chat-bg);
   border-bottom: 1px solid var(--docu-chat-border);
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  shrink: 0;
+  flex-shrink: 0;
   z-index: 10;
 }
 
@@ -101,7 +105,7 @@
   letter-spacing: -0.015em;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
 
 .docu-drawer-status-pill {
@@ -112,9 +116,9 @@
   letter-spacing: 0.04em;
   padding: 2px 7px;
   border-radius: 9999px;
-  background: #f1f5f9;
-  color: var(--docu-chat-muted);
-  border: 1px solid var(--docu-chat-border);
+  background: var(--docu-chat-chip-bg);
+  color: var(--docu-chat-chip-text);
+  border: 1px solid var(--docu-chat-chip-border);
 }
 
 .docu-drawer-actions {
@@ -138,13 +142,13 @@
 }
 
 .docu-btn-icon:hover {
-  background: #f1f5f9;
+  background: var(--docu-chat-surface-highest);
   color: var(--docu-chat-text);
   border-color: var(--docu-chat-border);
 }
 
 .docu-btn-text {
-  background: #ffffff;
+  background: var(--docu-chat-surface);
   border: 1px solid var(--docu-chat-border);
   color: var(--docu-chat-muted);
   padding: 5px 10px;
@@ -159,20 +163,37 @@
 }
 
 .docu-btn-text:hover {
-  background: #f8fafc;
+  background: var(--docu-chat-surface-high);
   color: var(--docu-chat-text);
-  border-color: #cbd5e1;
+  border-color: #5c4038;
+}
+
+.docu-btn-primary {
+  background: var(--docu-chat-primary);
+  color: #0e0e0e;
+  border: none;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: background-color 0.15s ease;
+}
+
+.docu-btn-primary:hover {
+  background: var(--docu-chat-primary-hover);
 }
 
 /* Document Tray */
 .docu-docs-tray {
-  background: #f8fafc;
+  background: var(--docu-chat-shell);
   border-bottom: 1px solid var(--docu-chat-border);
   padding: 10px 18px;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  shrink: 0;
+  flex-shrink: 0;
 }
 
 .docu-docs-tray-header {
@@ -195,7 +216,7 @@
 }
 
 .docu-doc-chip {
-  background: #ffffff;
+  background: var(--docu-chat-surface);
   border: 1px solid var(--docu-chat-border);
   border-radius: 6px;
   padding: 3px 8px;
@@ -204,12 +225,11 @@
   align-items: center;
   gap: 6px;
   color: var(--docu-chat-text);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
 }
 
 .docu-doc-chip-badge {
-  background: #eff6ff;
-  color: #1d4ed8;
+  background: rgba(255, 87, 29, 0.15);
+  color: var(--docu-chat-primary);
   font-size: 9px;
   font-family: 'JetBrains Mono', monospace;
   padding: 1px 5px;
@@ -231,7 +251,7 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
-  background: #ffffff;
+  background: var(--docu-chat-shell);
 }
 
 /* Empty / Welcome State */
@@ -250,8 +270,8 @@
   width: 48px;
   height: 48px;
   border-radius: 12px;
-  background: #eff6ff;
-  color: var(--docu-chat-blue);
+  background: rgba(255, 87, 29, 0.12);
+  color: var(--docu-chat-primary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -292,6 +312,8 @@
   text-transform: uppercase;
   letter-spacing: 0.05em;
   padding: 0 4px;
+  display: flex;
+  align-items: center;
 }
 
 .docu-user-bubble {
@@ -307,7 +329,7 @@
 }
 
 .docu-assistant-card {
-  background: #ffffff;
+  background: var(--docu-chat-surface);
   color: var(--docu-chat-text);
   padding: 14px 16px;
   border-radius: 16px 16px 16px 4px;
@@ -315,7 +337,7 @@
   line-height: 1.6;
   width: 100%;
   border: 1px solid var(--docu-chat-border);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -344,7 +366,7 @@
   align-items: center;
   justify-content: space-between;
   padding-top: 8px;
-  border-top: 1px solid #f1f5f9;
+  border-top: 1px solid var(--docu-chat-border-subtle);
   font-size: 11px;
   color: var(--docu-chat-muted);
   font-family: 'JetBrains Mono', monospace;
@@ -354,10 +376,11 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  background: #f8fafc;
+  background: var(--docu-chat-surface-high);
   padding: 2px 7px;
   border-radius: 4px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--docu-chat-border);
+  color: var(--docu-chat-text);
 }
 
 /* Citation Pills */
@@ -381,8 +404,8 @@
 }
 
 .docu-citation-pill:hover {
-  background: #dbeafe;
-  border-color: #93c5fd;
+  background: #3d2319;
+  border-color: var(--docu-chat-primary);
   transform: translateY(-1px);
 }
 
@@ -396,9 +419,9 @@
 
 /* Status Banners */
 .docu-banner-abstain {
-  background: #fff7ed;
-  border: 1px solid #fed7aa;
-  color: #9a3412;
+  background: rgba(255, 87, 29, 0.08);
+  border: 1px solid rgba(255, 87, 29, 0.3);
+  color: #ffb59f;
   border-radius: 8px;
   padding: 10px 12px;
   font-size: 12.5px;
@@ -409,9 +432,9 @@
 }
 
 .docu-banner-unconfigured {
-  background: #fefce8;
-  border: 1px solid #fef08a;
-  color: #854d0e;
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: #fbbf24;
   border-radius: 8px;
   padding: 12px 14px;
   font-size: 12.5px;
@@ -422,9 +445,9 @@
 }
 
 .docu-banner-error {
-  background: #fef2f2;
-  border: 1px solid #fecaca;
-  color: #991b1b;
+  background: rgba(255, 180, 171, 0.1);
+  border: 1px solid rgba(255, 180, 171, 0.3);
+  color: var(--docu-chat-red);
   border-radius: 8px;
   padding: 10px 12px;
   font-size: 12.5px;
@@ -441,13 +464,13 @@
   right: 0;
   bottom: 0;
   left: 0;
-  background: #ffffff;
+  background: var(--docu-chat-bg);
   z-index: 20;
   display: flex;
   flex-direction: column;
   transform: translateY(100%);
   transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.45);
 }
 
 .docu-evidence-drawer.active {
@@ -472,7 +495,7 @@
 }
 
 .docu-evidence-snippet {
-  background: #f8fafc;
+  background: var(--docu-chat-shell);
   border: 1px solid var(--docu-chat-border);
   border-radius: 8px;
   padding: 14px;
@@ -486,19 +509,19 @@
 /* Bottom Composer */
 .docu-composer-tray {
   padding: 14px 18px;
-  background: #ffffff;
+  background: var(--docu-chat-bg);
   border-top: 1px solid var(--docu-chat-border);
   display: flex;
   flex-direction: column;
   gap: 8px;
-  shrink: 0;
+  flex-shrink: 0;
 }
 
 .docu-composer-wrapper {
   display: flex;
   align-items: flex-end;
   gap: 8px;
-  background: #f8fafc;
+  background: var(--docu-chat-surface);
   border: 1.5px solid var(--docu-chat-border);
   border-radius: 16px;
   padding: 8px 10px;
@@ -506,9 +529,9 @@
 }
 
 .docu-composer-wrapper:focus-within {
-  border-color: var(--docu-chat-blue);
-  background: #ffffff;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  border-color: var(--docu-chat-primary);
+  background: var(--docu-chat-surface-high);
+  box-shadow: 0 0 0 2px rgba(255, 87, 29, 0.2);
 }
 
 .docu-composer-textarea {
@@ -527,31 +550,32 @@
 }
 
 .docu-composer-textarea::placeholder {
-  color: #94a3b8;
+  color: #6e6a68;
 }
 
 .docu-btn-send {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: var(--docu-chat-blue);
-  color: #ffffff;
+  background: var(--docu-chat-primary);
+  color: #0e0e0e;
   border: none;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: background-color 0.15s ease, transform 0.1s ease;
-  shrink: 0;
+  flex-shrink: 0;
 }
 
 .docu-btn-send:hover {
-  background: var(--docu-chat-blue-hover);
+  background: var(--docu-chat-primary-hover);
   transform: scale(1.05);
 }
 
 .docu-btn-send:disabled {
-  background: #cbd5e1;
+  background: #353534;
+  color: #6e6a68;
   cursor: not-allowed;
   transform: none;
 }
@@ -566,12 +590,122 @@
   padding: 0 4px;
 }
 
+/* History Drawer Overlay */
+.docu-history-drawer {
+  position: absolute;
+  top: 61px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--docu-chat-bg);
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  animation: docuFadeIn 0.2s ease;
+}
+
+@keyframes docuFadeIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.docu-history-header {
+  padding: 12px 16px;
+  background: var(--docu-chat-surface);
+  border-bottom: 1px solid var(--docu-chat-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--docu-chat-muted);
+}
+
+.docu-history-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.docu-history-item {
+  padding: 10px 12px;
+  background: var(--docu-chat-surface);
+  border: 1px solid var(--docu-chat-border);
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  transition: all 0.15s ease;
+}
+
+.docu-history-item:hover {
+  background: var(--docu-chat-surface-high);
+  border-color: #5c4038;
+  transform: translateY(-1px);
+}
+
+.docu-history-item.active {
+  background: var(--docu-chat-chip-bg);
+  border-color: var(--docu-chat-primary);
+}
+
+.docu-history-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.docu-history-item-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--docu-chat-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.docu-history-item-date {
+  font-size: 11px;
+  color: var(--docu-chat-muted);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.docu-history-delete-btn {
+  background: transparent;
+  border: none;
+  color: var(--docu-chat-muted);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.6;
+  transition: opacity 0.15s ease, color 0.15s ease;
+}
+
+.docu-history-delete-btn:hover {
+  opacity: 1;
+  color: var(--docu-chat-red);
+}
+
 /* Reduced Motion Override */
 @media (prefers-reduced-motion: reduce) {
   .documind-chat-drawer,
   .documind-chat-backdrop,
-  .docu-evidence-drawer {
+  .docu-evidence-drawer,
+  .docu-history-drawer {
     transition: none !important;
+    animation: none !important;
   }
   .docu-streaming-cursor {
     animation: none !important;

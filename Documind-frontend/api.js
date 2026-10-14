@@ -18,12 +18,35 @@
 
   const DEFAULT_TIMEOUT_MS = 35000;
 
+  function getAuthToken() {
+    if (typeof window === "undefined") return null;
+    try {
+      return (window.localStorage && window.localStorage.getItem("documind_auth_token")) ||
+             (window.sessionStorage && window.sessionStorage.getItem("documind_auth_token")) || null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function setAuthToken(token) {
+    if (typeof window === "undefined") return;
+    try {
+      if (token) {
+        if (window.localStorage) window.localStorage.setItem("documind_auth_token", token);
+        if (window.sessionStorage) window.sessionStorage.setItem("documind_auth_token", token);
+      } else {
+        if (window.localStorage) window.localStorage.removeItem("documind_auth_token");
+        if (window.sessionStorage) window.sessionStorage.removeItem("documind_auth_token");
+      }
+    } catch (_) {}
+  }
+
   function getBaseUrl() {
     if (typeof window !== "undefined" && window.DOCUMIND_API_URL) {
       return window.DOCUMIND_API_URL.replace(/\/+$/, "");
     }
     // If running in browser and protocol is http/https, default to origin or local API
-    if (typeof window !== "undefined" && window.location && window.location.origin) {
+    if (typeof window !== "undefined" && window.location && window.location.origin && window.location.origin !== "null") {
       if (window.location.port === "5500") {
         return "http://127.0.0.1:8000";
       }
@@ -35,15 +58,28 @@
   let _sessionPromise = null;
 
   function getSessionId() {
-    if (typeof window === "undefined" || !window.sessionStorage) {
+    if (typeof window === "undefined") {
       return null;
     }
-    return window.sessionStorage.getItem("documind_session_id") || null;
+    try {
+      if (window.sessionStorage) {
+        const sid = window.sessionStorage.getItem("documind_session_id");
+        if (sid && sid.length >= 16) return sid;
+      }
+      if (window.localStorage) {
+        const sid = window.localStorage.getItem("documind_session_id");
+        if (sid && sid.length >= 16) {
+          if (window.sessionStorage) window.sessionStorage.setItem("documind_session_id", sid);
+          return sid;
+        }
+      }
+    } catch (_) {}
+    return null;
   }
 
   async function initSession(forceNew = false) {
-    if (!forceNew && typeof window !== "undefined" && window.sessionStorage) {
-      const existing = window.sessionStorage.getItem("documind_session_id");
+    if (!forceNew) {
+      const existing = getSessionId();
       if (existing && existing.length >= 16) {
         return existing;
       }
@@ -58,13 +94,15 @@
         const res = await fetch(`${baseUrl}/api/demo/session`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
+          credentials: "include",
         });
         if (res.ok) {
           const data = await res.json();
           if (data && data.session_id) {
-            if (typeof window !== "undefined" && window.sessionStorage) {
-              window.sessionStorage.setItem("documind_session_id", data.session_id);
-            }
+            try {
+              if (window.sessionStorage) window.sessionStorage.setItem("documind_session_id", data.session_id);
+              if (window.localStorage) window.localStorage.setItem("documind_session_id", data.session_id);
+            } catch (_) {}
             return data.session_id;
           }
         }
@@ -88,7 +126,8 @@
     const timeoutMs = options.timeoutMs || DEFAULT_TIMEOUT_MS;
 
     let sid = getSessionId();
-    if (!sid && endpoint !== "/api/demo/session" && endpoint !== "/healthz") {
+    const authToken = getAuthToken();
+    if (!sid && !authToken && endpoint !== "/api/demo/session" && endpoint !== "/healthz") {
       try {
         sid = await initSession();
       } catch (sessErr) {
@@ -100,6 +139,9 @@
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
     const headers = new Headers(options.headers || {});
+    if (authToken && !headers.has("Authorization")) {
+      headers.set("Authorization", `Bearer ${authToken}`);
+    }
     if (sid && !headers.has("X-Session-ID")) {
       headers.set("X-Session-ID", sid);
     }
@@ -107,6 +149,7 @@
     const fetchOptions = {
       method: options.method || "GET",
       headers: headers,
+      credentials: "include",
       signal: controller.signal,
     };
 
@@ -192,8 +235,11 @@
     getSessionId,
 
     resetSession() {
-      if (typeof window !== "undefined" && window.sessionStorage) {
-        window.sessionStorage.removeItem("documind_session_id");
+      if (typeof window !== "undefined") {
+        try {
+          if (window.sessionStorage) window.sessionStorage.removeItem("documind_session_id");
+          if (window.localStorage) window.localStorage.removeItem("documind_session_id");
+        } catch (_) {}
       }
       return getSessionId();
     },
@@ -220,6 +266,22 @@
     async deleteDocument(source) {
       return request(`/api/demo/documents/${encodeURIComponent(source)}`, {
         method: "DELETE",
+      });
+    },
+
+    async getRecentDocuments(limit = 10) {
+      return request(`/api/demo/documents/recent?limit=${encodeURIComponent(limit)}`);
+    },
+
+    async getDocument(source) {
+      return request(`/api/demo/documents/${encodeURIComponent(source)}`);
+    },
+
+    async renameDocument(source, displayName) {
+      return request(`/api/demo/documents/${encodeURIComponent(source)}/rename`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ display_name: displayName }),
       });
     },
 
@@ -270,6 +332,32 @@
       return request("/api/demo/conversations");
     },
 
+    async createConversation(title = "New Conversation", documentId = null) {
+      return request("/api/demo/conversations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title, document_id: documentId }),
+      });
+    },
+
+    async getConversation(conversationId) {
+      return request(`/api/demo/conversations/${encodeURIComponent(conversationId)}`);
+    },
+
+    async renameConversation(conversationId, title) {
+      return request(`/api/demo/conversations/${encodeURIComponent(conversationId)}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title }),
+      });
+    },
+
+    async archiveConversation(conversationId) {
+      return request(`/api/demo/conversations/${encodeURIComponent(conversationId)}/archive`, {
+        method: "POST",
+      });
+    },
+
     async getConversationMessages(conversationId) {
       return request(`/api/demo/conversations/${encodeURIComponent(conversationId)}/messages`);
     },
@@ -300,16 +388,28 @@
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
+      let sid = getSessionId();
+      const authToken = getAuthToken();
+      if (!sid && !authToken) {
+        try {
+          sid = await initSession();
+        } catch (_) {}
+      }
+
       const headers = new Headers(options.headers || {});
       headers.set("Content-Type", "application/json");
-      if (!headers.has("X-Session-ID")) {
-        headers.set("X-Session-ID", getSessionId());
+      if (authToken && !headers.has("Authorization")) {
+        headers.set("Authorization", `Bearer ${authToken}`);
+      }
+      if (sid && !headers.has("X-Session-ID")) {
+        headers.set("X-Session-ID", sid);
       }
 
       try {
         const res = await fetch(url, {
           method: "POST",
           headers: headers,
+          credentials: "include",
           body: JSON.stringify({
             question: question,
             conversation_id: conversationId || null,
@@ -385,15 +485,18 @@
     },
 
     async newSession() {
-      if (typeof window !== "undefined" && window.sessionStorage) {
-        window.sessionStorage.removeItem("documind_session_id");
+      if (typeof window !== "undefined") {
+        try {
+          if (window.sessionStorage) window.sessionStorage.removeItem("documind_session_id");
+          if (window.localStorage) window.localStorage.removeItem("documind_session_id");
+        } catch (_) {}
       }
       return initSession(true);
     },
 
     async register(email, password, claimGuest = true, displayName = null) {
       const guestSid = claimGuest ? getSessionId() : null;
-      return request("/api/auth/register", {
+      const res = await request("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -403,11 +506,15 @@
           claim_guest_session: guestSid,
         }),
       });
+      if (res && res.token) {
+        setAuthToken(res.token);
+      }
+      return res;
     },
 
     async login(email, password, claimGuest = true) {
       const guestSid = claimGuest ? getSessionId() : null;
-      return request("/api/auth/login", {
+      const res = await request("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -416,11 +523,34 @@
           claim_guest_session: guestSid,
         }),
       });
+      if (res && res.token) {
+        setAuthToken(res.token);
+      }
+      return res;
     },
 
     async logout() {
-      return request("/api/auth/logout", {
-        method: "POST",
+      try {
+        return await request("/api/auth/logout", {
+          method: "POST",
+        });
+      } finally {
+        setAuthToken(null);
+      }
+    },
+
+    async getProfile() {
+      return request("/api/auth/profile");
+    },
+
+    async updateProfile(data = {}) {
+      return request("/api/auth/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          display_name: data.displayName || data.display_name,
+          avatar_url: data.avatarUrl || data.avatar_url,
+        }),
       });
     },
 
@@ -701,7 +831,6 @@
   // Cross-view Navigation handler
   function bindNavigation() {
     const pathMap = {
-      chat: "../chat.html",
       architecture: "../architecture/code.html",
       console: "../console/code.html",
       proof: "../proof/code.html",
@@ -710,7 +839,19 @@
       compliance: "../proof/code.html",
     };
     document.querySelectorAll("[data-path]").forEach((el) => {
-      const target = pathMap[el.getAttribute("data-path")];
+      const path = el.getAttribute("data-path");
+      if (path === "chat") {
+        el.addEventListener("click", (e) => {
+          e.preventDefault();
+          if (window.DocuMindChatDrawer && typeof window.DocuMindChatDrawer.open === "function") {
+            window.DocuMindChatDrawer.open();
+          } else {
+            window.location.href = "../console/code.html?chat=open";
+          }
+        });
+        return;
+      }
+      const target = pathMap[path];
       if (target) {
         el.addEventListener("click", (e) => {
           e.preventDefault();

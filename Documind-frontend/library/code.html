@@ -8,7 +8,7 @@
     scroll-behavior: auto !important;
   }
 }
-</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = {
+</style><script src="../vendor/tailwindcss.js"></script><script id="tailwind-config">tailwind.config = {
     darkMode: "class",
     theme: {
       extend: {
@@ -183,7 +183,7 @@
         }
       },
     },
-  }</script></head><body class="bg-surface-container-lowest font-body-sm text-body-sm text-on-surface antialiased"><header class="fixed top-0 left-0 w-full z-50 bg-surface-container-lowest border-b border-surface-variant"><div class="h-14 w-full px-space-xl flex items-center justify-between"><div class="flex items-center gap-space-xl"><div class="flex items-center gap-space-md"><svg class="h-8 w-8 object-contain shrink-0" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><polygon points="16,2 29,9.5 29,24.5 16,32 3,24.5 3,9.5" fill="#201f1f" stroke="#ff571d" stroke-width="2"/><circle cx="16" cy="17" r="4.5" fill="#ff571d"/><path d="M16 6v6.5M8.5 21.5l5.5-3M23.5 21.5l-5.5-3" stroke="#e5e2e1" stroke-width="1.5" stroke-linecap="round"/></svg><span class="font-headline-sm text-headline-sm text-on-surface tracking-tight">DocuMind</span></div><nav class="hidden md:flex items-center gap-space-xl" data-active-classes="text-on-surface font-headline-sm text-headline-sm"><a class="font-headline-sm text-headline-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="architecture" href="#">Architecture</a><a class="font-headline-sm text-headline-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="console" href="#">Console</a><a aria-current="page" class="transition-colors text-on-surface font-headline-sm text-headline-sm" data-path="library" href="#">Library</a><a class="font-headline-sm text-headline-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="proof" href="#">Proof</a></nav></div><div class="flex items-center gap-space-lg"><div class="hidden sm:flex items-center gap-space-xs px-space-md py-space-xs bg-surface-container-low border border-surface-variant rounded-DEFAULT"><span class="w-1.5 h-1.5 rounded-full bg-tertiary inline-block"></span></div><a class="inline-flex items-center justify-center px-space-lg py-space-xs bg-primary-container hover:bg-inverse-primary text-on-primary-container font-code-sm text-code-sm tracking-wider uppercase rounded-xl transition-colors font-medium" data-path="chat" href="../chat.html">LAUNCH CHAT ↗</a><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="w-full pt-14 bg-surface-container-lowest min-h-screen"><div class="flex flex-col w-full">
+  }</script></head><body class="bg-surface-container-lowest font-body-sm text-body-sm text-on-surface antialiased"><header class="fixed top-0 left-0 w-full z-50 bg-surface-container-lowest border-b border-surface-variant"><div class="h-14 w-full px-space-xl flex items-center justify-between"><div class="flex items-center gap-space-xl"><div class="flex items-center gap-space-md"><svg class="h-8 w-8 object-contain shrink-0" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><polygon points="16,2 29,9.5 29,24.5 16,32 3,24.5 3,9.5" fill="#201f1f" stroke="#ff571d" stroke-width="2"/><circle cx="16" cy="17" r="4.5" fill="#ff571d"/><path d="M16 6v6.5M8.5 21.5l5.5-3M23.5 21.5l-5.5-3" stroke="#e5e2e1" stroke-width="1.5" stroke-linecap="round"/></svg><span class="font-headline-sm text-headline-sm text-on-surface tracking-tight">DocuMind</span></div><nav class="hidden md:flex items-center gap-space-xl" data-active-classes="text-on-surface font-headline-sm text-headline-sm"><a class="font-headline-sm text-headline-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="architecture" href="#">Architecture</a><a class="font-headline-sm text-headline-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="console" href="#">Console</a><a aria-current="page" class="transition-colors text-on-surface font-headline-sm text-headline-sm" data-path="library" href="#">Library</a><a class="font-headline-sm text-headline-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="proof" href="#">Proof</a></nav></div><div class="flex items-center gap-space-lg"><a class="inline-flex items-center justify-center px-space-lg py-space-xs bg-primary-container hover:bg-inverse-primary text-on-primary-container font-code-sm text-code-sm tracking-wider uppercase rounded-xl transition-colors font-medium" data-path="chat" href="../chat.html">LAUNCH CHAT ↗</a><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="w-full pt-14 bg-surface-container-lowest min-h-screen"><div class="flex flex-col w-full">
 <div class="w-full bg-[#0A0A0B] text-[#ECEAE6] min-h-[calc(100vh-3.5rem)] flex flex-col select-none">
 <!-- Top Ingestion & Step Pipeline -->
 <div class="w-full bg-[#111113] border-b border-[#26262A] px-4 py-3">
@@ -523,7 +523,67 @@ Delete this document
     function renderEmptyWorkspace() {
       selectedDocName.textContent = "NO DOCUMENT LOADED";
       selectedChunkFocus.textContent = "FOCUS: NONE";
-      chunkStreamViewport.innerHTML = '<div class="h-64 flex flex-col items-center justify-center text-center p-6 border border-dashed border-[#26262A] rounded-sm text-[#8A8690]"><span class="material-symbols-outlined text-4xl mb-2 text-[#F05A24]">description</span><div class="font-semibold text-sm text-[#ECEAE6]">Workspace is Empty</div><p class="text-xs max-w-sm mt-1">Upload a PDF, TXT or MD document above to begin chunking, embedding, and grounded questioning.</p></div>';
+
+      const emptyDiv = document.createElement("div");
+      emptyDiv.id = "empty-workspace-upload";
+      emptyDiv.tabIndex = 0;
+      emptyDiv.setAttribute("role", "button");
+      emptyDiv.setAttribute("aria-label", "Upload document to workspace");
+      emptyDiv.className = "h-72 flex flex-col items-center justify-center text-center p-6 border border-dashed border-[#26262A] hover:border-[#F05A24]/80 bg-[#0A0A0B]/60 hover:bg-[#121215] rounded-sm text-[#8A8690] cursor-pointer transition-all duration-200 group focus:outline-none focus:border-[#F05A24] select-none";
+      emptyDiv.innerHTML = `
+        <div class="w-12 h-12 rounded-sm bg-[#161619] border border-[#26262A] group-hover:border-[#F05A24]/60 flex items-center justify-center mb-3 text-[#F05A24] group-hover:scale-105 transition-all">
+          <span class="material-symbols-outlined text-[26px]">upload_file</span>
+        </div>
+        <div class="font-semibold text-sm text-[#ECEAE6] group-hover:text-white transition-colors">Workspace is Empty</div>
+        <p class="text-xs max-w-sm mt-1.5 text-[#8A8690] group-hover:text-[#ECEAE6]/90 transition-colors">
+          Click to upload a PDF, TXT or MD document from your computer, or drag and drop files here.
+        </p>
+        <div class="mt-4 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-sm bg-[#161619] border border-[#26262A] group-hover:border-[#F05A24] group-hover:bg-[#F05A24] text-[#ECEAE6] group-hover:text-black font-code-sm text-[11px] font-medium transition-all shadow-sm">
+          <span class="material-symbols-outlined text-[15px]">folder_open</span>
+          <span>BROWSE LOCAL FILES</span>
+        </div>
+      `;
+
+      emptyDiv.addEventListener("click", () => {
+        if (fileInput) fileInput.click();
+      });
+
+      emptyDiv.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " " || e.key === "Spacebar") {
+          e.preventDefault();
+          if (fileInput) fileInput.click();
+        }
+      });
+
+      let localDrag = 0;
+      emptyDiv.addEventListener("dragenter", (e) => {
+        e.preventDefault();
+        localDrag++;
+        emptyDiv.classList.add("border-[#F05A24]", "bg-[#F05A24]/10");
+      });
+      emptyDiv.addEventListener("dragover", (e) => {
+        e.preventDefault();
+      });
+      emptyDiv.addEventListener("dragleave", (e) => {
+        e.preventDefault();
+        localDrag--;
+        if (localDrag <= 0) {
+          localDrag = 0;
+          emptyDiv.classList.remove("border-[#F05A24]", "bg-[#F05A24]/10");
+        }
+      });
+      emptyDiv.addEventListener("drop", (e) => {
+        e.preventDefault();
+        localDrag = 0;
+        emptyDiv.classList.remove("border-[#F05A24]", "bg-[#F05A24]/10");
+        if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]) {
+          handleFileUpload(e.dataTransfer.files[0]);
+        }
+      });
+
+      chunkStreamViewport.innerHTML = "";
+      chunkStreamViewport.appendChild(emptyDiv);
+
       chunkStreamTokens.textContent = "TOTAL STREAM TOKENS: 0";
       inspectorId.textContent = "—";
       inspectorWords.textContent = "—";
@@ -541,7 +601,18 @@ Delete this document
 
     function renderDocumentList() {
       if (currentDocuments.length === 0) {
-        docListContainer.innerHTML = '<div class="p-4 text-[#8A8690] text-xs text-center">No documents yet. Upload a file to begin.</div>';
+        docListContainer.innerHTML = `
+          <div class="p-6 text-center text-xs text-[#8A8690] flex flex-col items-center justify-center gap-2">
+            <p>No documents yet.</p>
+            <button id="btn-upload-doc-empty" type="button" class="mt-1 px-3 py-1.5 text-[11px] font-code-sm text-[#F05A24] bg-[#161619] border border-[#26262A] hover:border-[#F05A24] rounded-sm transition-colors flex items-center gap-1.5 cursor-pointer">
+              <span class="material-symbols-outlined text-[14px]">upload_file</span>Upload file
+            </button>
+          </div>
+        `;
+        const btnUploadDoc = document.getElementById("btn-upload-doc-empty");
+        if (btnUploadDoc && fileInput) {
+          btnUploadDoc.addEventListener("click", () => fileInput.click());
+        }
         return;
       }
 
@@ -554,17 +625,19 @@ Delete this document
           : "p-3 hover:bg-[#151518] cursor-pointer transition-colors border-l-2 border-l-transparent";
 
         const shaShort = doc.sha256 ? `${doc.sha256.substring(0, 6)}…${doc.sha256.substring(doc.sha256.length - 4)}` : "—";
+        const displayName = doc.display_name || doc.source;
+        const lastAccess = doc.last_accessed_at ? new Date(doc.last_accessed_at * 1000).toLocaleDateString() : "";
         row.innerHTML = `
           <div class="flex items-center justify-between gap-1 mb-1">
-            <span class="text-[#ECEAE6] text-[13px] font-medium truncate">${escapeHtml(doc.source)}</span>
+            <span class="text-[#ECEAE6] text-[13px] font-medium truncate" title="${escapeHtml(displayName)}">${escapeHtml(displayName)}</span>
             <div class="flex items-center gap-1">
               <span class="w-1.5 h-1.5 rounded-full bg-[#3DD6A0]"></span>
-              <span class="text-[10px] text-[#3DD6A0] uppercase font-semibold">Indexed</span>
+              <span class="text-[10px] text-[#3DD6A0] uppercase font-semibold">${escapeHtml(doc.status || "Indexed")}</span>
             </div>
           </div>
           <div class="text-[#8A8690] text-[11px] flex items-center justify-between">
-            <span>${doc.chunks || 0} chunks</span>
-            <span>${shaShort}</span>
+            <span>${doc.chunks || doc.chunk_count || 0} chunks</span>
+            <span>${lastAccess || shaShort}</span>
           </div>
           ${isSelected ? '<div class="mt-2 text-[10px] text-[#F05A24] font-semibold tracking-wider uppercase">ACTIVE FOCUS</div>' : ""}
         `;
@@ -577,7 +650,8 @@ Delete this document
     async function selectDocument(doc) {
       activeDoc = doc;
       renderDocumentList();
-      selectedDocName.textContent = doc.source;
+      selectedDocName.textContent = doc.display_name || doc.source;
+      DocuMindAPI.getDocument(doc.source).catch(() => {});
       const storedCard = document.getElementById("stored-chroma-card");
       if (storedCard) storedCard.classList.remove("hidden");
       chunkStreamViewport.innerHTML = '<div class="p-8 text-center text-[#8A8690] text-xs"><span class="animate-pulse">Loading chunks from ChromaDB…</span></div>';
@@ -695,7 +769,9 @@ Delete this document
 
       fileInput.addEventListener("change", (e) => {
         if (e.target.files && e.target.files[0]) {
-          handleFileUpload(e.target.files[0]);
+          const pickedFile = e.target.files[0];
+          fileInput.value = "";
+          handleFileUpload(pickedFile);
         }
       });
 
@@ -730,16 +806,22 @@ Delete this document
     }
 
     async function handleFileUpload(file, replace = false) {
-      // Check authentication before attempting upload
+      // Ensure authenticated or active guest session before attempting upload
       try {
         const authState = await DocuMindAPI.getAuthUser();
         if (!authState || !authState.authenticated) {
+          const sid = await DocuMindAPI.initSession();
+          if (!sid) {
+            window.location.href = `/app/auth.html?reason=auth_required&redirect=${encodeURIComponent(window.location.href)}`;
+            return;
+          }
+        }
+      } catch (e) {
+        const sid = await DocuMindAPI.initSession().catch(() => null);
+        if (!sid) {
           window.location.href = `/app/auth.html?reason=auth_required&redirect=${encodeURIComponent(window.location.href)}`;
           return;
         }
-      } catch (e) {
-        window.location.href = `/app/auth.html?reason=auth_required&redirect=${encodeURIComponent(window.location.href)}`;
-        return;
       }
 
       const allowed = [".pdf", ".txt", ".md"];
@@ -787,10 +869,14 @@ Delete this document
         setStepState("store", "done");
 
         const elapsedSec = ((performance.now() - startTime) / 1000).toFixed(2);
+        const chunkCount = result.chunks != null ? result.chunks : (result.chunk_count || 0);
         dropZoneText.textContent = `Successfully indexed ${file.name}`;
-        dropZoneSubtext.textContent = `${result.chunks || 0} chunks created in ${elapsedSec}s`;
+        dropZoneSubtext.textContent = `${chunkCount} chunks created in ${elapsedSec}s`;
 
         await loadDocuments();
+        if (typeof window.refreshWorkspaceStatus === "function") {
+          window.refreshWorkspaceStatus();
+        }
         if (fileInput) fileInput.value = "";
       } catch (err) {
         console.error("Upload failed:", err);
@@ -802,8 +888,10 @@ Delete this document
           }
         }
         setStepState("store", "error");
-        dropZoneText.textContent = `Upload failed: ${err.message}`;
-        dropZoneSubtext.textContent = "Please verify document contents and try again.";
+        const errCode = err.code || `HTTP_${err.status || 500}`;
+        dropZoneText.textContent = `Upload / Indexing failed (${errCode})`;
+        dropZoneSubtext.textContent = err.message || "Please verify document contents and try again.";
+        alert(`Document upload failed (${errCode}): ${err.message}`);
       }
     }
 
