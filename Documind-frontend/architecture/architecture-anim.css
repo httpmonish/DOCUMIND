@@ -1,0 +1,128 @@
+/* =========================================================================
+   DOCUMIND ARCHITECTURE DIAGRAM ANIMATION STYLES
+   Confined strictly to the Hero Isometric Exploded Stack diagram.
+   ========================================================================= */
+
+#hero-arch-diagram-wrap {
+  position: relative;
+  transition: border-color 0.2s ease;
+}
+
+/* Stage status indicator header */
+.arch-ctrl-bar {
+  position: absolute;
+  top: 12px;
+  left: 14px;
+  z-index: 25;
+  pointer-events: none;
+}
+
+/* Stage status indicator pill */
+.arch-stage-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  background: rgba(20, 20, 22, 0.88);
+  border: 1px solid rgba(92, 64, 56, 0.6);
+  border-radius: 6px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  max-width: 85%;
+  overflow: hidden;
+  user-select: none;
+}
+
+.arch-live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #ff571d;
+  box-shadow: 0 0 6px rgba(255, 87, 29, 0.8);
+  flex-shrink: 0;
+}
+
+.arch-live-dot.is-paused {
+  background-color: #8A8690;
+  box-shadow: none;
+}
+
+.arch-stage-text {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: #ff8c53;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 500;
+}
+  pointer-events: none;
+}
+
+.arch-footer-telemetry span.active-outcome {
+  color: #ff8c53;
+  font-weight: 600;
+}
+
+/* SVG dynamic elements smoothing */
+#arch-anim-svg {
+  filter: drop-shadow(0 2px 8px rgba(0,0,0,0.4));
+}
+
+#layer-doc, #layer-chunk, #layer-vector, #layer-store {
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease;
+}
+
+.arch-chunk {
+  transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease;
+  transform-origin: center;
+}
+
+.arch-chunk polygon {
+  transition: stroke 0.3s ease, fill 0.3s ease, stroke-width 0.3s ease;
+}
+
+.arch-chunk.is-retrieved polygon {
+  stroke: #ff571d !important;
+  stroke-width: 1.8px !important;
+  fill: #2c1a14 !important;
+  filter: drop-shadow(0 0 6px rgba(255, 87, 29, 0.7));
+}
+
+.arch-chunk.is-retrieved text {
+  fill: #ff8c53 !important;
+  font-weight: 700 !important;
+}
+
+.arch-chunk.is-subdued {
+  opacity: 0.2 !important;
+}
+
+/* Vector bars animation */
+.arch-vector-spike {
+  transition: y2 0.35s cubic-bezier(0.16, 1, 0.3, 1), stroke 0.25s ease, opacity 0.25s ease;
+}
+
+/* Pulse animation utility */
+@keyframes arch-pulse-glow {
+  0% { transform: scale(1); opacity: 0.9; }
+  50% { transform: scale(1.08); opacity: 1; filter: drop-shadow(0 0 8px #ff571d); }
+  100% { transform: scale(1); opacity: 0.9; }
+}
+
+@keyframes arch-laser-scan {
+  0% { transform: translateY(0); opacity: 0; }
+  20% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { transform: translateY(45px); opacity: 0; }
+}
+
+/* prefers-reduced-motion accessibility */
+@media (prefers-reduced-motion: reduce) {
+  #layer-doc, #layer-chunk, #layer-vector, #layer-store,
+  .arch-chunk, .arch-vector-spike, .arch-scrubber-progress {
+    transition: none !important;
+    animation: none !important;
+  }
+}
