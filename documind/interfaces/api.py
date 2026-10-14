@@ -43,6 +43,12 @@ from pydantic import BaseModel, ConfigDict, field_validator
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.responses import StreamingResponse
 
+from documind.core.billing import (
+    BillingError,
+    QuotaExceededError,
+    RazorpayManager,
+    get_default_plans,
+)
 from documind.core.chat import ChatManager
 from documind.core.citations import parse_citations
 from documind.core.condense import condense_query
@@ -136,6 +142,21 @@ class ChatRequest(BaseModel):
         if not (1 <= v <= 10):
             raise ValueError("top_k must be an integer between 1 and 10")
         return v
+
+
+class CheckoutPayload(BaseModel):
+    plan_id: str
+
+
+class VerifyPaymentPayload(BaseModel):
+    plan_id: str
+    order_id: str
+    payment_id: str
+    signature: str
+
+
+class CancelSubscriptionPayload(BaseModel):
+    reason: str | None = None
 
 
 class AnalyzeRequest(BaseModel):
@@ -471,6 +492,40 @@ def register_exception_handlers(app: FastAPI) -> None:
             request_id=req_id,
         )
 
+    @app.exception_handler(QuotaExceededError)
+    def handle_quota_exceeded(request: Request, exc: QuotaExceededError) -> JSONResponse:
+        req_id = _get_request_id(request)
+        return JSONResponse(
+            status_code=status.HTTP_403_FORBIDDEN,
+            content={
+                "detail": exc.message,
+                "code": exc.code,
+                "quota": exc.quota,
+                "upgrade_url": "/app/console/code.html#upgrade",
+            },
+            headers={
+                "X-Request-ID": req_id,
+                "X-Content-Type-Options": "nosniff",
+                "Cache-Control": "no-store",
+            },
+        )
+
+    @app.exception_handler(BillingError)
+    def handle_billing_error(request: Request, exc: BillingError) -> JSONResponse:
+        req_id = _get_request_id(request)
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            content={
+                "detail": str(exc),
+                "code": "BILLING_ERROR",
+            },
+            headers={
+                "X-Request-ID": req_id,
+                "X-Content-Type-Options": "nosniff",
+                "Cache-Control": "no-store",
+            },
+        )
+
     @app.exception_handler(DocuMindError)
     def handle_documind_error(request: Request, exc: DocuMindError) -> JSONResponse:
         req_id = _get_request_id(request)
@@ -567,6 +622,13 @@ def create_app(
     app.state.auth_manager = AuthManager(
         db_path=Path(app_settings.home) / "auth.db",
         database_url=app_settings.database_url,
+        free_doc_limit=getattr(app_settings, "free_doc_limit", 1),
+        free_question_limit=getattr(app_settings, "free_question_limit", 5),
+    )
+    app.state.razorpay_manager = RazorpayManager(
+        key_id=getattr(app_settings, "razorpay_key_id", ""),
+        key_secret=getattr(app_settings, "razorpay_key_secret", ""),
+        webhook_secret=getattr(app_settings, "razorpay_webhook_secret", ""),
     )
     app.state.limiter = limiter or TokenBucketLimiter(rate_per_min=app_settings.rate_limit_per_min)
     app.state.multi_limiter = MultiActionRateLimiter()
@@ -899,6 +961,12 @@ def create_app(
                     detail="Document already exists. Set replace=true to overwrite.",
                 )
 
+        # Check and reserve document quota for authenticated users
+        doc_reserved = False
+        if auth_mgr and user and not user.id.startswith("guest_"):
+            auth_mgr.check_and_reserve_document(user.id, req_id, resource_id=safe_name)
+            doc_reserved = True
+
         # 5. Text extraction & Indexing with write lock
         try:
             with write_lock:
@@ -939,6 +1007,9 @@ def create_app(
 
                 num_chunks = engine.index_text(extracted_text, safe_name, file_sha)
                 if auth_mgr and user and not user.id.startswith("guest_"):
+                    if doc_reserved:
+                        auth_mgr.commit_document_indexed(user.id, req_id)
+                        doc_reserved = False
                     auth_mgr.record_document_owner(
                         user_id=user.id,
                         source=safe_name,
@@ -953,6 +1024,9 @@ def create_app(
                         status="indexed",
                     )
         except Exception as proc_err:
+            if doc_reserved and auth_mgr and user and not user.id.startswith("guest_"):
+                with contextlib.suppress(Exception):
+                    auth_mgr.release_document_reservation(user.id, req_id, reason=str(proc_err))
             if auth_mgr and user and not user.id.startswith("guest_"):
                 with contextlib.suppress(Exception):
                     auth_mgr.record_document_owner(
@@ -1244,14 +1318,17 @@ def create_app(
             request.app.state, "multi_limiter", MultiActionRateLimiter()
         )
 
-        # Upload rate limit: 5 / hour per IP
-        allowed, retry_after = multi_limiter.consume("upload", ip_h)
-        if not allowed:
-            raise HTTPException(
-                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                detail=f"Upload rate limit exceeded (5/hour). Retry in {retry_after} s.",
-                headers={"Retry-After": str(retry_after)},
-            )
+        # Upload rate limit: exempt loopback (local dev) and key by user for authenticated accounts
+        is_loopback = ip in ("127.0.0.1", "::1", "localhost", "testclient")
+        if not is_loopback:
+            rate_key = f"user_{user.id}" if user and user.id else ip_h
+            allowed, retry_after = multi_limiter.consume("upload", rate_key)
+            if not allowed:
+                raise HTTPException(
+                    status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                    detail=f"Upload rate limit exceeded (5/hour). Retry in {retry_after} s.",
+                    headers={"Retry-After": str(retry_after)},
+                )
 
         # Extension check
         filename = file.filename or "upload.txt"
@@ -1506,7 +1583,17 @@ def create_app(
                 detail="index_empty",
             )
 
+        auth_mgr = getattr(request.app.state, "auth_manager", None)
+        user_info = get_authenticated_user_opt(request)
+        user = user_info[0] if user_info else None
+        reserved_q = False
+        if auth_mgr and user and not user.id.startswith("guest_"):
+            auth_mgr.check_and_reserve_question(user.id, req_id)
+            reserved_q = True
+
         if os.getenv("DOCUMIND_DISABLE_GENERATION") == "1":
+            if reserved_q and auth_mgr and user and not user.id.startswith("guest_"):
+                auth_mgr.release_question_reservation(user.id, req_id, reason="kill_switch_active")
             effective_k = body.top_k or session_engine.settings.top_k
             q_vec = session_engine.embedder.embed_query(body.question)
             retrieved = session_engine.store.query(q_vec, effective_k)
@@ -1543,6 +1630,8 @@ def create_app(
         can_spend, reason = spend_ledger.can_spend(ip_h, est_cost)
 
         if not can_spend:
+            if reserved_q and auth_mgr and user and not user.id.startswith("guest_"):
+                auth_mgr.release_question_reservation(user.id, req_id, reason="spend_cap_reached")
             # FAIL CLOSED to retrieval_only: transparent, honest, no bare HTTP 500!
             effective_k = body.top_k or session_engine.settings.top_k
             q_vec = session_engine.embedder.embed_query(body.question)
@@ -1590,8 +1679,12 @@ def create_app(
             )
             actual_cost = calculate_cost_usd(ans.usage.input_tokens, ans.usage.output_tokens)
             spend_ledger.settle(ip_h, session_id, est_cost, actual_cost)
+            if reserved_q and auth_mgr and user and not user.id.startswith("guest_"):
+                auth_mgr.finalize_question(user.id, req_id, final_status="committed")
         except Exception:
             spend_ledger.release(ip_h, session_id, est_cost)
+            if reserved_q and auth_mgr and user and not user.id.startswith("guest_"):
+                auth_mgr.release_question_reservation(user.id, req_id, reason="generation_error")
             raise
 
         if ans.abstain_reason == "llm_unavailable":
@@ -1850,6 +1943,12 @@ def create_app(
                 detail="index_empty",
             )
 
+        # Check quota if account is authenticated
+        reserved_q = False
+        if auth_mgr and user and not user.id.startswith("guest_"):
+            auth_mgr.check_and_reserve_question(user.id, req_id)
+            reserved_q = True
+
         owner_id = user.id if not user.id.startswith("guest_") else None
         if body.conversation_id:
             conv = chat_mgr.get_conversation(body.conversation_id)
@@ -1911,6 +2010,8 @@ def create_app(
         can_spend, reason = spend_ledger.can_spend(ip_h, est_cost)
 
         if not can_spend:
+            if reserved_q and auth_mgr and user and not user.id.startswith("guest_"):
+                auth_mgr.release_question_reservation(user.id, req_id, reason="spend_cap_reached")
             effective_k = body.top_k or session_engine.settings.top_k
             q_vec = session_engine.embedder.embed_query(condensed_q)
             retrieved = session_engine.store.query(q_vec, effective_k)
@@ -1955,8 +2056,12 @@ def create_app(
             )
             actual_cost = calculate_cost_usd(ans.usage.input_tokens, ans.usage.output_tokens)
             spend_ledger.settle(ip_h, session_id, est_cost, actual_cost)
+            if reserved_q and auth_mgr and user and not user.id.startswith("guest_"):
+                auth_mgr.finalize_question(user.id, req_id, final_status="committed")
         except Exception:
             spend_ledger.release(ip_h, session_id, est_cost)
+            if reserved_q and auth_mgr and user and not user.id.startswith("guest_"):
+                auth_mgr.release_question_reservation(user.id, req_id, reason="generation_error")
             raise
 
         ans_dict = answer_to_dict(ans, include_retrieved=True)
@@ -2855,13 +2960,28 @@ def create_app(
             res = auth_mgr.get_user_by_session(auth_token)
             if res:
                 user, csrf_token = res
+                quota = auth_mgr.get_user_quota(user.id)
+                sub = auth_mgr.get_user_subscription(user.id)
                 return {
                     "authenticated": True,
                     "user": user.to_dict(),
                     "csrf_token": csrf_token,
+                    "quota": quota,
+                    "subscription": sub,
                 }
 
         return {"authenticated": False, "user": None, "csrf_token": None}
+
+    @auth_router.get("/quota", status_code=status.HTTP_200_OK)
+    async def auth_quota(
+        request: Request,
+        auth_info: tuple[User, str] = Depends(require_authenticated_user),
+    ) -> dict[str, Any]:
+        user, _ = auth_info
+        auth_mgr: AuthManager = request.app.state.auth_manager
+        quota = auth_mgr.get_user_quota(user.id)
+        sub = auth_mgr.get_user_subscription(user.id)
+        return {"quota": quota, "subscription": sub}
 
     @auth_router.get("/profile", status_code=status.HTTP_200_OK)
     async def auth_profile(
@@ -2909,7 +3029,152 @@ def create_app(
             ) from e
         return updated_user.to_dict()
 
+    # --- Billing & Subscription Router ---
+    billing_router = APIRouter(prefix="/api/billing", tags=["billing"])
+
+    @billing_router.get("/plans")
+    def billing_get_plans() -> dict[str, Any]:
+        return {"plans": [p.to_dict() for p in get_default_plans().values()]}
+
+    @billing_router.post("/checkout")
+    def billing_checkout(
+        payload: CheckoutPayload,
+        request: Request,
+        auth_info: tuple[User, str] = Depends(require_authenticated_user),
+    ) -> dict[str, Any]:
+        user, _ = auth_info
+        plans = get_default_plans()
+        plan = plans.get(payload.plan_id)
+        if not plan:
+            raise HTTPException(status_code=400, detail=f"Invalid plan '{payload.plan_id}'")
+
+        rzp_mgr: RazorpayManager | None = getattr(request.app.state, "razorpay_manager", None)
+        if not rzp_mgr:
+            raise HTTPException(status_code=500, detail="Razorpay is not configured on this server")
+
+        order = rzp_mgr.create_order(
+            amount_paise=plan.price_cents,
+            currency=plan.currency,
+            notes={"user_id": user.id, "plan_id": plan.plan_id},
+        )
+        return {
+            "status": "checkout_ready",
+            "plan_id": plan.plan_id,
+            "amount": plan.price_cents,
+            "currency": plan.currency,
+            "order_id": order.get("order_id"),
+            "subscription_id": order.get("subscription_id"),
+            "test_signature": order.get("test_signature"),
+            "key_id": rzp_mgr.key_id,
+        }
+
+    @billing_router.post("/verify")
+    def billing_verify(
+        payload: VerifyPaymentPayload,
+        request: Request,
+        auth_info: tuple[User, str] = Depends(require_authenticated_user),
+    ) -> dict[str, Any]:
+        user, _ = auth_info
+        rzp_mgr: RazorpayManager | None = getattr(request.app.state, "razorpay_manager", None)
+        if not rzp_mgr:
+            raise HTTPException(status_code=500, detail="Razorpay is not configured")
+
+        valid = rzp_mgr.verify_payment_signature(
+            order_id=payload.order_id,
+            payment_id=payload.payment_id,
+            signature=payload.signature,
+        )
+        if not valid:
+            raise HTTPException(status_code=400, detail="Invalid payment signature")
+
+        auth_mgr: AuthManager = request.app.state.auth_manager
+        plans = get_default_plans()
+        plan = plans.get(payload.plan_id)
+        if not plan:
+            raise HTTPException(status_code=400, detail=f"Invalid plan '{payload.plan_id}'")
+
+        quota = auth_mgr.upgrade_user_plan(
+            user_id=user.id,
+            new_plan_id=plan.plan_id,
+            doc_limit=plan.doc_limit,
+            question_limit=plan.question_limit,
+            subscription_id=f"sub_{payload.order_id}",
+        )
+        return {"status": "ok", "quota": quota}
+
+    @billing_router.post("/webhook")
+    async def billing_webhook(request: Request) -> dict[str, Any]:
+        rzp_mgr: RazorpayManager | None = getattr(request.app.state, "razorpay_manager", None)
+        auth_mgr: AuthManager | None = getattr(request.app.state, "auth_manager", None)
+        if not rzp_mgr or not auth_mgr:
+            raise HTTPException(status_code=500, detail="Billing services unavailable")
+
+        raw_body = await request.body()
+        sig = request.headers.get("X-Razorpay-Signature", "")
+
+        if not rzp_mgr.verify_webhook_signature(raw_body, sig):
+            raise HTTPException(status_code=400, detail="Invalid webhook signature")
+
+        try:
+            event_data = json.loads(raw_body.decode("utf-8"))
+        except Exception as e:
+            raise HTTPException(status_code=400, detail="Invalid JSON payload") from e
+
+        event_id = event_data.get("id", "")
+        if event_id and auth_mgr.is_webhook_processed(event_id):
+            return {"status": "already_processed"}
+
+        if event_id:
+            auth_mgr.record_processed_webhook(
+                event_id,
+                event_data.get("event", "unknown"),
+                raw_body.decode("utf-8", errors="replace"),
+            )
+
+        # Handle subscription activation or renewal
+        payload = event_data.get("payload", {})
+        sub_entity = payload.get("subscription", {}).get("entity", {})
+        notes = sub_entity.get("notes", {})
+        user_id = notes.get("user_id")
+        plan_id = notes.get("plan_id", "pro_monthly")
+
+        if user_id:
+            plans = get_default_plans()
+            target_plan = plans.get(plan_id, plans.get("pro_monthly"))
+            if target_plan:
+                auth_mgr.upgrade_user_plan(
+                    user_id=user_id,
+                    new_plan_id=target_plan.plan_id,
+                    doc_limit=target_plan.doc_limit,
+                    question_limit=target_plan.question_limit,
+                    subscription_id=sub_entity.get("id"),
+                )
+
+        return {"status": "ok"}
+
+    @billing_router.get("/subscription")
+    def billing_get_subscription(
+        request: Request,
+        auth_info: tuple[User, str] = Depends(require_authenticated_user),
+    ) -> dict[str, Any]:
+        user, _ = auth_info
+        auth_mgr: AuthManager = request.app.state.auth_manager
+        sub = auth_mgr.get_user_subscription(user.id)
+        return {"subscription": sub}
+
+    @billing_router.post("/subscription/cancel")
+    def billing_cancel_subscription(
+        payload: CancelSubscriptionPayload,
+        request: Request,
+        auth_info: tuple[User, str] = Depends(require_authenticated_user),
+    ) -> dict[str, Any]:
+        user, _ = auth_info
+        auth_mgr: AuthManager = request.app.state.auth_manager
+        sub = auth_mgr.cancel_user_subscription(user.id, reason=payload.reason or "")
+        return {"status": "ok", "subscription": sub}
+
     app.include_router(auth_router)
+    app.include_router(billing_router)
     app.include_router(demo_router)
 
     # Static files mounting for Same-Origin serving
