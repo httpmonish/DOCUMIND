@@ -8,7 +8,7 @@
     scroll-behavior: auto !important;
   }
 }
-</style><script src="../vendor/tailwindcss.js"></script><script id="tailwind-config">tailwind.config = {
+</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = {
     darkMode: "class",
     theme: {
       extend: {
@@ -183,7 +183,7 @@
         }
       },
     },
-  }</script></head><body class="bg-surface-container-lowest font-body-sm text-body-sm text-on-surface antialiased"><header class="fixed top-0 left-0 w-full z-50 bg-surface-container-lowest border-b border-surface-variant"><div class="h-14 w-full px-space-xl flex items-center justify-between"><div class="flex items-center gap-space-xl"><div class="flex items-center gap-space-md"><svg class="h-8 w-8 object-contain shrink-0" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><polygon points="16,2 29,9.5 29,24.5 16,32 3,24.5 3,9.5" fill="#201f1f" stroke="#ff571d" stroke-width="2"/><circle cx="16" cy="17" r="4.5" fill="#ff571d"/><path d="M16 6v6.5M8.5 21.5l5.5-3M23.5 21.5l-5.5-3" stroke="#e5e2e1" stroke-width="1.5" stroke-linecap="round"/></svg><span class="font-headline-sm text-headline-sm text-on-surface tracking-tight">DocuMind</span></div><nav class="hidden md:flex items-center gap-space-xl" data-active-classes="text-on-surface font-headline-sm text-headline-sm"><a class="font-headline-sm text-headline-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="architecture" href="#">Architecture</a><a aria-current="page" class="transition-colors text-on-surface font-headline-sm text-headline-sm" data-path="console" href="#">Console</a><a class="font-headline-sm text-headline-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="library" href="#">Library</a><a class="font-headline-sm text-headline-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="proof" href="#">Proof</a></nav></div><div class="flex items-center gap-space-lg"><a class="inline-flex items-center justify-center px-space-lg py-space-xs bg-primary-container hover:bg-inverse-primary text-on-primary-container font-code-sm text-code-sm tracking-wider uppercase rounded-xl transition-colors font-medium cursor-pointer" data-path="chat" href="../chat.html">LAUNCH CHAT ↗</a><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="w-full pt-14 bg-surface-container-lowest min-h-screen"><div class="flex flex-col w-full">
+  }</script></head><body class="bg-surface-container-lowest font-body-sm text-body-sm text-on-surface antialiased"><header class="fixed top-0 left-0 w-full z-50 bg-surface-container-lowest border-b border-surface-variant"><div class="h-14 w-full px-space-xl flex items-center justify-between"><div class="flex items-center gap-space-xl"><div class="flex items-center gap-space-md"><svg class="h-8 w-8 object-contain shrink-0" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><polygon points="16,2 29,9.5 29,24.5 16,32 3,24.5 3,9.5" fill="#201f1f" stroke="#ff571d" stroke-width="2"/><circle cx="16" cy="17" r="4.5" fill="#ff571d"/><path d="M16 6v6.5M8.5 21.5l5.5-3M23.5 21.5l-5.5-3" stroke="#e5e2e1" stroke-width="1.5" stroke-linecap="round"/></svg><span class="font-headline-sm text-headline-sm text-on-surface tracking-tight">DocuMind</span></div><nav class="hidden md:flex items-center gap-space-xl" data-active-classes="text-on-surface font-headline-sm text-headline-sm"><a class="font-headline-sm text-headline-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="architecture" href="#">Architecture</a><a aria-current="page" class="transition-colors text-on-surface font-headline-sm text-headline-sm" data-path="console" href="#">Console</a><a class="font-headline-sm text-headline-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="library" href="#">Library</a><a class="font-headline-sm text-headline-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="proof" href="#">Proof</a></nav></div><div class="flex items-center gap-space-lg"><div class="hidden sm:flex items-center gap-space-xs px-space-md py-space-xs bg-surface-container-low border border-surface-variant rounded-DEFAULT"><span class="w-1.5 h-1.5 rounded-full bg-tertiary inline-block"></span></div><a class="inline-flex items-center justify-center px-space-lg py-space-xs bg-primary-container hover:bg-inverse-primary text-on-primary-container font-code-sm text-code-sm tracking-wider uppercase rounded-xl transition-colors font-medium" href="../chat.html">LAUNCH CHAT ↗</a><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="w-full pt-14 bg-surface-container-lowest min-h-screen"><div class="flex flex-col w-full">
 <!-- Metadata Ribbon -->
 <div class="w-full bg-surface-container-lowest px-space-xl py-space-xs flex flex-wrap items-center justify-between gap-space-sm">
 <div class="flex items-center gap-space-md flex-wrap font-code-sm text-code-sm text-on-surface-variant">
@@ -200,6 +200,18 @@
 <span id="ribbon-tau" class="text-primary-container font-code-sm">τ 0.35</span>
 <span class="text-surface-variant">/</span>
 <span class="text-on-surface">top-k: 5</span>
+</div>
+<!-- Secondary Controls -->
+<div class="flex items-center gap-space-md">
+<div class="inline-flex rounded-lg bg-surface-container p-0.5">
+<button class="px-space-sm py-0.5 rounded-DEFAULT text-on-primary bg-primary-container font-code-sm text-code-sm transition-colors" id="toggle-live">LIVE</button>
+<button class="px-space-sm py-0.5 rounded-DEFAULT text-on-surface-variant hover:text-on-surface font-code-sm text-code-sm transition-colors" id="toggle-demo">DEMO</button>
+</div>
+<span class="px-space-sm py-0.5 bg-surface-container-high text-primary font-code-sm text-code-sm tracking-wider uppercase rounded-DEFAULT">DEMO DATA</span>
+<label class="flex items-center gap-space-xs cursor-pointer select-none">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">INSPECT</span>
+<input checked="" class="accent-primary-container w-3.5 h-3.5 rounded-DEFAULT cursor-pointer" id="inspect-toggle" type="checkbox">
+</label>
 </div>
 </div>
 <!-- Primary Workspace: 8 / 12 and 4 / 12 Split -->
@@ -938,7 +950,6 @@ Listening for pipeline execution events…
       let streamedRetrieved = [];
       let streamMeta = null;
       let streamDone = null;
-      let streamError = null;
 
       try {
         await DocuMindAPI.chatStream(
@@ -967,98 +978,20 @@ Listening for pipeline execution events…
               addLiveEvent("citations_verify", 8, clientReqId, "query");
             } else if (ev === "done") {
               streamDone = data;
-            } else if (ev === "error") {
-              streamError = typeof data === "object" && data !== null ? data : { message: String(data) };
             }
           }
         );
 
         const elapsed = performance.now() - startTime;
-
-        // 1. Explicit Backend Error event handling (e.g. index_empty, provider_error)
-        if (streamError) {
-          if (cursorSpan) cursorSpan.remove();
-          const errCode = streamError.code || "error";
-          const errMsg = streamError.message || "An error occurred during response generation.";
-
-          if (errCode === "index_empty") {
-            if (streamingStatus) streamingStatus.innerHTML = '<span class="text-error font-semibold">Workspace Index Empty</span>';
-            if (answerBadge) {
-              answerBadge.className = "px-space-xs py-0.5 rounded-DEFAULT bg-error/20 text-error font-code-sm text-code-sm";
-              answerBadge.textContent = "EMPTY INDEX";
-            }
-            if (tokenSpan) {
-              tokenSpan.innerHTML = `
-                <div class="p-3.5 rounded-lg bg-surface-container border border-error/30 text-on-surface">
-                  <div class="flex items-center gap-2 text-error font-semibold text-xs mb-1">
-                    <span class="material-symbols-outlined text-[16px]">folder_off</span>
-                    <span>No Indexed Documents Available</span>
-                  </div>
-                  <p class="text-xs text-on-surface-variant leading-relaxed">
-                    No documents are currently indexed in your active workspace session. DocuMind requires grounded document context to answer inquiries without hallucination.
-                  </p>
-                  <div class="mt-2.5">
-                    <a href="../library/code.html" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded bg-primary-container hover:bg-inverse-primary text-on-primary-container text-xs font-medium font-code-sm uppercase tracking-wider transition-colors cursor-pointer">
-                      <span class="material-symbols-outlined text-[14px]">upload_file</span>
-                      <span>Upload or Select Document in Library</span>
-                    </a>
-                  </div>
-                </div>
-              `;
-            }
-          } else {
-            if (streamingStatus) streamingStatus.innerHTML = `<span class="text-error font-semibold">Error (${escapeHtml(errCode)})</span>`;
-            if (answerBadge) {
-              answerBadge.className = "px-space-xs py-0.5 rounded-DEFAULT bg-error/20 text-error font-code-sm text-code-sm";
-              answerBadge.textContent = escapeHtml(errCode.toUpperCase());
-            }
-            if (tokenSpan) {
-              tokenSpan.innerHTML = `
-                <div class="p-3 rounded-lg bg-error/10 border border-error/30 text-error text-xs">
-                  <strong>Request Failed (${escapeHtml(errCode)}):</strong> ${escapeHtml(errMsg)}
-                </div>
-              `;
-            }
-          }
-          addLiveEvent("chat_error", elapsed, clientReqId, "error", errMsg);
-          return; // STOP NORMAL ANSWER FINALIZATION!
-        }
-
-        // 2. Stream Interrupted / Incomplete Request
-        if (!streamDone) {
-          if (cursorSpan) cursorSpan.remove();
-          if (streamingStatus) streamingStatus.innerHTML = '<span class="text-error font-semibold">Stream Interrupted</span>';
-          if (answerBadge) {
-            answerBadge.className = "px-space-xs py-0.5 rounded-DEFAULT bg-error/20 text-error font-code-sm text-code-sm";
-            answerBadge.textContent = "STREAM INTERRUPTED";
-          }
-          if (tokenSpan) {
-            const partial = accumulatedText ? `<p class="mb-2 text-on-surface">${escapeHtml(accumulatedText)}</p>` : "";
-            tokenSpan.innerHTML = `
-              ${partial}
-              <div class="p-3 rounded-lg bg-error/10 border border-error/30 text-error text-xs">
-                <strong>Incomplete Request:</strong> The response stream disconnected before finalization. Please retry your inquiry.
-              </div>
-            `;
-          }
-          addLiveEvent("chat_stream_interrupted", elapsed, clientReqId, "error");
-          return; // STOP NORMAL ANSWER FINALIZATION!
-        }
-
-        // 3. Genuine completions: answered, abstained, unconfigured_model, retrieval_only
-        const outcome = streamDone.outcome || "answered";
-        const reason = streamDone.reason || null;
-        const isAbstain = outcome === "abstained" || outcome === "abstain";
-        const isUnconfigured = outcome === "unconfigured_model";
-        const isRetrievalOnly = outcome === "retrieval_only";
+        const isAbstain = (streamDone && streamDone.outcome === "abstain") || !streamedRetrieved.some(c => (c.score || 0) >= 0.35);
 
         const res = {
           text: accumulatedText,
           citations: streamedCitations,
           retrieved: streamedRetrieved,
-          outcome: outcome,
-          latency_ms: streamDone.latency_ms ? streamDone.latency_ms : Math.round(elapsed),
-          abstain_reason: reason,
+          outcome: streamDone ? streamDone.outcome : (isAbstain ? "abstain" : "answered"),
+          latency_ms: streamDone && streamDone.latency_ms ? streamDone.latency_ms : Math.round(elapsed),
+          abstain_reason: streamDone && streamDone.reason ? streamDone.reason : (isAbstain ? "low_confidence" : null),
         };
         lastAnswerResult = res;
 
@@ -1072,21 +1005,6 @@ Listening for pipeline execution events…
             answerBadge.className = "px-space-xs py-0.5 rounded-DEFAULT bg-[#ff571d]/20 text-[#ffb59f] font-code-sm text-code-sm";
             answerBadge.textContent = "ABSTAINED (τ < 0.35)";
           }
-          if (tokenSpan) tokenSpan.textContent = accumulatedText || "I couldn't find any sufficiently relevant passages in your documents.";
-        } else if (isUnconfigured) {
-          if (streamingStatus) streamingStatus.innerHTML = '<span class="text-primary-container font-semibold">Semantic Retrieval Only (No LLM)</span>';
-          if (answerBadge) {
-            answerBadge.className = "px-space-xs py-0.5 rounded-DEFAULT bg-surface-container-high text-primary-container font-code-sm text-code-sm";
-            answerBadge.textContent = "NO LLM CONFIGURED";
-          }
-          if (tokenSpan) tokenSpan.innerHTML = escapeHtml(accumulatedText).replace(/\n/g, "<br>");
-        } else if (isRetrievalOnly) {
-          if (streamingStatus) streamingStatus.innerHTML = '<span class="text-primary-container font-semibold">Spend Cap Reached (Retrieval Only)</span>';
-          if (answerBadge) {
-            answerBadge.className = "px-space-xs py-0.5 rounded-DEFAULT bg-surface-container-high text-primary-container font-code-sm text-code-sm";
-            answerBadge.textContent = "SPEND CAP";
-          }
-          if (tokenSpan) tokenSpan.textContent = accumulatedText;
         } else {
           if (streamingStatus) streamingStatus.textContent = `${streamedCitations.length} Citations Verified`;
           if (answerBadge) {
@@ -1130,19 +1048,6 @@ Listening for pipeline execution events…
 
       } catch (err) {
         console.warn("Chat stream failed, attempting sync fallback:", err);
-        if (cursorSpan) cursorSpan.remove();
-        if (streamingStatus) streamingStatus.innerHTML = '<span class="text-error font-semibold">Connection / Network Error</span>';
-        if (answerBadge) {
-          answerBadge.className = "px-space-xs py-0.5 rounded-DEFAULT bg-error/20 text-error font-code-sm text-code-sm";
-          answerBadge.textContent = "NETWORK ERROR";
-        }
-        if (tokenSpan) {
-          tokenSpan.innerHTML = `
-            <div class="p-3 rounded-lg bg-error/10 border border-error/30 text-error text-xs">
-              <strong>Connection Error:</strong> ${escapeHtml(err.message || "Failed to reach DocuMind server.")}
-            </div>
-          `;
-        }
         addLiveEvent("chat_error", performance.now() - startTime, clientReqId, "error", err.message);
         handleError(err);
       } finally {
@@ -1255,64 +1160,51 @@ Listening for pipeline execution events…
       });
     }
 
-    async function refreshWorkspaceStatus() {
-      try {
-        const [meta, docs] = await Promise.all([
-          DocuMindAPI.getMeta ? DocuMindAPI.getMeta().catch(() => null) : Promise.resolve(null),
-          DocuMindAPI.getDocuments().catch(() => [])
-        ]);
-        const arr = Array.isArray(docs) ? docs : (docs.documents || []);
-        const totalChunks = arr.reduce((sum, d) => sum + (d.chunks || d.chunk_count || 0), 0);
-        const docCount = arr.length;
-
-        const ribbonChunks = document.getElementById("ribbon-chunks");
-        if (ribbonChunks) ribbonChunks.textContent = `${totalChunks} chunk${totalChunks === 1 ? "" : "s"}`;
-
-        const ribbonDocs = document.getElementById("ribbon-docs");
-        if (ribbonDocs) ribbonDocs.textContent = `${docCount} document${docCount === 1 ? "" : "s"}`;
-
-        const topologyChunks = document.getElementById("topology-chunks");
-        if (topologyChunks) topologyChunks.textContent = `${totalChunks} chunks`;
-
-        const topologyDocs = document.getElementById("topology-docs");
-        if (topologyDocs) topologyDocs.textContent = `${docCount} documents`;
-
-        if (meta) {
-          if (meta.version) {
-            const engVer = document.getElementById("engine-version-text");
-            if (engVer) engVer.textContent = `Engine: DocuMind v${meta.version}`;
-            const footVer = document.getElementById("footer-version");
-            if (footVer) footVer.textContent = `DocuMind · v${meta.version} · MIT`;
-          }
-          if (meta.tau != null) {
-            const ribbonTau = document.getElementById("ribbon-tau");
-            if (ribbonTau) ribbonTau.textContent = `τ ${meta.tau}`;
-          }
-          if (meta.llm_mode) {
-            const modeBadge = document.getElementById("mode-badge");
-            if (modeBadge) modeBadge.textContent = meta.llm_mode.toUpperCase();
-          }
-        }
-        return { docCount, totalChunks };
-      } catch (err) {
-        console.warn("Failed to refresh workspace status:", err);
-      }
-    }
-    window.refreshWorkspaceStatus = refreshWorkspaceStatus;
-
-    // Sync with backend session, meta, and health on load & focus
+    // Sync with backend session, meta, and health
     DocuMindAPI.initSession().then(sid => {
       addLiveEvent("session_bootstrap_ready", 12, sid ? sid.substring(0, 8) : "sys", "index");
       addLiveEvent("vector_index_ready", 4, "hnsw_384", "index");
-      refreshWorkspaceStatus();
     }).catch(err => {
       addLiveEvent("session_init_failed", 0, "err", "error");
-      refreshWorkspaceStatus();
     });
 
-    window.addEventListener("focus", () => {
-      refreshWorkspaceStatus();
-    });
+    Promise.all([
+      DocuMindAPI.getMeta ? DocuMindAPI.getMeta().catch(() => null) : Promise.resolve(null),
+      DocuMindAPI.getDocuments().catch(() => [])
+    ]).then(([meta, docs]) => {
+      const arr = Array.isArray(docs) ? docs : (docs.documents || []);
+      const totalChunks = arr.reduce((sum, d) => sum + (d.chunks || 0), 0);
+      const docCount = arr.length;
+
+      const ribbonChunks = document.getElementById("ribbon-chunks");
+      if (ribbonChunks) ribbonChunks.textContent = `${totalChunks} chunk${totalChunks === 1 ? "" : "s"}`;
+
+      const ribbonDocs = document.getElementById("ribbon-docs");
+      if (ribbonDocs) ribbonDocs.textContent = `${docCount} document${docCount === 1 ? "" : "s"}`;
+
+      const topologyChunks = document.getElementById("topology-chunks");
+      if (topologyChunks) topologyChunks.textContent = `${totalChunks} chunks`;
+
+      const topologyDocs = document.getElementById("topology-docs");
+      if (topologyDocs) topologyDocs.textContent = `${docCount} documents`;
+
+      if (meta) {
+        if (meta.version) {
+          const engVer = document.getElementById("engine-version-text");
+          if (engVer) engVer.textContent = `Engine: DocuMind v${meta.version}`;
+          const footVer = document.getElementById("footer-version");
+          if (footVer) footVer.textContent = `DocuMind · v${meta.version} · MIT`;
+        }
+        if (meta.tau != null) {
+          const ribbonTau = document.getElementById("ribbon-tau");
+          if (ribbonTau) ribbonTau.textContent = `τ ${meta.tau}`;
+        }
+        if (meta.llm_mode) {
+          const modeBadge = document.getElementById("mode-badge");
+          if (modeBadge) modeBadge.textContent = meta.llm_mode.toUpperCase();
+        }
+      }
+    }).catch(console.error);
 
     function escapeHtml(str) {
       if (!str) return "";

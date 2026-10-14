@@ -19,66 +19,11 @@
   let evidenceSnippetEl = null;
   let evidenceSourceEl = null;
   let fileInputEl = null;
-  let historyDrawerEl = null;
-  let historyListEl = null;
 
   let currentConversationId = null;
   let isStreaming = false;
   let loadedDocs = [];
   let lastFailedQuestion = null;
-
-  function renderCitationFormattedText(container, text, citations, onCitationClick) {
-    container.textContent = "";
-    if (!text) return;
-    if (!citations || citations.length === 0) {
-      container.textContent = text;
-      return;
-    }
-    const markerRegex = /\[S(\d+)\]/g;
-    let lastIndex = 0;
-    let match;
-    while ((match = markerRegex.exec(text)) !== null) {
-      const matchIndex = match.index;
-      if (matchIndex > lastIndex) {
-        container.appendChild(document.createTextNode(text.substring(lastIndex, matchIndex)));
-      }
-      const markerText = match[0];
-      const citNum = parseInt(match[1], 10);
-      const citIndex = citNum - 1;
-      const citation = citations[citIndex] || citations.find(c => c.marker === markerText);
-
-      const pill = document.createElement("button");
-      pill.className = "docu-citation-pill";
-      pill.textContent = markerText;
-      if (citation && onCitationClick) {
-        pill.addEventListener("click", () => onCitationClick(citation));
-      }
-      container.appendChild(pill);
-      lastIndex = markerRegex.lastIndex;
-    }
-    if (lastIndex < text.length) {
-      container.appendChild(document.createTextNode(text.substring(lastIndex)));
-    }
-  }
-
-  function renderCitationsTray(container, citations, onCitationClick) {
-    container.textContent = "";
-    if (!citations || citations.length === 0) {
-      container.style.display = "none";
-      return;
-    }
-    container.style.display = "flex";
-    citations.forEach((c, idx) => {
-      const pill = document.createElement("button");
-      pill.className = "docu-citation-pill";
-      const marker = c.marker || `[S${idx + 1}]`;
-      pill.textContent = `${marker} ${c.source || "doc"} · c${c.chunk_index ?? 0}`;
-      if (onCitationClick) {
-        pill.addEventListener("click", () => onCitationClick(c));
-      }
-      container.appendChild(pill);
-    });
-  }
 
   function initChatDrawer() {
     if (document.getElementById("documind-chat-drawer-root")) {
@@ -109,10 +54,6 @@
             </div>
           </div>
           <div class="docu-drawer-actions">
-            <button class="docu-btn-text" id="docu-btn-history" title="View conversation history">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-              <span>History</span>
-            </button>
             <button class="docu-btn-text" id="docu-btn-new-chat" title="Start a fresh conversation thread">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
               <span>New</span>
@@ -122,19 +63,6 @@
             </button>
           </div>
         </header>
-
-        <!-- History Overlay Panel -->
-        <div class="docu-history-drawer" id="docu-history-drawer" style="display: none;">
-          <div class="docu-history-header">
-            <span>SAVED CONVERSATIONS</span>
-            <button class="docu-btn-icon" id="docu-btn-close-history" aria-label="Close history">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-            </button>
-          </div>
-          <div class="docu-history-list" id="docu-history-list">
-            <span style="font-size: 11px; color: var(--docu-chat-muted);">Loading past conversations…</span>
-          </div>
-        </div>
 
         <!-- Document Tray -->
         <section class="docu-docs-tray">
@@ -215,8 +143,6 @@
     evidenceSnippetEl = document.getElementById("docu-evidence-snippet");
     evidenceSourceEl = document.getElementById("docu-evidence-source");
     fileInputEl = document.getElementById("docu-file-input");
-    historyDrawerEl = document.getElementById("docu-history-drawer");
-    historyListEl = document.getElementById("docu-history-list");
 
     // Event listeners
     backdropEl.addEventListener("click", closeDrawer);
@@ -224,10 +150,6 @@
     document.getElementById("docu-btn-close-evidence").addEventListener("click", closeEvidence);
 
     document.getElementById("docu-btn-new-chat").addEventListener("click", resetConversation);
-    const btnHistory = document.getElementById("docu-btn-history");
-    if (btnHistory) btnHistory.addEventListener("click", toggleHistory);
-    const btnCloseHist = document.getElementById("docu-btn-close-history");
-    if (btnCloseHist) btnCloseHist.addEventListener("click", closeHistory);
 
     // Attach actions
     const btnAttach = document.getElementById("docu-btn-attach");
@@ -267,14 +189,6 @@
 
     // Wire all page buttons that trigger chat
     wireChatTriggers();
-
-    // Auto-restore active conversation if present in session storage
-    try {
-      const savedConvId = sessionStorage.getItem("documind_active_conv_id");
-      if (savedConvId) {
-        loadConversation(savedConvId);
-      }
-    } catch (_) {}
   }
 
   function wireChatTriggers() {
@@ -338,180 +252,9 @@
     }
   }
 
-  function closeHistory() {
-    if (historyDrawerEl) {
-      historyDrawerEl.style.display = "none";
-    }
-  }
-
-  async function toggleHistory() {
-    if (!historyDrawerEl) return;
-    if (historyDrawerEl.style.display === "flex") {
-      closeHistory();
-      return;
-    }
-    closeEvidence();
-    historyDrawerEl.style.display = "flex";
-    historyListEl.innerHTML = `
-      <span style="font-size: 11px; color: var(--docu-chat-muted); padding: 8px;">Loading saved conversations…</span>
-    `;
-    try {
-      const convs = await DocuMindAPI.listConversations();
-      const list = Array.isArray(convs) ? convs : [];
-      if (list.length === 0) {
-        historyListEl.innerHTML = `
-          <div style="text-align: center; padding: 24px 12px; color: var(--docu-chat-muted); font-size: 12px;">
-            No saved conversations found. Ask a question to start one!
-          </div>
-        `;
-        return;
-      }
-      historyListEl.innerHTML = list.map(c => {
-        const title = c.title || "Untitled Conversation";
-        const dateStr = c.last_message_at ? new Date(c.last_message_at * 1000).toLocaleDateString(undefined, {
-          month: "short", day: "numeric", hour: "2-digit", minute: "2-digit"
-        }) : (c.created_at ? new Date(c.created_at * 1000).toLocaleDateString() : "");
-        const isActive = c.id === currentConversationId ? " active" : "";
-        return `
-          <div class="docu-history-item${isActive}" data-conv-id="${escapeHtml(c.id)}">
-            <div class="docu-history-item-info">
-              <span class="docu-history-item-title">${escapeHtml(title)}</span>
-              <span class="docu-history-item-date">${escapeHtml(dateStr)}</span>
-            </div>
-            <button class="docu-history-delete-btn" data-delete-id="${escapeHtml(c.id)}" title="Delete conversation">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-            </button>
-          </div>
-        `;
-      }).join("");
-
-      historyListEl.querySelectorAll(".docu-history-item").forEach(item => {
-        item.addEventListener("click", (e) => {
-          if (e.target.closest(".docu-history-delete-btn")) return;
-          const cid = item.getAttribute("data-conv-id");
-          if (cid) loadConversation(cid);
-        });
-      });
-
-      historyListEl.querySelectorAll(".docu-history-delete-btn").forEach(btn => {
-        btn.addEventListener("click", async (e) => {
-          e.stopPropagation();
-          const cid = btn.getAttribute("data-delete-id");
-          if (!cid) return;
-          try {
-            await DocuMindAPI.deleteConversation(cid);
-            if (currentConversationId === cid) {
-              resetConversation();
-            }
-            toggleHistory();
-          } catch (delErr) {
-            console.error("Failed to delete conversation:", delErr);
-          }
-        });
-      });
-    } catch (err) {
-      console.error("Failed to load conversations:", err);
-      historyListEl.innerHTML = `
-        <div style="color: var(--docu-chat-red); font-size: 12px; padding: 12px;">
-          Failed to load history: ${escapeHtml(err.message)}
-        </div>
-      `;
-    }
-  }
-
-  async function loadConversation(convId) {
-    closeHistory();
-    closeEvidence();
-    currentConversationId = convId;
-    try {
-      sessionStorage.setItem("documind_active_conv_id", convId);
-    } catch (_) {}
-    if (messagesListEl) {
-      messagesListEl.innerHTML = `
-        <div style="padding: 24px; text-align: center; color: var(--docu-chat-muted); font-size: 12.5px;">
-          Restoring conversation messages…
-        </div>
-      `;
-    }
-    try {
-      const msgs = await DocuMindAPI.getConversationMessages(convId);
-      const list = Array.isArray(msgs) ? msgs : [];
-      if (messagesListEl) {
-        messagesListEl.innerHTML = "";
-      }
-      if (list.length === 0) {
-        resetConversation();
-        return;
-      }
-      for (const m of list) {
-        if (m.role === "user") {
-          const userRow = document.createElement("div");
-          userRow.className = "docu-msg-row user";
-          userRow.innerHTML = `
-            <span class="docu-msg-role">YOU</span>
-            <div class="docu-user-bubble">${escapeHtml(m.content)}</div>
-          `;
-          messagesListEl.appendChild(userRow);
-        } else {
-          const assistantRow = document.createElement("div");
-          assistantRow.className = "docu-msg-row assistant";
-          const roleSpan = document.createElement("span");
-          roleSpan.className = "docu-msg-role";
-          roleSpan.innerHTML = `<svg width="12" height="12" viewBox="0 0 32 32" fill="none" style="display:inline-block; vertical-align:-1px; margin-right:5px;"><polygon points="16,2 29,9.5 29,24.5 16,32 3,24.5 3,9.5" fill="#201f1f" stroke="#ff571d" stroke-width="2.5"/><circle cx="16" cy="17" r="4.5" fill="#ff571d"/><path d="M16 6v6.5M8.5 21.5l5.5-3M23.5 21.5l-5.5-3" stroke="#e5e2e1" stroke-width="1.8" stroke-linecap="round"/></svg>DOCUMIND`;
-
-          const card = document.createElement("div");
-          card.className = "docu-assistant-card";
-
-          const contentDiv = document.createElement("div");
-          contentDiv.className = "docu-assistant-content";
-          const tokenSpan = document.createElement("span");
-          tokenSpan.className = "token-stream";
-          const citations = Array.isArray(m.citations) ? m.citations : [];
-          renderCitationFormattedText(tokenSpan, m.content || "", citations, openEvidence);
-          contentDiv.appendChild(tokenSpan);
-          card.appendChild(contentDiv);
-
-          const tray = document.createElement("div");
-          tray.className = "docu-citations-tray";
-          renderCitationsTray(tray, citations, openEvidence);
-          card.appendChild(tray);
-
-          const metaDiv = document.createElement("div");
-          metaDiv.className = "docu-assistant-meta";
-          const statusSpan = document.createElement("span");
-          statusSpan.className = "status-label";
-          statusSpan.style.color = "var(--docu-chat-green)";
-          statusSpan.textContent = `${citations.length} Verified Citations`;
-          metaDiv.appendChild(statusSpan);
-          card.appendChild(metaDiv);
-
-          assistantRow.appendChild(roleSpan);
-          assistantRow.appendChild(card);
-          messagesListEl.appendChild(assistantRow);
-        }
-      }
-      messagesListEl.scrollTop = messagesListEl.scrollHeight;
-      if (composerTextarea) {
-        composerTextarea.focus();
-      }
-    } catch (err) {
-      console.error("Failed to restore conversation messages:", err);
-      if (messagesListEl) {
-        messagesListEl.innerHTML = `
-          <div class="docu-banner-error">
-            <span>Failed to restore messages: ${escapeHtml(err.message)}</span>
-          </div>
-        `;
-      }
-    }
-  }
-
   function resetConversation() {
     currentConversationId = null;
     lastFailedQuestion = null;
-    try {
-      sessionStorage.removeItem("documind_active_conv_id");
-    } catch (_) {}
     if (messagesListEl) {
       messagesListEl.innerHTML = `
         <div class="docu-welcome-card" id="docu-welcome-card">
@@ -689,8 +432,6 @@
     let citations = [];
     let outcome = "answered";
     let reportedLatency = null;
-    let streamDone = null;
-    let streamError = null;
 
     try {
       await DocuMindAPI.chatStream(
@@ -700,9 +441,6 @@
           if (ev === "meta") {
             if (data && data.conversation_id) {
               currentConversationId = data.conversation_id;
-              try {
-                sessionStorage.setItem("documind_active_conv_id", currentConversationId);
-              } catch (_) {}
             }
             statusLabel.textContent = "Searching vector space…";
           } else if (ev === "retrieval") {
@@ -717,13 +455,20 @@
           } else if (ev === "citations") {
             citations = (data && data.citations) || [];
           } else if (ev === "done") {
-            streamDone = data;
             outcome = (data && data.outcome) || "answered";
             if (data && data.latency_ms) {
               reportedLatency = data.latency_ms;
             }
           } else if (ev === "error") {
-            streamError = typeof data === "object" && data !== null ? data : { message: String(data) };
+            const errMsg = (data && data.message) || "An error occurred during response generation.";
+            if (statusLabel) {
+              statusLabel.textContent = "Failed";
+              statusLabel.style.color = "var(--docu-chat-red)";
+            }
+            if (!accumulatedText) {
+              accumulatedText = `⚠️ ${errMsg}`;
+              tokenSpan.textContent = accumulatedText;
+            }
           }
         }
       );
@@ -737,35 +482,6 @@
       if (workedLabel) {
         workedLabel.textContent = `Worked for ${(elapsed / 1000).toFixed(1)}s`;
         workedLabel.style.display = "inline-flex";
-      }
-
-      // Handle backend error
-      if (streamError) {
-        const errCode = streamError.code || "error";
-        const errMsg = streamError.message || "An error occurred during response generation.";
-        statusLabel.textContent = errCode === "index_empty" ? "Workspace Index Empty" : "Request Failed";
-        statusLabel.style.color = "var(--docu-chat-red)";
-        if (errCode === "index_empty") {
-          tokenSpan.textContent = "No documents are currently indexed in this workspace.";
-          assistantRow.querySelector(".docu-assistant-card").insertAdjacentHTML("afterbegin", `
-            <div class="docu-banner-abstain" style="background:#fee2e2; border-color:#fca5a5; color:#991b1b; padding:8px 12px; margin-bottom:8px; border-radius:6px; font-size:12px;">
-              <div><strong>Workspace index is empty.</strong> Please upload a document in the Library before asking questions.</div>
-            </div>
-          `);
-        } else {
-          tokenSpan.textContent = `⚠️ ${errMsg}`;
-        }
-        return;
-      }
-
-      // Handle interrupted stream without completion event
-      if (!streamDone) {
-        statusLabel.textContent = "Stream Interrupted";
-        statusLabel.style.color = "var(--docu-chat-red)";
-        if (!accumulatedText) {
-          tokenSpan.textContent = "⚠️ Response stream was interrupted before completion.";
-        }
-        return;
       }
 
       // Handle outcomes
@@ -796,13 +512,39 @@
         statusLabel.textContent = `${citations.length} Verified Citations`;
         statusLabel.style.color = "var(--docu-chat-green)";
 
-        // Format text with interactive citation pills safely
-        renderCitationFormattedText(tokenSpan, accumulatedText, citations, openEvidence);
+        // Format text with interactive citation pills
+        let formatted = escapeHtml(accumulatedText);
+        citations.forEach((c, idx) => {
+          const marker = c.marker || `[S${idx + 1}]`;
+          const pillHtml = `<button class="docu-citation-pill" data-cit-idx="${idx}">${escapeHtml(marker)}</button>`;
+          formatted = formatted.replaceAll(escapeHtml(marker), pillHtml);
+        });
+        tokenSpan.innerHTML = formatted;
+
+        // Wire click handlers for inline citations
+        tokenSpan.querySelectorAll(".docu-citation-pill").forEach(pill => {
+          pill.addEventListener("click", () => {
+            const idx = parseInt(pill.getAttribute("data-cit-idx"), 10);
+            if (citations[idx]) openEvidence(citations[idx]);
+          });
+        });
       }
 
-      // Populate citations footer tray safely
+      // Populate citations footer tray
       if (citations.length > 0) {
-        renderCitationsTray(citationsTray, citations, openEvidence);
+        citationsTray.style.display = "flex";
+        citationsTray.innerHTML = citations.map((c, idx) => `
+          <button class="docu-citation-pill" data-cit-idx="${idx}">
+            ${escapeHtml(c.marker || `[S${idx + 1}]`)} ${escapeHtml(c.source)} · c${c.chunk_index}
+          </button>
+        `).join("");
+
+        citationsTray.querySelectorAll(".docu-citation-pill").forEach(pill => {
+          pill.addEventListener("click", () => {
+            const idx = parseInt(pill.getAttribute("data-cit-idx"), 10);
+            if (citations[idx]) openEvidence(citations[idx]);
+          });
+        });
       }
 
     } catch (err) {
@@ -857,7 +599,7 @@
   function checkAutoOpen() {
     const params = new URLSearchParams(window.location.search);
     if (params.get("chat") === "open") {
-      openDrawer();
+      setTimeout(openDrawer, 100);
     }
   }
 
