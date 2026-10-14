@@ -359,4 +359,403 @@
 
       // Sequential illumination of the 7 vector bars from left to right
       vBars.forEach((bar, idx) => {
-        const base = defau
+        const base = defaultBars[idx];
+        if (!base) return;
+        const barStartP = idx * 0.10;
+        const barP = clamp01((p - barStartP) / 0.35);
+
+        if (barP > 0) {
+          const eased = easeInOutQuad(barP);
+          // Rise from base plate y1 to resting height y2
+          const currentY2 = base.y1 - (base.y1 - base.y2) * eased;
+          bar.setAttribute('y2', currentY2.toFixed(1));
+          bar.setAttribute('stroke', barP < 1 ? '#ff8c53' : '#ff571d');
+          bar.setAttribute('stroke-width', barP < 1 ? '3' : (idx === 3 ? '3' : '2.5'));
+        } else {
+          bar.setAttribute('y2', base.y1.toString());
+        }
+      });
+
+      // Peak spark node flare at the top of the vector layer (Y=290)
+      if (vPeakSpark) {
+        if (p > 0.5) {
+          const sparkP = (p - 0.5) / 0.5;
+          const radius = 3.5 + Math.sin(sparkP * Math.PI * 3) * 1.5;
+          vPeakSpark.setAttribute('r', radius.toFixed(1));
+          vPeakSpark.style.opacity = '1';
+        } else {
+          vPeakSpark.setAttribute('r', '3.5');
+          vPeakSpark.style.opacity = '0.5';
+        }
+      }
+
+      // Dimension indicator tag
+      if (vDimTag) {
+        vDimTag.style.opacity = p > 0.65 ? clamp01((p - 0.65) * 3).toFixed(2) : '0';
+      }
+
+      resetDownstream(3);
+      return;
+    }
+
+    // =========================================================================
+    // SCENE 5: STORE (11.0s – 13.8s) · The index makes passages searchable
+    // =========================================================================
+    if (timeMs >= 11000 && timeMs < 13800) {
+      const p = (timeMs - 11000) / 2800;
+      if (stageLabelEl) stageLabelEl.textContent = '05 · STORE: The index makes passages searchable in local storage';
+
+      if (vDimTag) vDimTag.style.opacity = '0';
+      if (vPulseBeam) vPulseBeam.style.opacity = '0';
+      if (layerStore) layerStore.style.opacity = '1';
+
+      // Vector indicator travels across the 45px separation from Vector base (Y=380) into Chroma (Y=430)
+      if (axisPulse) {
+        if (p < 0.6) {
+          const travelP = p / 0.6;
+          const pulseY = 380 + (430 - 380) * travelP;
+          axisPulse.setAttribute('cy', pulseY.toFixed(1));
+          axisPulse.style.opacity = (Math.sin(travelP * Math.PI) * 0.95).toFixed(2);
+        } else {
+          axisPulse.style.opacity = '0';
+        }
+      }
+
+      // Chroma cylinder illuminates upon arrival
+      if (chromaTopEllipse) {
+        const ellipseActive = p > 0.35;
+        chromaTopEllipse.setAttribute('stroke', ellipseActive ? '#ff571d' : '#e5e2e1');
+        chromaTopEllipse.setAttribute('stroke-width', ellipseActive ? '1.8' : '1');
+      }
+
+      // Concentric confirmation ripple on top face
+      if (chromaRipple) {
+        if (p > 0.35) {
+          const ripP = (p - 0.35) / 0.65;
+          const rx = 30 + 65 * ripP;
+          const ry = 8 + 16 * ripP;
+          chromaRipple.setAttribute('rx', rx.toFixed(1));
+          chromaRipple.setAttribute('ry', ry.toFixed(1));
+          chromaRipple.style.opacity = ((1 - ripP) * 0.9).toFixed(2);
+        } else {
+          chromaRipple.style.opacity = '0';
+        }
+      }
+
+      // Persistence commit badge
+      if (chromaCommitTag) {
+        chromaCommitTag.style.opacity = p > 0.55 ? clamp01((p - 0.55) * 3).toFixed(2) : '0';
+      }
+
+      resetDownstream(4);
+      return;
+    }
+
+    // =========================================================================
+    // SCENE 6: RETRIEVE (13.8s – 16.0s) · Relevant passages are selected for your question
+    // =========================================================================
+    if (timeMs >= 13800 && timeMs < 16000) {
+      const p = (timeMs - 13800) / 2200;
+      if (stageLabelEl) stageLabelEl.textContent = '06 · RETRIEVE: Relevant passages selected for your question';
+
+      if (chromaRipple) chromaRipple.style.opacity = '0';
+      if (chromaCommitTag) chromaCommitTag.style.opacity = '0.5';
+
+      // User question capsule appears in top-left zone (Y=12)
+      if (queryCapsule) {
+        queryCapsule.style.opacity = clamp01(p * 2.5).toFixed(2);
+      }
+
+      // Query ray flows down toward Chroma index
+      if (queryRay) {
+        if (p > 0.25) {
+          queryRay.style.opacity = clamp01((p - 0.25) * 2.5).toFixed(2);
+        } else {
+          queryRay.style.opacity = '0';
+        }
+      }
+
+      // Chunks highlight: selected evidence vs subdued non-relevant chunks
+      if (currentOutcome === 'grounded') {
+        if (chunkC1) {
+          chunkC1.classList.add('is-retrieved');
+          chunkC1.classList.remove('is-subdued');
+        }
+        if (chunkC2) {
+          chunkC2.classList.add('is-retrieved');
+          chunkC2.classList.remove('is-subdued');
+        }
+        if (chunkC0) {
+          chunkC0.classList.remove('is-retrieved');
+          chunkC0.classList.add('is-subdued');
+        }
+        if (chunkC3) {
+          chunkC3.classList.remove('is-retrieved');
+          chunkC3.classList.add('is-subdued');
+        }
+
+        // Citation badges [S1] and [S2] appear in clear zone above chunks (Y=175)
+        if (citeS1) citeS1.style.opacity = clamp01(p * 2.5).toFixed(2);
+        if (citeS2) citeS2.style.opacity = clamp01((p - 0.2) * 2.5).toFixed(2);
+      } else {
+        // Abstention case: evidence is insufficient, all chunks remain subdued
+        [chunkC0, chunkC1, chunkC2, chunkC3].forEach(c => {
+          if (c) {
+            c.classList.remove('is-retrieved');
+            c.classList.add('is-subdued');
+          }
+        });
+        if (citeS1) citeS1.style.opacity = '0';
+        if (citeS2) citeS2.style.opacity = '0';
+      }
+
+      resetDownstream(5);
+      return;
+    }
+
+    // =========================================================================
+    // SCENE 7: VERIFY (16.0s – 18.0s) · The system checks whether evidence is sufficient
+    // =========================================================================
+    if (timeMs >= 16000 && timeMs < 18000) {
+      if (stageLabelEl) stageLabelEl.textContent = '07 · VERIFY: The system checks whether evidence is sufficient';
+      if (queryCapsule) queryCapsule.style.opacity = '1';
+      if (queryRay) queryRay.style.opacity = '0.35';
+
+      resetDownstream(6);
+      return;
+    }
+
+    // =========================================================================
+    // SCENE 8: ANSWER (18.0s – 20.0s) · DocuMind provides supported info with citations or abstains
+    // =========================================================================
+    if (timeMs >= 18000 && timeMs <= 20000) {
+      const p = (timeMs - 18000) / 2000;
+
+      if (currentOutcome === 'grounded') {
+        if (stageLabelEl) stageLabelEl.textContent = '08 · ANSWER: Supported answer verified with citations [S1][S2]';
+        if (outcomeGrounded) outcomeGrounded.style.opacity = clamp01(p * 3).toFixed(2);
+        if (outcomeAbstain) outcomeAbstain.style.opacity = '0';
+        if (citeS1) citeS1.style.opacity = '1';
+        if (citeS2) citeS2.style.opacity = '1';
+      } else {
+        if (stageLabelEl) stageLabelEl.textContent = '08 · ANSWER: DocuMind abstains (insufficient evidence in corpus)';
+        if (outcomeAbstain) outcomeAbstain.style.opacity = clamp01(p * 3).toFixed(2);
+        if (outcomeGrounded) outcomeGrounded.style.opacity = '0';
+        if (citeS1) citeS1.style.opacity = '0';
+        if (citeS2) citeS2.style.opacity = '0';
+      }
+
+      // Smooth fade transition at the very end to loop back to Scene 1
+      if (p > 0.90) {
+        const fadeP = 1 - (p - 0.90) / 0.10;
+        if (queryCapsule) queryCapsule.style.opacity = fadeP.toFixed(2);
+        if (outcomeGrounded) outcomeGrounded.style.opacity = fadeP.toFixed(2);
+        if (outcomeAbstain) outcomeAbstain.style.opacity = fadeP.toFixed(2);
+      }
+    }
+  }
+
+  function resetDownstream(stageIndex) {
+    if (stageIndex < 7) {
+      if (outcomeGrounded) outcomeGrounded.style.opacity = '0';
+      if (outcomeAbstain) outcomeAbstain.style.opacity = '0';
+    }
+    if (stageIndex < 6) {
+      if (citeS1) citeS1.style.opacity = '0';
+      if (citeS2) citeS2.style.opacity = '0';
+      [chunkC0, chunkC1, chunkC2, chunkC3].forEach(c => {
+        if (c) {
+          c.classList.remove('is-retrieved');
+          c.classList.remove('is-subdued');
+        }
+      });
+    }
+    if (stageIndex < 5) {
+      if (queryCapsule) queryCapsule.style.opacity = '0';
+      if (queryRay) queryRay.style.opacity = '0';
+    }
+    if (stageIndex < 4) {
+      if (chromaRipple) chromaRipple.style.opacity = '0';
+      if (chromaCommitTag) chromaCommitTag.style.opacity = '0';
+      if (chromaTopEllipse) {
+        chromaTopEllipse.setAttribute('stroke', '#e5e2e1');
+        chromaTopEllipse.setAttribute('stroke-width', '1');
+      }
+    }
+    if (stageIndex < 3) {
+      if (vPulseBeam) vPulseBeam.style.opacity = '0';
+      if (vDimTag) vDimTag.style.opacity = '0';
+      vBars.forEach((bar, idx) => {
+        const base = defaultBars[idx];
+        if (base) {
+          bar.setAttribute('y2', base.y2.toString());
+          bar.setAttribute('stroke', '#ff571d');
+          bar.setAttribute('stroke-width', idx === 3 ? '3' : '2.5');
+        }
+      });
+    }
+    if (stageIndex < 2) {
+      if (chunkOverlap) chunkOverlap.style.opacity = '0';
+      [chunkC0, chunkC1, chunkC2, chunkC3].forEach(c => {
+        if (c) {
+          c.setAttribute('transform', 'translate(0, 0)');
+          const poly = c.querySelector('polygon');
+          if (poly) {
+            poly.setAttribute('stroke', '#e5e2e1');
+            poly.setAttribute('stroke-width', '1');
+          }
+        }
+      });
+    }
+    if (stageIndex < 1) {
+      if (axisPulse) axisPulse.style.opacity = '0';
+      if (docLine1) { docLine1.setAttribute('stroke', '#8A8690'); docLine1.setAttribute('stroke-width', '1.2'); }
+      if (docLine2) { docLine2.setAttribute('stroke', '#8A8690'); docLine2.setAttribute('stroke-width', '1.2'); }
+      if (docLine3) { docLine3.setAttribute('stroke', '#8A8690'); docLine3.setAttribute('stroke-width', '1.2'); }
+    }
+  }
+
+  function tick(timestamp) {
+    if (!lastTimestamp) lastTimestamp = timestamp;
+    const dt = timestamp - lastTimestamp;
+    lastTimestamp = timestamp;
+
+    if (isPlaying) {
+      currentTime += dt;
+      if (currentTime >= TOTAL_DURATION) {
+        currentTime = 0;
+        cycleCount++;
+
+        if (outcomePreference === 'auto') {
+          currentOutcome = cycleCount % 2 === 0 ? 'grounded' : 'abstain';
+        } else {
+          currentOutcome = outcomePreference;
+        }
+      }
+      renderFrame(currentTime);
+    }
+
+    animFrameId = requestAnimationFrame(tick);
+  }
+
+  function setPlayState(playing) {
+    isPlaying = playing;
+    if (playIcon) playIcon.textContent = isPlaying ? 'pause' : 'play_arrow';
+    if (playText) playText.textContent = isPlaying ? 'PAUSE' : 'PLAY';
+    if (liveDotEl) {
+      if (isPlaying) {
+        liveDotEl.classList.remove('is-paused');
+      } else {
+        liveDotEl.classList.add('is-paused');
+      }
+    }
+    if (!isPlaying && stageLabelEl) {
+      stageLabelEl.textContent = `[PAUSED] ${stageLabelEl.textContent.replace('[PAUSED] ', '')}`;
+    }
+  }
+
+  function replay() {
+    currentTime = 0;
+    lastTimestamp = performance.now();
+    setPlayState(true);
+    renderFrame(0);
+  }
+
+  function toggleOutcome() {
+    if (outcomePreference === 'auto') {
+      outcomePreference = 'grounded';
+      currentOutcome = 'grounded';
+    } else if (outcomePreference === 'grounded') {
+      outcomePreference = 'abstain';
+      currentOutcome = 'abstain';
+    } else {
+      outcomePreference = 'auto';
+      currentOutcome = cycleCount % 2 === 0 ? 'grounded' : 'abstain';
+    }
+
+    if (outcomeBtn) {
+      outcomeBtn.textContent = `MODE: ${outcomePreference.toUpperCase()}`;
+    }
+  }
+
+  function attachListeners() {
+    if (playBtn) {
+      playBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        setPlayState(!isPlaying);
+      });
+    }
+
+    if (replayBtn) {
+      replayBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        replay();
+      });
+    }
+
+    if (outcomeBtn) {
+      outcomeBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleOutcome();
+      });
+    }
+
+    if (scrubberTrack) {
+      scrubberTrack.addEventListener('click', (e) => {
+        const rect = scrubberTrack.getBoundingClientRect();
+        const clickX = e.clientX - rect.left;
+        const seekPct = Math.max(0, Math.min(1, clickX / rect.width));
+        currentTime = seekPct * TOTAL_DURATION;
+        renderFrame(currentTime);
+      });
+    }
+
+    if (wrapEl) {
+      wrapEl.setAttribute('tabindex', '0');
+      wrapEl.addEventListener('keydown', (e) => {
+        if (e.code === 'Space') {
+          e.preventDefault();
+          setPlayState(!isPlaying);
+        } else if (e.code === 'KeyR') {
+          e.preventDefault();
+          replay();
+        }
+      });
+    }
+
+    try {
+      const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+      if (motionQuery.matches) {
+        setPlayState(false);
+        currentTime = 9000;
+        renderFrame(currentTime);
+        if (stageLabelEl) stageLabelEl.textContent = 'MOTION REDUCED · STATIC REPOSITORY TOPOLOGY';
+      }
+      motionQuery.addEventListener('change', (e) => {
+        if (e.matches) {
+          setPlayState(false);
+          renderFrame(9000);
+          if (stageLabelEl) stageLabelEl.textContent = 'MOTION REDUCED · STATIC REPOSITORY TOPOLOGY';
+        }
+      });
+    } catch (_) {}
+  }
+
+  function init() {
+    if (!queryElements()) {
+      setTimeout(init, 100);
+      return;
+    }
+
+    attachListeners();
+    renderFrame(0);
+    lastTimestamp = performance.now();
+    animFrameId = requestAnimationFrame(tick);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
