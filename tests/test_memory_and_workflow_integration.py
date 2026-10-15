@@ -11,6 +11,7 @@ End-to-end integration test validating realistic user workflow:
 
 from __future__ import annotations
 
+import importlib
 import io
 import resource
 import sys
@@ -18,6 +19,7 @@ from pathlib import Path
 
 import numpy as np
 import pytest
+import tomllib
 from pypdf import PdfReader, PdfWriter
 from starlette.testclient import TestClient
 
@@ -211,3 +213,33 @@ def test_full_workflow_login_upload_index_retrieval_citations_chathistory(
     # 7. Memory Measurement Check
     mem_end = _get_rss_mb()
     print(f"\n[Realistic Workflow RSS] Start: {mem_start:.2f} MB | End: {mem_end:.2f} MB")
+
+
+def test_vercel_entrypoint_and_routes(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Validate Vercel entrypoint configuration and basic routing."""
+    # Verify pyproject.toml [tool.vercel] section
+    with Path("pyproject.toml").open("rb") as f:
+        data = tomllib.load(f)
+    vercel_cfg = data.get("tool", {}).get("vercel", {})
+    entrypoint_str = vercel_cfg.get("entrypoint")
+    assert entrypoint_str in ("documind.interfaces.api", "documind.interfaces.api:app")
+
+    # Dynamically resolve entrypoint module and attribute as Vercel does
+    mod_name = entrypoint_str.split(":")[0]
+    app_name = entrypoint_str.split(":")[1] if ":" in entrypoint_str else "app"
+    mod = importlib.import_module(mod_name)
+    app = getattr(mod, app_name)
+    assert app is not None
+
+    client = TestClient(app)
+
+    # Healthcheck
+    health_resp = client.get("/healthz")
+    assert health_resp.status_code == 200
+    assert health_resp.json()["status"] == "ok"
+
+    # Root redirect to frontend
+    root_resp = client.get("/", follow_redirects=False)
+    assert root_resp.status_code in (307, 308)
+    assert "/app/console/code.html" in root_resp.headers["location"]
+

@@ -67,3 +67,17 @@ def test_config_overlap_larger_than_chunk_size(monkeypatch):
     monkeypatch.setenv("DOCUMIND_OVERLAP", "100")
     with pytest.raises(ValueError, match="DOCUMIND_OVERLAP"):
         load_settings()
+
+
+def test_config_vercel_environment(monkeypatch):
+    import tempfile
+    from pathlib import Path
+
+    monkeypatch.setenv("VERCEL", "1")
+    monkeypatch.delenv("DOCUMIND_HOME", raising=False)
+    monkeypatch.delenv("HF_HOME", raising=False)
+    monkeypatch.delenv("TMPDIR", raising=False)
+    settings = load_settings()
+    expected = (Path(tempfile.gettempdir()) / "documind").resolve()
+    assert settings.home == expected
+

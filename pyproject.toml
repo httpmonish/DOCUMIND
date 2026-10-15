@@ -80,3 +80,6 @@ markers = [
   "asyncio: mark test as asynchronous coroutine",
 ]
 addopts = "-q"
+
+[tool.vercel]
+entrypoint = "documind.interfaces.api"

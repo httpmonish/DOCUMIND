@@ -156,7 +156,19 @@ def load_settings() -> Settings:
     load_dotenv()
 
     home_env = os.getenv("DOCUMIND_HOME")
-    home = Path(home_env).expanduser().resolve() if home_env else Path.home() / ".documind"
+    if home_env:
+        home = Path(home_env).expanduser().resolve()
+    elif os.getenv("VERCEL"):
+        import tempfile
+
+        tmp_base = Path(tempfile.gettempdir())
+        home = (tmp_base / "documind").resolve()
+        if not os.getenv("HF_HOME"):
+            os.environ["HF_HOME"] = str(tmp_base / "huggingface")
+        if not os.getenv("TMPDIR"):
+            os.environ["TMPDIR"] = str(tmp_base)
+    else:
+        home = Path.home() / ".documind"
 
     embed_model = os.getenv("DOCUMIND_EMBED_MODEL", "BAAI/bge-small-en-v1.5").strip()
     if not embed_model:
