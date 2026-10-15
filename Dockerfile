@@ -17,7 +17,13 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt pyproject.toml ./
-RUN pip install --no-cache-dir --user -r requirements.txt
+# Pre-install CPU-only PyTorch build to avoid multi-gigabyte CUDA runtime packages (~4.5 GB savings),
+# install dependencies, and strip non-runtime cache files
+RUN pip install --no-cache-dir --user --index-url https://download.pytorch.org/whl/cpu "torch==2.14.1" && \
+    pip install --no-cache-dir --user -r requirements.txt --extra-index-url https://download.pytorch.org/whl/cpu && \
+    find /root/.local -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true && \
+    find /root/.local -type d -name "tests" -depth -exec rm -rf {} + 2>/dev/null || true && \
+    find /root/.local -type f -name "*.pyc" -delete 2>/dev/null || true
 
 # Final minimal runtime image
 FROM python:3.12-slim AS runner
@@ -40,6 +46,13 @@ ENV PATH=/home/documind/.local/bin:$PATH
 ENV PYTHONPATH=/home/documind/.local/lib/python3.12/site-packages
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
+ENV DOCUMIND_TORCH_THREADS=1
+ENV DOCUMIND_EMBED_BATCH_SIZE=16
+ENV OMP_NUM_THREADS=1
+ENV MKL_NUM_THREADS=1
+ENV OPENBLAS_NUM_THREADS=1
+ENV VECLIB_MAXIMUM_THREADS=1
+ENV NUMEXPR_NUM_THREADS=1
 
 # Copy application source code
 COPY --chown=documind:documind documind ./documind

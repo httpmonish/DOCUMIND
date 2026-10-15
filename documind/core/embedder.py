@@ -4,9 +4,12 @@ SentenceTransformer embedding wrapper implementing the Embedder protocol.
 
 from __future__ import annotations
 
+import gc
 import logging
+import os
 import threading
 from collections.abc import Sequence
+from contextlib import nullcontext
 from typing import Any
 
 import numpy as np
@@ -20,6 +23,35 @@ DEFAULT_MODEL_ID = "BAAI/bge-small-en-v1.5"
 DEFAULT_REVISION = "5c38ec7c405ec4b44b94cc5a9bb96e735b38267a"
 
 _ENCODE_SEMAPHORE = threading.Semaphore(2)
+_MODEL_CACHE: dict[tuple[str, str, str], Any] = {}
+_MODEL_CACHE_LOCK = threading.Lock()
+
+
+def _configure_torch_runtime() -> None:
+    """Configure PyTorch runtime settings for minimal memory consumption on CPU."""
+    try:
+        import contextlib
+
+        import torch
+
+        # Default to 1 thread for CPU inference to avoid thread pools and memory fragmentation
+        torch_threads = int(os.getenv("DOCUMIND_TORCH_THREADS", "1"))
+        if torch.get_num_threads() > torch_threads:
+            torch.set_num_threads(torch_threads)
+        with contextlib.suppress(RuntimeError):
+            torch.set_num_interop_threads(torch_threads)
+        torch.set_grad_enabled(False)
+    except Exception as err:
+        logger.debug("Could not configure PyTorch runtime: %s", err)
+
+
+def _is_mock(obj: Any) -> bool:
+    """Detect whether a class/object is a unittest.mock to bypass caching during tests."""
+    return (
+        getattr(obj, "_mock_return_value", None) is not None
+        or hasattr(obj, "assert_called")
+        or hasattr(obj, "side_effect")
+    )
 
 
 class SentenceTransformerEmbedder:
@@ -36,18 +68,36 @@ class SentenceTransformerEmbedder:
         except ImportError as err:
             raise ImportError("pip install 'documind[embed]'") from err
 
+        _configure_torch_runtime()
         self.model_id = model_id
-        logger.info("Loading embedding model %s (revision: %s)", model_id, revision)
 
-        try:
-            self._model: Any = SentenceTransformer(
-                model_id,
-                device=device,
-                trust_remote_code=False,
-                revision=revision,
-            )
-        except Exception as err:
-            raise EmbeddingFailed(f"Failed to load embedding model {model_id}: {err}") from err
+        cache_key = (model_id, revision, device)
+        cached_model = None
+        if not _is_mock(SentenceTransformer):
+            with _MODEL_CACHE_LOCK:
+                cached_model = _MODEL_CACHE.get(cache_key)
+
+        if cached_model is not None:
+            self._model = cached_model
+            logger.debug("Reusing cached embedding model %s (revision: %s)", model_id, revision)
+        else:
+            logger.info("Loading embedding model %s (revision: %s)", model_id, revision)
+            try:
+                loaded = SentenceTransformer(
+                    model_id,
+                    device=device,
+                    trust_remote_code=False,
+                    revision=revision,
+                )
+                if hasattr(loaded, "eval"):
+                    loaded.eval()
+                self._model = loaded
+            except Exception as err:
+                raise EmbeddingFailed(f"Failed to load embedding model {model_id}: {err}") from err
+
+            if not _is_mock(SentenceTransformer):
+                with _MODEL_CACHE_LOCK:
+                    _MODEL_CACHE[cache_key] = self._model
 
         max_seq = getattr(self._model, "max_seq_length", None)
         if max_seq is None or max_seq < 512:
@@ -69,11 +119,19 @@ class SentenceTransformerEmbedder:
     def tokenizer(self) -> Any:
         return self._model.tokenizer
 
+    def _get_inference_context(self) -> Any:
+        try:
+            import torch
+
+            return torch.inference_mode()
+        except (ImportError, AttributeError):
+            return nullcontext()
+
     def _encode_batch(self, batch: list[str]) -> np.ndarray:
         current_batch_size = len(batch)
         while current_batch_size >= 1:
             try:
-                with _ENCODE_SEMAPHORE:
+                with _ENCODE_SEMAPHORE, self._get_inference_context():
                     encoded = self._model.encode(
                         batch,
                         batch_size=current_batch_size,
@@ -97,10 +155,19 @@ class SentenceTransformerEmbedder:
 
         raise EmbeddingFailed("Failed to encode batch: batch size reduced below 1")
 
-    def embed_documents(self, texts: Sequence[str], batch_size: int = 32) -> np.ndarray:
+    def embed_documents(self, texts: Sequence[str], batch_size: int = 16) -> np.ndarray:
         """float32, shape (len(texts), dim), L2-normalised rows."""
         if not texts:
             return np.zeros((0, self.dim), dtype=np.float32)
+
+        env_batch = os.getenv("DOCUMIND_EMBED_BATCH_SIZE")
+        if env_batch:
+            try:
+                configured_batch = int(env_batch)
+                if configured_batch > 0:
+                    batch_size = min(batch_size, configured_batch)
+            except ValueError:
+                pass
 
         text_list = list(texts)
         results: list[np.ndarray] = []
@@ -110,12 +177,15 @@ class SentenceTransformerEmbedder:
             encoded = self._encode_batch(batch)
             results.append(encoded)
 
-        return np.vstack(results).astype(np.float32)
+        final_vecs = np.vstack(results).astype(np.float32)
+        del results
+        gc.collect()
+        return final_vecs
 
     def embed_query(self, text: str) -> np.ndarray:
         """float32, shape (dim,), L2-normalised."""
         prefixed = f"{QUERY_PREFIX}{text}"
-        with _ENCODE_SEMAPHORE:
+        with _ENCODE_SEMAPHORE, self._get_inference_context():
             try:
                 encoded = self._model.encode(
                     prefixed,

@@ -31,6 +31,15 @@ def load_document(filepath: str) -> str:
 
 
 def _load_pdf(path: Path) -> str:
+    import gc
+
     reader = PdfReader(str(path))
-    page_texts = [page.extract_text() for page in reader.pages]
-    return "\n".join(page_texts)
+    page_texts: list[str] = []
+    for page in reader.pages:
+        txt = page.extract_text()
+        if txt:
+            page_texts.append(txt)
+    result = "\n".join(page_texts)
+    del reader, page_texts
+    gc.collect()
+    return result

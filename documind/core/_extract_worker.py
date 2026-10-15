@@ -11,7 +11,7 @@ from pathlib import Path
 
 
 def _apply_memory_limit() -> None:
-    """Apply best-effort memory limit on Linux POSIX systems (1.5 GB)."""
+    """Apply best-effort memory limit on Linux POSIX systems (default 1.5 GB, configurable)."""
     try:
         import platform
         import resource
@@ -19,8 +19,8 @@ def _apply_memory_limit() -> None:
         if platform.system() == "Darwin":
             return  # RLIMIT_AS has different virtual address semantics on macOS
 
-        # 1.5 GB in bytes
-        limit_bytes = 1536 * 1024 * 1024
+        limit_mb = int(os.getenv("DOCUMIND_WORKER_MAX_MEMORY_MB", "1536"))
+        limit_bytes = limit_mb * 1024 * 1024
         resource.setrlimit(resource.RLIMIT_AS, (limit_bytes, limit_bytes))
     except (ImportError, AttributeError, ValueError, OSError):
         # Unsupported on Windows or restricted environments
@@ -85,6 +85,9 @@ def main() -> None:
 
         sys.stdout.buffer.write(full_text.encode("utf-8"))
         sys.stdout.buffer.flush()
+        del reader, page_texts, full_text
+        import gc
+        gc.collect()
         sys.exit(0)
 
     except (PdfReadError, PdfStreamError, FileNotDecryptedError) as pdf_err:

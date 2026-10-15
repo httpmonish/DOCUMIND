@@ -613,11 +613,11 @@ def create_app(
         lifespan=lifespan,
     )
 
-    app.state.settings = app_settings
-    app.state.engine = dm
     from documind.core.factory import build_default
 
     active_engine = dm if dm is not None else build_default(app_settings)
+    app.state.settings = app_settings
+    app.state.engine = active_engine
     app.state.session_manager = SessionManager(
         base_dir=Path(app_settings.home) / "sessions",
         shared_embedder=active_engine.embedder,
